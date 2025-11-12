@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
-    <title>工�??�板?�照工具</title>
+    <title>工程白板拍照工具</title>
     <style>
       :root {
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
@@ -35,7 +35,6 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        position: relative;
       }
 
       h1 {
@@ -52,79 +51,6 @@
         color: #facc15;
         font-size: 0.95rem;
         font-weight: 600;
-      }
-
-      .action-bar {
-        position: fixed;
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(520px, calc(100% - 1.5rem));
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
-        padding: 0.85rem 1rem;
-        border-radius: 24px;
-        background: rgba(15, 23, 42, 0.85);
-        box-shadow: 0 20px 35px rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(12px);
-        z-index: 30;
-      }
-
-      .action-btn {
-        border: none;
-        border-radius: 999px;
-        padding: 0.85rem 1.25rem;
-        font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: transform 0.1s ease, box-shadow 0.15s ease;
-      }
-
-      .action-btn.primary {
-        background: linear-gradient(135deg, #059669, #10b981);
-        color: #fff;
-        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.35);
-      }
-
-      .action-btn.secondary {
-        background: rgba(255, 255, 255, 0.1);
-        color: #f8fafc;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-      }
-
-      .action-btn:active {
-        transform: translateY(1px);
-      }
-
-      .export-message {
-        position: fixed;
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(520px, calc(100% - 1.5rem));
-        background: rgba(15, 23, 42, 0.9);
-        color: #f8fafc;
-        padding: 0.75rem 1rem;
-        border-radius: 16px;
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.45);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease, transform 0.3s ease;
-        transform-origin: bottom;
-        z-index: 25;
-        text-align: center;
-        font-size: 0.95rem;
-      }
-
-      .export-message.visible {
-        opacity: 1;
-        transform: translateX(-50%) translateY(-8px);
-      }
-
-      .export-message[data-variant="success"] {
-        background: rgba(34, 197, 94, 0.9);
-        color: #052e13;
       }
 
       .controls {
@@ -201,12 +127,12 @@
         left: 50%;
         top: 72%;
         transform: translate(-50%, -50%);
-        width: min(80%, 430px);
-        background: rgba(248, 250, 252, 0.95);
+        width: min(80%, 420px);
+        background: rgba(248, 250, 252, 0.94);
         border-radius: 18px;
         border: 4px solid #cbd5f5;
         box-shadow: 0 20px 35px rgba(15, 23, 42, 0.35);
-        padding: 0.75rem 0.85rem 0.8rem;
+        padding: 0.8rem;
         backdrop-filter: blur(2px);
         touch-action: none;
       }
@@ -224,24 +150,13 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.35rem;
+        font-weight: 700;
       }
 
-      .whiteboard-header h2 {
-        margin: 0;
-        font-size: 1.05rem;
-      }
-
-      .whiteboard-body {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 0.6rem;
-      }
-
-      .field {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
+      .whiteboard-header small {
+        color: #475569;
+        font-weight: 500;
       }
 
       label {
@@ -262,16 +177,74 @@
       }
 
       textarea {
-        min-height: 70px;
         resize: vertical;
       }
 
-      .field--full {
-        grid-column: 1 / -1;
+      .board-title {
+        margin-bottom: 0.5rem;
+      }
+
+      .board-title input {
+        width: 100%;
+        font-weight: 700;
+        font-size: 0.95rem;
+      }
+
+      .board-layout {
+        display: flex;
+        gap: 0.6rem;
+      }
+
+      .board-sidebar {
+        flex: 0 0 120px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .board-sidebar label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        letter-spacing: 0.05em;
+      }
+
+      .board-sidebar input {
+        font-size: 0.9rem;
+        padding: 0.35rem 0.4rem;
+      }
+
+      .board-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .board-main textarea {
+        flex: 1;
+        min-height: 180px;
+        line-height: 1.4;
+        font-size: 0.95rem;
+      }
+
+      .board-footer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-top: 0.6rem;
+        align-items: stretch;
+      }
+
+      .board-footer .field {
+        flex: 1;
+        min-width: 150px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
       }
 
       .signature-panel {
-        margin-top: 0.5rem;
+        flex: 1 1 220px;
         border: 1px dashed #94a3b8;
         border-radius: 12px;
         padding: 0.6rem;
@@ -304,6 +277,75 @@
         background: #fff;
       }
 
+      .action-bar {
+        position: fixed;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(520px, calc(100% - 1.5rem));
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        border-radius: 24px;
+        background: rgba(15, 23, 42, 0.85);
+        box-shadow: 0 20px 35px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(12px);
+        z-index: 30;
+      }
+
+      .action-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 0.85rem 1.25rem;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: transform 0.1s ease, box-shadow 0.15s ease;
+      }
+
+      .action-btn.primary {
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #fff;
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.35);
+      }
+
+      .action-btn.secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: #f8fafc;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .export-message {
+        position: fixed;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(520px, calc(100% - 1.5rem));
+        background: rgba(15, 23, 42, 0.9);
+        color: #f8fafc;
+        padding: 0.75rem 1rem;
+        border-radius: 16px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        transform-origin: bottom;
+        z-index: 25;
+        text-align: center;
+        font-size: 0.95rem;
+      }
+
+      .export-message.visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-8px);
+      }
+
+      .export-message[data-variant="success"] {
+        background: rgba(34, 197, 94, 0.9);
+        color: #052e13;
+      }
+
       .hidden-input {
         display: none;
       }
@@ -312,74 +354,96 @@
   <body>
     <div class="app-shell">
       <div>
-        <h1>工�??�板?�照工具</h1>
-        <p class="version-note">??已更?��??��?請使?�此介面?�?��??�能</p>
+        <h1>工程白板拍照工具</h1>
+        <p class="version-note">⚠ 已更新版本 v1.2，請使用此介面最新版功能</p>
       </div>
 
       <div class="controls">
-        <button class="btn" id="takePhotoBtn">?�照</button>
-        <button class="btn btn-secondary" id="uploadPhotoBtn">上傳?��?</button>
+        <button class="btn" id="takePhotoBtn">拍照</button>
+        <button class="btn btn-secondary" id="uploadPhotoBtn">上傳照片</button>
       </div>
 
       <div class="stage" id="captureArea">
         <div class="stage-content" id="photoLayer">
           <div class="stage-placeholder" id="placeholder">
-            <strong>請�??��?上傳?��?</strong>
-            <span>?�板?��??�照?��??��??��?一，亦?��??�到?��?位置??/span>
+            <strong>請拍照或上傳照片</strong>
+            <span>白板會疊在照片下方三分之一，可拖曳至其他位置。</span>
           </div>
         </div>
         <div class="whiteboard" id="whiteboard">
           <div class="whiteboard-header">
-            <h2>?�場試�?紀?�板</h2>
-            <small>?�曳以調?��?�?/small>
+            <h2>現場試驗紀錄板</h2>
+            <small>拖曳以調整位置</small>
           </div>
           <div class="whiteboard-body">
-            <div class="field">
-              <label for="projectName">工�??�稱</label>
-              <input type="text" id="projectName" placeholder="輸入工�??�稱" />
+            <div class="board-title">
+              <label for="projectName">工程名稱</label>
+              <input
+                type="text"
+                id="projectName"
+                placeholder="例：頭屋鄉都市計畫區24M特1號道路拓寬工程"
+              />
             </div>
-            <div class="field">
-              <label for="agency">主辦機�?</label>
-              <input type="text" id="agency" placeholder="輸入主辦機�?" />
+            <div class="board-layout">
+              <div class="board-sidebar">
+                <label for="inspectionLocation">
+                  <span>檢查位置</span>
+                  <input
+                    type="text"
+                    id="inspectionLocation"
+                    placeholder="輸入位置"
+                  />
+                </label>
+                <label for="designSpec">
+                  <span>設計規範</span>
+                  <input
+                    type="text"
+                    id="designSpec"
+                    placeholder="輸入規範"
+                  />
+                </label>
+                <label for="testItem">
+                  <span>試驗項目</span>
+                  <input type="text" id="testItem" placeholder="輸入項目" />
+                </label>
+              </div>
+              <div class="board-main">
+                <label for="testResult">檢查紀錄</label>
+                <textarea
+                  id="testResult"
+                  placeholder="例如：OK+500~OK+590 撓工樑 接桿規定 W=105cm..."
+                ></textarea>
+              </div>
             </div>
-            <div class="field">
-              <label for="contractor">?��???/label>
-              <input type="text" id="contractor" placeholder="輸入?��??? />
+            <div class="board-footer">
+              <div class="field">
+                <label for="testDate">檢查日期</label>
+                <input type="date" id="testDate" />
+              </div>
+              <div class="field">
+                <label for="inspector">檢查人員</label>
+                <input type="text" id="inspector" placeholder="輸入檢查人員" />
+              </div>
+              <div class="signature-panel">
+                <div class="signature-toolbar">
+                  <label for="brushSize">筆刷粗細</label>
+                  <input type="range" id="brushSize" min="2" max="10" value="3" />
+                  <label for="brushColor">簽名顏色</label>
+                  <input type="color" id="brushColor" value="#0f172a" />
+                </div>
+                <canvas id="signatureCanvas"></canvas>
+              </div>
             </div>
-            <div class="field">
-              <label for="testItem">試�??�目</label>
-              <input type="text" id="testItem" placeholder="輸入試�??�目" />
-            </div>
-            <div class="field">
-              <label for="testDate">?��?</label>
-              <input type="date" id="testDate" />
-            </div>
-            <div class="field field--full">
-              <label for="testResult">試�?結�?</label>
-              <textarea
-                id="testResult"
-                placeholder="輸入測試結�??��?註�?注�?事�?"
-              ></textarea>
-            </div>
-          </div>
-          <div class="signature-panel">
-            <div class="signature-toolbar">
-              <label for="brushSize">筆刷粗細</label>
-              <input type="range" id="brushSize" min="2" max="10" value="3" />
-              <label for="brushColor">簽�?顏色</label>
-              <input type="color" id="brushColor" value="#0f172a" />
-            </div>
-            <canvas id="signatureCanvas"></canvas>
           </div>
         </div>
       </div>
 
       <div class="action-bar">
         <button class="action-btn secondary" id="clearSignatureBtn">
-          清除簽�?
+          清除簽名
         </button>
         <button class="action-btn primary" id="exportBtn">
-          ?�出?�張?��?
+          匯出整張圖片
         </button>
       </div>
 
@@ -411,6 +475,7 @@
       const whiteboard = document.getElementById("whiteboard");
       const exportBtn = document.getElementById("exportBtn");
       const captureArea = document.getElementById("captureArea");
+      const exportMessage = document.getElementById("exportMessage");
 
       const dateInput = document.getElementById("testDate");
       const signatureCanvas = document.getElementById("signatureCanvas");
@@ -418,11 +483,11 @@
       const clearSignatureBtn = document.getElementById("clearSignatureBtn");
       const brushSize = document.getElementById("brushSize");
       const brushColor = document.getElementById("brushColor");
-      const exportMessage = document.getElementById("exportMessage");
 
       const state = {
         dragging: false,
         dragOffset: { x: 0, y: 0 },
+        stageRect: null,
         drawing: false,
         lastPoint: { x: 0, y: 0 },
         messageTimer: null,
@@ -445,7 +510,6 @@
         const second = String(date.getSeconds()).padStart(2, "0");
         return `${year}-${month}-${day}_${hour}-${minute}-${second}`;
       };
-      dateInput.value = formatDateValue();
 
       const setCanvasSize = () => {
         const ratio = window.devicePixelRatio || 1;
@@ -463,76 +527,16 @@
         ctx.fillRect(0, 0, signatureCanvas.width, signatureCanvas.height);
       };
 
-      const toggleWhiteboardSolid = (enable) => {
-        whiteboard.classList.toggle("solid-mode", Boolean(enable));
-      };
-
-      const showExportMessage = (message, variant = "info") => {
-        if (!exportMessage) return;
-        exportMessage.textContent = message;
-        exportMessage.dataset.variant = variant;
-        exportMessage.classList.add("visible");
-        if (state.messageTimer) clearTimeout(state.messageTimer);
-        state.messageTimer = setTimeout(() => {
-          exportMessage.classList.remove("visible");
-        }, 5000);
-      };
-
-      const downloadBlob = (blob, filename) => {
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.download = filename;
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 2000);
-      };
-
-      const openPreviewTab = (blob) => {
-        const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-      };
-
-      const handleShareOrDownload = async (blob, filename) => {
-        const file = new File([blob], filename, { type: "image/png" });
-        if (
-          navigator.canShare &&
-          navigator.canShare({ files: [file] }) &&
-          navigator.share
-        ) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: "工�??�板?��?",
-              text: "請在?�享?�板中選?�「儲存影?�」即?��??�相簿�?,
-            });
-            showExportMessage(
-              "已�??��?享面?��?請選?�「儲存影?�」�?,
-              "success"
-            );
-            return;
-          } catch (error) {
-            if (error.name === "AbortError") {
-              showExportMessage("已�?消�?享�??�為下�?影�???);
-            } else {
-              console.warn("Share failed, fallback to download", error);
-              showExportMessage("?�享?�板不可?��??�為下�?影�???);
-            }
-          }
-        }
-
-        downloadBlob(blob, filename);
-        openPreviewTab(blob);
-        showExportMessage(
-          "已�?載並?��??�覽，�??��??��??��??��?�?App ?��?載�??��??��??��??��???,
-          "info"
-        );
+      const getCanvasPoint = (event) => {
+        const rect = signatureCanvas.getBoundingClientRect();
+        const x = (event.clientX ?? event.touches?.[0]?.clientX ?? 0) - rect.left;
+        const y = (event.clientY ?? event.touches?.[0]?.clientY ?? 0) - rect.top;
+        return { x, y };
       };
 
       const startDraw = (event) => {
         state.drawing = true;
-        const point = getCanvasPoint(event);
-        state.lastPoint = point;
+        state.lastPoint = getCanvasPoint(event);
       };
 
       const draw = (event) => {
@@ -550,15 +554,6 @@
 
       const stopDraw = () => {
         state.drawing = false;
-      };
-
-      const getCanvasPoint = (event) => {
-        const rect = signatureCanvas.getBoundingClientRect();
-        const x =
-          (event.clientX ?? event.touches?.[0]?.clientX ?? 0) - rect.left;
-        const y =
-          (event.clientY ?? event.touches?.[0]?.clientY ?? 0) - rect.top;
-        return { x, y };
       };
 
       const handleFiles = (files) => {
@@ -624,12 +619,73 @@
         }
       };
 
+      const toggleWhiteboardSolid = (enable) => {
+        whiteboard.classList.toggle("solid-mode", Boolean(enable));
+      };
+
+      const showExportMessage = (message, variant = "info") => {
+        exportMessage.textContent = message;
+        exportMessage.dataset.variant = variant;
+        exportMessage.classList.add("visible");
+        if (state.messageTimer) clearTimeout(state.messageTimer);
+        state.messageTimer = setTimeout(() => {
+          exportMessage.classList.remove("visible");
+        }, 5000);
+      };
+
+      const downloadBlob = (blob, filename) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      };
+
+      const openPreviewTab = (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank");
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      };
+
+      const handleShareOrDownload = async (blob, filename) => {
+        const file = new File([blob], filename, { type: "image/png" });
+        if (
+          navigator.canShare &&
+          navigator.canShare({ files: [file] }) &&
+          navigator.share
+        ) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "工程白板照片",
+              text: "請在分享面板中選擇「儲存影像」即可存入相簿。",
+            });
+            showExportMessage("已開啟分享面板，請選擇「儲存影像」。", "success");
+            return;
+          } catch (error) {
+            if (error.name === "AbortError") {
+              showExportMessage("已取消分享，改為下載影像。");
+            } else {
+              console.warn("Share failed, fallback to download", error);
+              showExportMessage("分享面板不可用，改為下載影像。");
+            }
+          }
+        }
+
+        downloadBlob(blob, filename);
+        openPreviewTab(blob);
+        showExportMessage(
+          "已下載並開啟預覽，如找不到圖片請至檔案 App 或長按圖片儲存。"
+        );
+      };
+
       const exportImage = async () => {
         exportBtn.disabled = true;
-        exportBtn.textContent = "?�出中�?;
+        exportBtn.textContent = "匯出中…";
+        toggleWhiteboardSolid(true);
         const timestampLabel = formatExportTimestamp();
         const filename = `whiteboard_${timestampLabel}.png`;
-        toggleWhiteboardSolid(true);
         try {
           const canvasCapture = await html2canvas(captureArea, {
             backgroundColor: null,
@@ -642,7 +698,7 @@
                 if (result) {
                   resolve(result);
                 } else {
-                  reject(new Error("?��??��??��?"));
+                  reject(new Error("無法生成圖片"));
                 }
               },
               "image/png",
@@ -653,12 +709,12 @@
           await handleShareOrDownload(blob, filename);
         } catch (error) {
           console.error(error);
-          alert("?�出失�?，�??�試一次�?);
-          showExportMessage("?�出失�?，�??�試一次�?, "info");
+          showExportMessage("匯出失敗，請再試一次。");
+          alert("匯出失敗，請再試一次。");
         } finally {
           toggleWhiteboardSolid(false);
           exportBtn.disabled = false;
-          exportBtn.textContent = "?�出?�張?��?";
+          exportBtn.textContent = "匯出整張圖片";
         }
       };
 
@@ -685,6 +741,7 @@
       exportBtn.addEventListener("click", exportImage);
 
       window.addEventListener("resize", setCanvasSize);
+      dateInput.value = formatDateValue();
       setCanvasSize();
     </script>
   </body>
