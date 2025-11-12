@@ -6,122 +6,518 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
-    <title>Mobile Whiteboard Canvas</title>
-    <link rel="stylesheet" href="styles.css" />
+    <title>工程白板拍照工具</title>
+    <style>
+      :root {
+        font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
+          BlinkMacSystemFont, sans-serif;
+        line-height: 1.5;
+        color: #0f172a;
+        background: #0f172a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: radial-gradient(circle, #1e293b, #0f172a);
+        min-height: 100vh;
+        padding: 1.25rem;
+        display: flex;
+        justify-content: center;
+      }
+
+      .app-shell {
+        width: min(520px, 100%);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      h1 {
+        color: #f8fafc;
+        text-align: center;
+        margin: 0;
+        font-size: clamp(1.5rem, 6vw, 2.25rem);
+        letter-spacing: 0.08em;
+      }
+
+      .version-note {
+        text-align: center;
+        margin-top: 0.35rem;
+        color: #facc15;
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 999px;
+        padding: 0.75rem 1.25rem;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        color: #fff;
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        box-shadow: 0 10px 18px rgba(37, 99, 235, 0.3);
+        transition: transform 0.1s ease, box-shadow 0.2s ease;
+      }
+
+      .btn-secondary {
+        background: transparent;
+        border: 2px solid #94a3b8;
+        color: #e2e8f0;
+        box-shadow: none;
+      }
+
+      .btn:active {
+        transform: translateY(1px);
+        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.35);
+      }
+
+      .stage {
+        position: relative;
+        width: 100%;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #1f2937;
+        box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45);
+        border: 6px solid rgba(248, 250, 252, 0.1);
+      }
+
+      .stage::before {
+        content: "";
+        display: block;
+        width: 100%;
+        padding-top: calc(16 / 9 * 100%);
+      }
+
+      .stage-content {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+
+      .stage-placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #cbd5f5;
+        gap: 0.35rem;
+        padding: 1.5rem;
+        text-align: center;
+      }
+
+      .whiteboard {
+        position: absolute;
+        left: 50%;
+        top: 65%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        background: rgba(248, 250, 252, 0.95);
+        border-radius: 18px;
+        border: 4px solid #cbd5f5;
+        box-shadow: 0 20px 35px rgba(15, 23, 42, 0.35);
+        padding: 0.9rem;
+        backdrop-filter: blur(2px);
+        touch-action: none;
+      }
+
+      .whiteboard.dragging {
+        opacity: 0.92;
+        cursor: grabbing;
+      }
+
+      .whiteboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
+
+      .whiteboard-header h2 {
+        margin: 0;
+        font-size: 1.05rem;
+      }
+
+      .whiteboard-body {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.6rem;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      label {
+        font-weight: 600;
+        color: #0f172a;
+        font-size: 0.85rem;
+      }
+
+      input,
+      textarea,
+      select {
+        border: 2px solid #cbd5f5;
+        border-radius: 10px;
+        padding: 0.45rem 0.6rem;
+        font: inherit;
+        background: #fff;
+        color: #0f172a;
+      }
+
+      textarea {
+        min-height: 70px;
+        resize: vertical;
+      }
+
+      .field--full {
+        grid-column: 1 / -1;
+      }
+
+      .signature-panel {
+        margin-top: 0.5rem;
+        border: 1px dashed #94a3b8;
+        border-radius: 12px;
+        padding: 0.6rem;
+        background: #fff;
+      }
+
+      .signature-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 0.4rem;
+      }
+
+      .signature-toolbar label {
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+
+      .signature-toolbar input[type="range"] {
+        flex: 1;
+      }
+
+      canvas {
+        width: 100%;
+        height: 180px;
+        border-radius: 10px;
+        border: 1px solid #cbd5f5;
+        touch-action: none;
+        background: #fff;
+      }
+
+      .export-btn {
+        width: 100%;
+        margin-top: 0.5rem;
+        background: linear-gradient(135deg, #059669, #10b981);
+      }
+
+      .hidden-input {
+        display: none;
+      }
+    </style>
   </head>
   <body>
-    <header class="app-header">
-      <h1>Mobile Whiteboard Canvas</h1>
-      <p>先點「新增照片」開啟相機，同時會浮出白板供你即時輸入。</p>
-    </header>
-
-    <main>
-      <section class="control-panel">
-        <label class="control">
-          <span>日期</span>
-          <input type="date" id="dateField" />
-        </label>
-
-        <label class="control">
-          <span>白板顏色</span>
-          <input type="color" id="boardColor" value="#fefefe" />
-        </label>
-
-        <label class="control">
-          <span>文字顏色</span>
-          <input type="color" id="textColor" value="#1a1a1a" />
-        </label>
-
-        <label class="control control--scale">
-          <span>白板縮放</span>
-          <div class="scale-group">
-            <input
-              type="range"
-              id="scaleControl"
-              min="50"
-              max="150"
-              value="100"
-            />
-            <span id="scaleValue">100%</span>
-          </div>
-        </label>
-
-        <button id="openCamera" type="button" class="primary-button">
-          開啟相機並顯示浮動白板
-        </button>
-
-        <label class="control">
-          <span>備用：從相簿選擇照片</span>
-          <input type="file" id="photoInput" accept="image/*" />
-        </label>
-
-        <button id="clearImage" type="button" class="ghost-button">
-          清除照片
-        </button>
-      </section>
-    </main>
-
-    <div class="floating-board hidden" id="floatingBoard" aria-hidden="true">
-      <div class="floating-board__backdrop" id="floatingBoardBackdrop"></div>
-      <div
-        class="floating-board__panel"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="floatingBoardTitle"
-      >
-        <header class="floating-board__header">
-          <h2 id="floatingBoardTitle">浮動白板</h2>
-          <button
-            type="button"
-            id="closeFloatingBoard"
-            class="icon-button"
-            aria-label="關閉浮動白板"
-          >
-            ✕
-          </button>
-        </header>
-        <section class="floating-board__body">
-          <div class="camera-panel">
-            <video
-              id="cameraPreview"
-              autoplay
-              playsinline
-              muted
-              poster=""
-            ></video>
-            <div class="camera-actions">
-              <button id="capturePhoto" type="button" class="primary-button">
-                拍照
-              </button>
-              <span id="cameraStatus" class="camera-status"
-                >相機尚未啟動</span
-              >
-            </div>
-          </div>
-          <section class="whiteboard-viewport">
-            <div class="whiteboard" id="whiteboard">
-              <div
-                id="whiteboardContent"
-                class="whiteboard-content"
-                contenteditable="true"
-                role="textbox"
-                aria-label="白板文字內容"
-              >
-                點一下即可輸入文字、筆記或待辦事項。
-              </div>
-              <img id="boardImage" alt="白板上的照片" hidden />
-            </div>
-          </section>
-        </section>
+    <div class="app-shell">
+      <div>
+        <h1>工程白板拍照工具</h1>
+        <p class="version-note">⚠ 已更新版本，請使用此介面最新版功能</p>
       </div>
+
+      <div class="controls">
+        <button class="btn" id="takePhotoBtn">拍照</button>
+        <button class="btn btn-secondary" id="uploadPhotoBtn">上傳照片</button>
+        <button class="btn btn-secondary" id="clearSignatureBtn">
+          清除簽名
+        </button>
+      </div>
+
+      <div class="stage" id="captureArea">
+        <div class="stage-content" id="photoLayer">
+          <div class="stage-placeholder" id="placeholder">
+            <strong>請拍照或上傳照片</strong>
+            <span>白板會疊在照片下方三分之一，亦可拖曳到其他位置。</span>
+          </div>
+        </div>
+        <div class="whiteboard" id="whiteboard">
+          <div class="whiteboard-header">
+            <h2>現場試驗紀錄板</h2>
+            <small>拖曳以調整位置</small>
+          </div>
+          <div class="whiteboard-body">
+            <div class="field">
+              <label for="projectName">工程名稱</label>
+              <input type="text" id="projectName" placeholder="輸入工程名稱" />
+            </div>
+            <div class="field">
+              <label for="agency">主辦機關</label>
+              <input type="text" id="agency" placeholder="輸入主辦機關" />
+            </div>
+            <div class="field">
+              <label for="contractor">承包商</label>
+              <input type="text" id="contractor" placeholder="輸入承包商" />
+            </div>
+            <div class="field">
+              <label for="testItem">試驗項目</label>
+              <input type="text" id="testItem" placeholder="輸入試驗項目" />
+            </div>
+            <div class="field">
+              <label for="testDate">日期</label>
+              <input type="date" id="testDate" />
+            </div>
+            <div class="field field--full">
+              <label for="testResult">試驗結果</label>
+              <textarea
+                id="testResult"
+                placeholder="輸入測試結果、備註或注意事項"
+              ></textarea>
+            </div>
+          </div>
+          <div class="signature-panel">
+            <div class="signature-toolbar">
+              <label for="brushSize">筆刷粗細</label>
+              <input type="range" id="brushSize" min="2" max="10" value="3" />
+              <label for="brushColor">簽名顏色</label>
+              <input type="color" id="brushColor" value="#0f172a" />
+            </div>
+            <canvas id="signatureCanvas"></canvas>
+          </div>
+          <button class="btn export-btn" id="exportBtn">匯出整張圖片</button>
+        </div>
+      </div>
+
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        class="hidden-input"
+        id="takePhotoInput"
+      />
+      <input type="file" accept="image/*" class="hidden-input" id="uploadInput" />
     </div>
 
-    <footer class="app-footer">
-      <small
-        >貼士：若需要手動開關白板，可再次點「新增照片」或按右上角關閉。</small
-      >
-    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+      const takePhotoBtn = document.getElementById("takePhotoBtn");
+      const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
+      const takePhotoInput = document.getElementById("takePhotoInput");
+      const uploadInput = document.getElementById("uploadInput");
+      const photoLayer = document.getElementById("photoLayer");
+      const placeholder = document.getElementById("placeholder");
+      const whiteboard = document.getElementById("whiteboard");
+      const exportBtn = document.getElementById("exportBtn");
+      const captureArea = document.getElementById("captureArea");
 
-    <script src="script.js"></script>
+      const dateInput = document.getElementById("testDate");
+      const signatureCanvas = document.getElementById("signatureCanvas");
+      const ctx = signatureCanvas.getContext("2d");
+      const clearSignatureBtn = document.getElementById("clearSignatureBtn");
+      const brushSize = document.getElementById("brushSize");
+      const brushColor = document.getElementById("brushColor");
+
+      const state = {
+        dragging: false,
+        dragOffset: { x: 0, y: 0 },
+        drawing: false,
+        lastPoint: { x: 0, y: 0 },
+      };
+
+      const formatDateValue = (date = new Date()) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      };
+      dateInput.value = formatDateValue();
+
+      const setCanvasSize = () => {
+        const ratio = window.devicePixelRatio || 1;
+        const { width, height } = signatureCanvas.getBoundingClientRect();
+        signatureCanvas.width = width * ratio;
+        signatureCanvas.height = height * ratio;
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        clearSignature();
+      };
+
+      const clearSignature = () => {
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+      };
+
+      const startDraw = (event) => {
+        state.drawing = true;
+        const point = getCanvasPoint(event);
+        state.lastPoint = point;
+      };
+
+      const draw = (event) => {
+        if (!state.drawing) return;
+        event.preventDefault();
+        const point = getCanvasPoint(event);
+        ctx.strokeStyle = brushColor.value;
+        ctx.lineWidth = brushSize.value;
+        ctx.beginPath();
+        ctx.moveTo(state.lastPoint.x, state.lastPoint.y);
+        ctx.lineTo(point.x, point.y);
+        ctx.stroke();
+        state.lastPoint = point;
+      };
+
+      const stopDraw = () => {
+        state.drawing = false;
+      };
+
+      const getCanvasPoint = (event) => {
+        const rect = signatureCanvas.getBoundingClientRect();
+        const x =
+          (event.clientX ?? event.touches?.[0]?.clientX ?? 0) - rect.left;
+        const y =
+          (event.clientY ?? event.touches?.[0]?.clientY ?? 0) - rect.top;
+        return { x, y };
+      };
+
+      const handleFiles = (files) => {
+        const [file] = files || [];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          photoLayer.style.backgroundImage = `url(${event.target.result})`;
+          placeholder.style.display = "none";
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+      const startDrag = (event) => {
+        if (
+          event.target.closest(
+            "input, textarea, button, select, .signature-panel"
+          )
+        )
+          return;
+        state.dragging = true;
+        whiteboard.classList.add("dragging");
+        const boardRect = whiteboard.getBoundingClientRect();
+        const stageRect = captureArea.getBoundingClientRect();
+        const pointerX = event.clientX ?? event.touches?.[0]?.clientX ?? 0;
+        const pointerY = event.clientY ?? event.touches?.[0]?.clientY ?? 0;
+        state.dragOffset.x = pointerX - boardRect.left;
+        state.dragOffset.y = pointerY - boardRect.top;
+        state.stageRect = stageRect;
+        event.preventDefault();
+      };
+
+      const dragMove = (event) => {
+        if (!state.dragging) return;
+        event.preventDefault();
+        const pointerX = event.clientX ?? event.touches?.[0]?.clientX ?? 0;
+        const pointerY = event.clientY ?? event.touches?.[0]?.clientY ?? 0;
+        const boardRect = whiteboard.getBoundingClientRect();
+        const stageRect = state.stageRect;
+
+        const newLeft = clamp(
+          pointerX - stageRect.left - state.dragOffset.x + boardRect.width / 2,
+          boardRect.width / 2,
+          stageRect.width - boardRect.width / 2
+        );
+        const newTop = clamp(
+          pointerY - stageRect.top - state.dragOffset.y + boardRect.height / 2,
+          boardRect.height / 2,
+          stageRect.height - boardRect.height / 2
+        );
+
+        whiteboard.style.left = `${(newLeft / stageRect.width) * 100}%`;
+        whiteboard.style.top = `${(newTop / stageRect.height) * 100}%`;
+        whiteboard.style.transform = "translate(-50%, -50%)";
+      };
+
+      const endDrag = () => {
+        if (state.dragging) {
+          state.dragging = false;
+          whiteboard.classList.remove("dragging");
+        }
+      };
+
+      const exportImage = async () => {
+        exportBtn.disabled = true;
+        exportBtn.textContent = "匯出中…";
+        const timestamp = new Date()
+          .toISOString()
+          .replace(/T/, "_")
+          .replace(/:/g, "-")
+          .split(".")[0];
+        try {
+          const canvas = await html2canvas(captureArea, {
+            backgroundColor: null,
+            scale: window.devicePixelRatio || 2,
+          });
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) return;
+              const link = document.createElement("a");
+              link.href = URL.createObjectURL(blob);
+              link.download = `anchor_test_${timestamp}.png`;
+              link.click();
+              URL.revokeObjectURL(link.href);
+            },
+            "image/png",
+            1
+          );
+        } catch (error) {
+          alert("匯出失敗，請再試一次。");
+          console.error(error);
+        } finally {
+          exportBtn.disabled = false;
+          exportBtn.textContent = "匯出整張圖片";
+        }
+      };
+
+      takePhotoBtn.addEventListener("click", () => takePhotoInput.click());
+      uploadPhotoBtn.addEventListener("click", () => uploadInput.click());
+      takePhotoInput.addEventListener("change", (event) =>
+        handleFiles(event.target.files)
+      );
+      uploadInput.addEventListener("change", (event) =>
+        handleFiles(event.target.files)
+      );
+
+      whiteboard.addEventListener("pointerdown", startDrag);
+      window.addEventListener("pointermove", dragMove);
+      window.addEventListener("pointerup", endDrag);
+      window.addEventListener("pointercancel", endDrag);
+
+      signatureCanvas.addEventListener("pointerdown", startDraw);
+      signatureCanvas.addEventListener("pointermove", draw);
+      window.addEventListener("pointerup", stopDraw);
+      window.addEventListener("pointercancel", stopDraw);
+
+      clearSignatureBtn.addEventListener("click", clearSignature);
+      exportBtn.addEventListener("click", exportImage);
+
+      window.addEventListener("resize", setCanvasSize);
+      setCanvasSize();
+    </script>
   </body>
 </html>
