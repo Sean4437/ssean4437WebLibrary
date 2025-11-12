@@ -25,13 +25,13 @@
         background: radial-gradient(circle, #1e293b, #0f172a);
         min-height: 100vh;
         padding: 1.25rem;
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 160px);
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 170px);
         display: flex;
         justify-content: center;
       }
 
       .app-shell {
-        width: min(520px, 100%);
+        width: min(540px, 100%);
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -51,6 +51,87 @@
         color: #facc15;
         font-size: 0.95rem;
         font-weight: 600;
+      }
+
+      .data-panel {
+        background: rgba(15, 23, 42, 0.4);
+        border-radius: 20px;
+        padding: 1rem 1.15rem;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        backdrop-filter: blur(12px);
+        color: #e2e8f0;
+      }
+
+      .data-panel h3 {
+        margin: 0 0 0.75rem;
+        font-size: 1.05rem;
+        letter-spacing: 0.06em;
+      }
+
+      .data-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 0.75rem;
+      }
+
+      .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+
+      .form-field label {
+        font-size: 0.9rem;
+      }
+
+      .form-field input,
+      .form-field textarea {
+        border-radius: 12px;
+        border: 1px solid rgba(226, 232, 240, 0.4);
+        background: rgba(15, 23, 42, 0.6);
+        color: #f8fafc;
+        font: inherit;
+        padding: 0.55rem 0.7rem;
+      }
+
+      .form-field textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      .panel-actions {
+        margin-top: 0.85rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      .size-control {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex: 1;
+      }
+
+      .size-control input[type="range"] {
+        flex: 1;
+      }
+
+      .panel-actions .ghost-btn {
+        border-radius: 999px;
+        border: 1px solid rgba(226, 232, 240, 0.4);
+        background: transparent;
+        color: #e2e8f0;
+        font-weight: 600;
+        padding: 0.6rem 1.25rem;
+        cursor: pointer;
+      }
+
+      .panel-hint {
+        margin: 0.35rem 0 0;
+        font-size: 0.85rem;
+        color: #cbd5f5;
       }
 
       .controls {
@@ -77,11 +158,6 @@
         border: 2px solid #94a3b8;
         color: #e2e8f0;
         box-shadow: none;
-      }
-
-      .btn:active {
-        transform: translateY(1px);
-        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.35);
       }
 
       .stage {
@@ -127,12 +203,13 @@
         left: 50%;
         top: 70%;
         transform: translate(-50%, -50%);
-        width: min(88%, 460px);
+        width: 85%;
+        max-width: 480px;
         background: rgba(248, 250, 252, 0.94);
         border-radius: 18px;
         border: 4px solid #cbd5f5;
         box-shadow: 0 20px 35px rgba(15, 23, 42, 0.35);
-        padding: 0.95rem;
+        padding: 1rem;
         backdrop-filter: blur(2px);
         touch-action: none;
       }
@@ -141,16 +218,11 @@
         background: #f8fafc;
       }
 
-      .whiteboard.dragging {
-        opacity: 0.92;
-        cursor: grabbing;
-      }
-
       .whiteboard-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 0.35rem;
+        margin-bottom: 0.4rem;
         font-weight: 700;
       }
 
@@ -159,86 +231,67 @@
         font-weight: 500;
       }
 
-      label {
-        font-weight: 600;
-        color: #0f172a;
-        font-size: 0.85rem;
-      }
-
-      input,
-      textarea,
-      select {
-        border: 2px solid #cbd5f5;
-        border-radius: 10px;
-        padding: 0.45rem 0.6rem;
-        font: inherit;
-        background: #fff;
-        color: #0f172a;
-      }
-
-      textarea {
-        resize: vertical;
-      }
-
       .board-title {
         margin-bottom: 0.5rem;
       }
 
-      .board-title input {
-        width: 100%;
-        font-weight: 700;
+      .board-title .board-value {
         font-size: 0.95rem;
+        font-weight: 700;
       }
 
       .board-layout {
         display: grid;
-        grid-template-columns: 115px 1fr;
+        grid-template-columns: 120px 1fr;
         gap: 0.55rem;
-        align-items: stretch;
       }
 
       .board-sidebar {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.45rem;
       }
 
       .board-sidebar label {
-        display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
+        font-size: 0.85rem;
         letter-spacing: 0.05em;
+        color: #0f172a;
       }
 
-      .board-sidebar input {
-        font-size: 0.9rem;
-        padding: 0.35rem 0.4rem;
+      .board-value {
+        min-height: 30px;
+        border: 1px solid #cbd5f5;
+        border-radius: 10px;
+        padding: 0.35rem 0.45rem;
+        background: #fff;
+        color: #0f172a;
+        font-size: 0.92rem;
+        white-space: pre-wrap;
       }
 
-      .board-main textarea {
+      .board-main textarea,
+      .board-notes {
         min-height: 220px;
+        border: 1px solid #cbd5f5;
+        border-radius: 12px;
+        padding: 0.6rem;
+        background: #fff;
         line-height: 1.4;
         font-size: 0.95rem;
+        color: #0f172a;
+        white-space: pre-wrap;
       }
 
       .board-footer {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.6rem;
         margin-top: 0.6rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.6rem;
         align-items: stretch;
       }
 
-      .board-footer .field {
-        flex: 1;
-        min-width: 150px;
-        display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
-      }
-
       .signature-panel {
-        flex: 1 1 220px;
+        grid-column: 1 / -1;
         border: 1px dashed #94a3b8;
         border-radius: 12px;
         padding: 0.6rem;
@@ -269,12 +322,6 @@
         border: 1px solid #cbd5f5;
         touch-action: none;
         background: #fff;
-      }
-
-      @media (max-width: 400px) {
-        .board-layout {
-          grid-template-columns: 1fr;
-        }
       }
 
       .action-bar {
@@ -316,7 +363,7 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
       }
 
-      .export-message {
+      .toast-message {
         position: fixed;
         bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
         left: 50%;
@@ -336,18 +383,24 @@
         font-size: 0.95rem;
       }
 
-      .export-message.visible {
+      .toast-message.visible {
         opacity: 1;
         transform: translateX(-50%) translateY(-8px);
       }
 
-      .export-message[data-variant="success"] {
+      .toast-message[data-variant="success"] {
         background: rgba(34, 197, 94, 0.9);
         color: #052e13;
       }
 
       .hidden-input {
         display: none;
+      }
+
+      @media (max-width: 420px) {
+        .board-layout {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -358,6 +411,56 @@
         <p class="version-note">⚠ 已更新版本 v1.2，請使用此介面最新版功能</p>
       </div>
 
+      <section class="data-panel">
+        <h3>資料輸入面板（輸入完後套用至白板）</h3>
+        <div class="data-grid">
+          <div class="form-field">
+            <label for="inputProjectName">工程名稱</label>
+            <input
+              type="text"
+              id="inputProjectName"
+              placeholder="例：頭屋鄉都市計畫區24M特1號道路拓寬工程"
+            />
+          </div>
+          <div class="form-field">
+            <label for="inputInspectionLocation">檢查位置</label>
+            <input type="text" id="inputInspectionLocation" placeholder="輸入位置" />
+          </div>
+          <div class="form-field">
+            <label for="inputDesignSpec">設計規範</label>
+            <input type="text" id="inputDesignSpec" placeholder="輸入規範" />
+          </div>
+          <div class="form-field">
+            <label for="inputTestItem">試驗項目</label>
+            <input type="text" id="inputTestItem" placeholder="輸入試驗項目" />
+          </div>
+          <div class="form-field">
+            <label for="inputTestDate">檢查日期</label>
+            <input type="date" id="inputTestDate" />
+          </div>
+          <div class="form-field">
+            <label for="inputInspector">檢查人員</label>
+            <input type="text" id="inputInspector" placeholder="輸入檢查人員" />
+          </div>
+          <div class="form-field" style="grid-column: 1 / -1">
+            <label for="inputTestResult">檢查紀錄/備註</label>
+            <textarea
+              id="inputTestResult"
+              placeholder="例如：OK+500~OK+590 撓工梁 接桿規定 W=105cm…"
+            ></textarea>
+          </div>
+        </div>
+        <div class="panel-actions">
+          <label class="size-control">
+            <span>白板尺寸</span>
+            <input type="range" id="boardScale" min="60" max="95" value="85" />
+            <span id="boardScaleValue">85%</span>
+          </label>
+          <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
+        </div>
+        <p class="panel-hint">先在此輸入，按「套用到白板」後再進行拍照或匯出。</p>
+      </section>
+
       <div class="controls">
         <button class="btn" id="takePhotoBtn">拍照</button>
         <button class="btn btn-secondary" id="uploadPhotoBtn">上傳照片</button>
@@ -367,92 +470,66 @@
         <div class="stage-content" id="photoLayer">
           <div class="stage-placeholder" id="placeholder">
             <strong>請拍照或上傳照片</strong>
-            <span>白板會疊在照片下方三分之一，可拖曳至其他位置。</span>
+            <span>白板會疊在照片下方區域，可拖曳調整位置與大小。</span>
           </div>
         </div>
         <div class="whiteboard" id="whiteboard">
           <div class="whiteboard-header">
             <h2>現場試驗紀錄板</h2>
-            <small>拖曳以調整位置</small>
+            <small>拖曳白板可移動位置</small>
           </div>
-          <div class="whiteboard-body">
-            <div class="board-title">
-              <label for="projectName">工程名稱</label>
-              <input
-                type="text"
-                id="projectName"
-                placeholder="例：頭屋鄉都市計畫區24M特1號道路拓寬工程"
-              />
+          <div class="board-title">
+            <label>工程名稱</label>
+            <div class="board-value" id="displayProjectName">（尚未輸入）</div>
+          </div>
+          <div class="board-layout">
+            <div class="board-sidebar">
+              <label>
+                檢查位置
+                <div class="board-value" id="displayInspectionLocation">—</div>
+              </label>
+              <label>
+                設計規範
+                <div class="board-value" id="displayDesignSpec">—</div>
+              </label>
+              <label>
+                試驗項目
+                <div class="board-value" id="displayTestItem">—</div>
+              </label>
             </div>
-            <div class="board-layout">
-              <div class="board-sidebar">
-                <label for="inspectionLocation">
-                  <span>檢查位置</span>
-                  <input
-                    type="text"
-                    id="inspectionLocation"
-                    placeholder="輸入位置"
-                  />
-                </label>
-                <label for="designSpec">
-                  <span>設計規範</span>
-                  <input
-                    type="text"
-                    id="designSpec"
-                    placeholder="輸入規範"
-                  />
-                </label>
-                <label for="testItem">
-                  <span>試驗項目</span>
-                  <input type="text" id="testItem" placeholder="輸入項目" />
-                </label>
-              </div>
-              <div class="board-main">
-                <label for="testResult">檢查紀錄</label>
-                <textarea
-                  id="testResult"
-                  placeholder="例如：OK+500~OK+590 撓工樑 接桿規定 W=105cm..."
-                ></textarea>
-              </div>
+            <div class="board-main">
+              <label>檢查紀錄</label>
+              <div class="board-notes" id="displayTestResult">—</div>
             </div>
-            <div class="board-footer">
-              <div class="field">
-                <label for="testDate">檢查日期</label>
-                <input type="date" id="testDate" />
+          </div>
+          <div class="board-footer">
+            <div class="form-field">
+              <label>檢查日期</label>
+              <div class="board-value" id="displayTestDate">—</div>
+            </div>
+            <div class="form-field">
+              <label>檢查人員</label>
+              <div class="board-value" id="displayInspector">—</div>
+            </div>
+            <div class="signature-panel">
+              <div class="signature-toolbar">
+                <label for="brushSize">筆刷粗細</label>
+                <input type="range" id="brushSize" min="2" max="10" value="3" />
+                <label for="brushColor">簽名顏色</label>
+                <input type="color" id="brushColor" value="#0f172a" />
               </div>
-              <div class="field">
-                <label for="inspector">檢查人員</label>
-                <input type="text" id="inspector" placeholder="輸入檢查人員" />
-              </div>
-              <div class="signature-panel">
-                <div class="signature-toolbar">
-                  <label for="brushSize">筆刷粗細</label>
-                  <input type="range" id="brushSize" min="2" max="10" value="3" />
-                  <label for="brushColor">簽名顏色</label>
-                  <input type="color" id="brushColor" value="#0f172a" />
-                </div>
-                <canvas id="signatureCanvas"></canvas>
-              </div>
+              <canvas id="signatureCanvas"></canvas>
             </div>
           </div>
         </div>
       </div>
 
       <div class="action-bar">
-        <button class="action-btn secondary" id="clearSignatureBtn">
-          清除簽名
-        </button>
-        <button class="action-btn primary" id="exportBtn">
-          匯出整張圖片
-        </button>
+        <button class="action-btn secondary" id="clearSignatureBtn">清除簽名</button>
+        <button class="action-btn primary" id="exportBtn">匯出整張圖片</button>
       </div>
 
-      <p
-        id="exportMessage"
-        class="export-message"
-        role="status"
-        aria-live="polite"
-      ></p>
+      <p id="toastMessage" class="toast-message" role="status" aria-live="polite"></p>
 
       <input
         type="file"
@@ -475,14 +552,36 @@
       const whiteboard = document.getElementById("whiteboard");
       const exportBtn = document.getElementById("exportBtn");
       const captureArea = document.getElementById("captureArea");
-      const exportMessage = document.getElementById("exportMessage");
+      const toastMessage = document.getElementById("toastMessage");
+      const boardScale = document.getElementById("boardScale");
+      const boardScaleValue = document.getElementById("boardScaleValue");
+      const applyDataBtn = document.getElementById("applyDataBtn");
 
-      const dateInput = document.getElementById("testDate");
       const signatureCanvas = document.getElementById("signatureCanvas");
       const ctx = signatureCanvas.getContext("2d");
       const clearSignatureBtn = document.getElementById("clearSignatureBtn");
       const brushSize = document.getElementById("brushSize");
       const brushColor = document.getElementById("brushColor");
+
+      const formInputs = {
+        projectName: document.getElementById("inputProjectName"),
+        inspectionLocation: document.getElementById("inputInspectionLocation"),
+        designSpec: document.getElementById("inputDesignSpec"),
+        testItem: document.getElementById("inputTestItem"),
+        testResult: document.getElementById("inputTestResult"),
+        testDate: document.getElementById("inputTestDate"),
+        inspector: document.getElementById("inputInspector"),
+      };
+
+      const displayTargets = {
+        projectName: document.getElementById("displayProjectName"),
+        inspectionLocation: document.getElementById("displayInspectionLocation"),
+        designSpec: document.getElementById("displayDesignSpec"),
+        testItem: document.getElementById("displayTestItem"),
+        testResult: document.getElementById("displayTestResult"),
+        testDate: document.getElementById("displayTestDate"),
+        inspector: document.getElementById("displayInspector"),
+      };
 
       const state = {
         dragging: false,
@@ -490,7 +589,7 @@
         stageRect: null,
         drawing: false,
         lastPoint: { x: 0, y: 0 },
-        messageTimer: null,
+        toastTimer: null,
       };
 
       const formatDateValue = (date = new Date()) => {
@@ -509,6 +608,16 @@
         const minute = String(date.getMinutes()).padStart(2, "0");
         const second = String(date.getSeconds()).padStart(2, "0");
         return `${year}-${month}-${day}_${hour}-${minute}-${second}`;
+      };
+
+      const showToast = (message, variant = "info") => {
+        toastMessage.textContent = message;
+        toastMessage.dataset.variant = variant;
+        toastMessage.classList.add("visible");
+        if (state.toastTimer) clearTimeout(state.toastTimer);
+        state.toastTimer = setTimeout(() => {
+          toastMessage.classList.remove("visible");
+        }, 4500);
       };
 
       const setCanvasSize = () => {
@@ -574,8 +683,9 @@
           event.target.closest(
             "input, textarea, button, select, .signature-panel"
           )
-        )
+        ) {
           return;
+        }
         state.dragging = true;
         whiteboard.classList.add("dragging");
         const boardRect = whiteboard.getBoundingClientRect();
@@ -623,16 +733,6 @@
         whiteboard.classList.toggle("solid-mode", Boolean(enable));
       };
 
-      const showExportMessage = (message, variant = "info") => {
-        exportMessage.textContent = message;
-        exportMessage.dataset.variant = variant;
-        exportMessage.classList.add("visible");
-        if (state.messageTimer) clearTimeout(state.messageTimer);
-        state.messageTimer = setTimeout(() => {
-          exportMessage.classList.remove("visible");
-        }, 5000);
-      };
-
       const downloadBlob = (blob, filename) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -661,23 +761,36 @@
               title: "工程白板照片",
               text: "請在分享面板中選擇「儲存影像」即可存入相簿。",
             });
-            showExportMessage("已開啟分享面板，請選擇「儲存影像」。", "success");
+            showToast("已開啟分享面板，請選擇「儲存影像」。", "success");
             return;
           } catch (error) {
             if (error.name === "AbortError") {
-              showExportMessage("已取消分享，改為下載影像。");
+              showToast("已取消分享，改為下載影像。");
             } else {
               console.warn("Share failed, fallback to download", error);
-              showExportMessage("分享面板不可用，改為下載影像。");
+              showToast("分享面板不可用，改為下載影像。");
             }
           }
         }
 
         downloadBlob(blob, filename);
         openPreviewTab(blob);
-        showExportMessage(
-          "已下載並開啟預覽，如找不到圖片請至檔案 App 或長按圖片儲存。"
-        );
+        showToast("已下載並開啟預覽，如找不到圖片請至檔案 App 或長按圖片儲存。");
+      };
+
+      const syncField = (key) => {
+        const value = formInputs[key].value.trim();
+        displayTargets[key].textContent = value || "—";
+      };
+
+      const syncAllFields = () => {
+        Object.keys(formInputs).forEach((key) => syncField(key));
+      };
+
+      const updateBoardScale = (value) => {
+        const percent = Number(value);
+        whiteboard.style.width = `${percent}%`;
+        boardScaleValue.textContent = `${percent}%`;
       };
 
       const exportImage = async () => {
@@ -709,7 +822,7 @@
           await handleShareOrDownload(blob, filename);
         } catch (error) {
           console.error(error);
-          showExportMessage("匯出失敗，請再試一次。");
+          showToast("匯出失敗，請再試一次。");
           alert("匯出失敗，請再試一次。");
         } finally {
           toggleWhiteboardSolid(false);
@@ -740,8 +853,24 @@
       clearSignatureBtn.addEventListener("click", clearSignature);
       exportBtn.addEventListener("click", exportImage);
 
+      Object.keys(formInputs).forEach((key) => {
+        formInputs[key].addEventListener("input", () => syncField(key));
+      });
+
+      applyDataBtn.addEventListener("click", () => {
+        syncAllFields();
+        showToast("已將填寫的資料套用到白板。", "success");
+      });
+
+      boardScale.addEventListener("input", (event) =>
+        updateBoardScale(event.target.value)
+      );
+
       window.addEventListener("resize", setCanvasSize);
-      dateInput.value = formatDateValue();
+
+      formInputs.testDate.value = formatDateValue();
+      syncAllFields();
+      updateBoardScale(boardScale.value);
       setCanvasSize();
     </script>
   </body>
