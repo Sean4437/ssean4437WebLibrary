@@ -109,6 +109,24 @@ main {
   color: #111827;
 }
 
+.primary-button {
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
+}
+
+.primary-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+}
+
 .floating-board {
   position: fixed;
   inset: 0;
@@ -151,6 +169,43 @@ main {
   line-height: 1;
   padding: 0.2rem;
   cursor: pointer;
+}
+
+.floating-board__body {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.4fr);
+  gap: 1rem;
+  height: 100%;
+}
+
+.camera-panel {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 15px 30px rgba(15, 23, 42, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.camera-panel video {
+  width: 100%;
+  border-radius: 14px;
+  background: #0f172a;
+  min-height: 240px;
+  object-fit: cover;
+}
+
+.camera-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.camera-status {
+  font-size: 0.9rem;
+  color: #475569;
 }
 
 .whiteboard-viewport {
@@ -206,6 +261,10 @@ main {
 
 @media (max-width: 600px) {
   .control-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .floating-board__body {
     grid-template-columns: 1fr;
   }
 

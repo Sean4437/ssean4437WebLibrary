@@ -46,14 +46,13 @@
           </div>
         </label>
 
+        <button id="openCamera" type="button" class="primary-button">
+          開啟相機並顯示浮動白板
+        </button>
+
         <label class="control">
-          <span>新增照片</span>
-          <input
-            type="file"
-            id="photoInput"
-            accept="image/*"
-            capture="environment"
-          />
+          <span>備用：從相簿選擇照片</span>
+          <input type="file" id="photoInput" accept="image/*" />
         </label>
 
         <button id="clearImage" type="button" class="ghost-button">
@@ -81,19 +80,38 @@
             ✕
           </button>
         </header>
-        <section class="whiteboard-viewport">
-          <div class="whiteboard" id="whiteboard">
-            <div
-              id="whiteboardContent"
-              class="whiteboard-content"
-              contenteditable="true"
-              role="textbox"
-              aria-label="白板文字內容"
-            >
-              點一下即可輸入文字、筆記或待辦事項。
+        <section class="floating-board__body">
+          <div class="camera-panel">
+            <video
+              id="cameraPreview"
+              autoplay
+              playsinline
+              muted
+              poster=""
+            ></video>
+            <div class="camera-actions">
+              <button id="capturePhoto" type="button" class="primary-button">
+                拍照
+              </button>
+              <span id="cameraStatus" class="camera-status"
+                >相機尚未啟動</span
+              >
             </div>
-            <img id="boardImage" alt="白板上的照片" hidden />
           </div>
+          <section class="whiteboard-viewport">
+            <div class="whiteboard" id="whiteboard">
+              <div
+                id="whiteboardContent"
+                class="whiteboard-content"
+                contenteditable="true"
+                role="textbox"
+                aria-label="白板文字內容"
+              >
+                點一下即可輸入文字、筆記或待辦事項。
+              </div>
+              <img id="boardImage" alt="白板上的照片" hidden />
+            </div>
+          </section>
         </section>
       </div>
     </div>
