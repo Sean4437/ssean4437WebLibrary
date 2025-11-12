@@ -1,89 +1,86 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/index.html b/index.html
-new file mode 100644
-index 0000000000000000000000000000000000000000..3400d3d786554abbc538101e960b62f5f9ed19b6
---- /dev/null
-+++ b/index.html
-@@ -0,0 +1,79 @@
-+<!DOCTYPE html>
-+<html lang="zh-Hant">
-+  <head>
-+    <meta charset="UTF-8" />
-+    <meta name="viewport" content="width=device-width, initial-scale=1" />
-+    <title>手機拍照 + 虛擬白板</title>
-+    <link rel="stylesheet" href="styles.css" />
-+  </head>
-+  <body>
-+    <header class="app-header">
-+      <h1>手機拍照 + 虛擬白板</h1>
-+      <p class="subtitle">開啟手機鏡頭、編輯白板內容，讓拍照或視訊教學更順手。</p>
-+    </header>
-+
-+    <section class="controls" aria-label="白板設定">
-+      <div class="control-group">
-+        <label class="control-label" for="session-date">日期</label>
-+        <input type="date" id="session-date" />
-+      </div>
-+      <div class="control-group">
-+        <label class="control-label" for="board-color">白板顏色</label>
-+        <input type="color" id="board-color" value="#ffffff" />
-+      </div>
-+      <div class="control-group">
-+        <label class="control-label" for="text-color">文字顏色</label>
-+        <input type="color" id="text-color" value="#111111" />
-+      </div>
-+      <div class="control-group zoom">
-+        <label class="control-label" for="board-zoom">白板縮放</label>
-+        <input type="range" id="board-zoom" min="60" max="180" value="100" />
-+        <span id="zoom-value" aria-live="polite">100%</span>
-+      </div>
-+    </section>
-+
-+    <main class="workspace">
-+      <section class="whiteboard" aria-label="虛擬白板">
-+        <div class="whiteboard-editor">
-+          <label for="board-input">白板內容</label>
-+          <textarea
-+            id="board-input"
-+            rows="4"
-+            placeholder="在這裡輸入要顯示在白板上的文字，支援換行與即時同步。"
-+          ></textarea>
-+        </div>
-+        <div class="whiteboard-preview" role="presentation">
-+          <div id="whiteboard" data-zoom="1">
-+            <div id="whiteboard-content"></div>
-+          </div>
-+        </div>
-+      </section>
-+
-+      <section class="camera" aria-label="手機相機">
-+        <div class="camera-header">
-+          <h2>相機</h2>
-+          <p>允許瀏覽器使用相機後即可預覽與拍照。</p>
-+        </div>
-+        <video id="camera-stream" playsinline></video>
-+        <div class="camera-actions">
-+          <button id="start-camera" type="button">啟動相機</button>
-+          <button id="capture-photo" type="button" disabled>拍照</button>
-+        </div>
-+        <canvas id="capture-canvas" hidden aria-hidden="true"></canvas>
-+        <img id="photo-preview" alt="拍攝照片預覽" />
-+      </section>
-+    </main>
-+
-+    <footer class="share" aria-live="polite">
-+      <div class="share-info">
-+        <span class="share-label">目前頁面網址</span>
-+        <code id="share-url">載入中...</code>
-+      </div>
-+      <button id="copy-url" type="button" class="copy-button">複製網址</button>
-+    </footer>
-+
-+    <noscript class="noscript">需要啟用 JavaScript 才能操作相機與白板。</noscript>
-+
-+    <script src="script.js" defer></script>
-+  </body>
-+</html>
- 
-EOF
-)
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <title>Mobile Whiteboard Canvas</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Mobile Whiteboard Canvas</h1>
+      <p>使用手機拍照、輸入文字，自由調整白板尺寸與色彩。</p>
+    </header>
+
+    <main>
+      <section class="control-panel">
+        <label class="control">
+          <span>日期</span>
+          <input type="date" id="dateField" />
+        </label>
+
+        <label class="control">
+          <span>白板顏色</span>
+          <input type="color" id="boardColor" value="#fefefe" />
+        </label>
+
+        <label class="control">
+          <span>文字顏色</span>
+          <input type="color" id="textColor" value="#1a1a1a" />
+        </label>
+
+        <label class="control control--scale">
+          <span>白板縮放</span>
+          <div class="scale-group">
+            <input
+              type="range"
+              id="scaleControl"
+              min="50"
+              max="150"
+              value="100"
+            />
+            <span id="scaleValue">100%</span>
+          </div>
+        </label>
+
+        <label class="control">
+          <span>新增照片</span>
+          <input
+            type="file"
+            id="photoInput"
+            accept="image/*"
+            capture="environment"
+          />
+        </label>
+
+        <button id="clearImage" type="button" class="ghost-button">
+          清除照片
+        </button>
+      </section>
+
+      <section class="whiteboard-viewport">
+        <div class="whiteboard" id="whiteboard">
+          <div
+            id="whiteboardContent"
+            class="whiteboard-content"
+            contenteditable="true"
+            role="textbox"
+            aria-label="白板文字內容"
+          >
+            點一下即可輸入文字、筆記或待辦事項。
+          </div>
+          <img id="boardImage" alt="白板上的照片" hidden />
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <small>貼士：用兩根手指可在手機上捲動畫面，白板內容會跟著縮放設定調整。</small>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
