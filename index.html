@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
   <head>
@@ -156,6 +155,7 @@
         background: transparent;
         border: 2px solid #94a3b8;
         color: #e2e8f0;
+        box-shadow: none;
       }
 
       .stage {
@@ -442,7 +442,7 @@
           <img id="photoImage" alt="拍攝預覽" hidden />
           <div class="stage-placeholder" id="placeholder">
             <strong>請拍照或上傳照片</strong>
-            <span>白板會顯示在畫面上，可拖曳、縮放與更改顏色。</span>
+            <span>白板會顯示在畫面上，可拖曳、縮放及更改顏色。</span>
           </div>
         </div>
         <div class="whiteboard-wrapper" id="whiteboardWrapper">
@@ -513,7 +513,6 @@
       const toastMessage = document.getElementById("toastMessage");
       const signaturePlaceholderText = document.getElementById("signaturePlaceholderText");
       const signatureImage = document.getElementById("signatureImage");
-      const signatureBox = document.getElementById("signatureBox");
 
       const SIGNATURE_STORAGE_KEY = "whiteboard_signature_data";
 
@@ -542,8 +541,8 @@
         toastMessage.dataset.variant = variant;
         toastMessage.classList.add("visible");
         clearTimeout(showToast.timer);
-        showToast.timer = setTimeout(
-          () => toastMessage.classList.remove("visible"),
+        showToast.timer = setTimeout(() =>
+          toastMessage.classList.remove("visible"),
           4500
         );
       };
@@ -664,7 +663,7 @@
 
       const syncField = (key) => {
         const value = formInputs[key].value.trim();
-        displayTargets[key].textContent = value || "-";
+        displayTargets[key].textContent = value || "—";
       };
 
       const syncAllFields = () => Object.keys(formInputs).forEach(syncField);
@@ -675,10 +674,6 @@
         syncAllFields();
         localStorage.removeItem(SIGNATURE_STORAGE_KEY);
         applySignatureImage(null);
-      };
-
-      const loadSignatureAndApply = () => {
-        loadSignatureFromStorage();
       };
 
       const openSignaturePad = () => {
@@ -695,9 +690,16 @@
             scale: window.devicePixelRatio || 2,
           });
           const blob = await new Promise((resolve, reject) =>
-            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("failed"))), "image/png", 1)
+            canvas.toBlob(
+              (b) => (b ? resolve(b) : reject(new Error("failed"))),
+              "image/png",
+              1
+            )
           );
-          const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
+          const timestamp = new Date()
+            .toISOString()
+            .replace(/[T:]/g, "-")
+            .split(".")[0];
           await handleShareOrDownload(blob, `whiteboard_${timestamp}.png`);
         } catch (error) {
           console.error(error);
@@ -726,7 +728,7 @@
 
       clearBoardBtn.addEventListener("click", () => {
         clearBoard();
-        showToast("白板文字已清除。", "success");
+        showToast("白板文字與簽名已清除。", "success");
       });
 
       boardScaleInput.addEventListener("input", (event) =>
@@ -749,9 +751,11 @@
       exportBtn.addEventListener("click", exportBoardImage);
       window.addEventListener("resize", updateStageAspect);
       photoImage.addEventListener("load", updateStageAspect);
-      window.addEventListener("focus", loadSignatureAndApply);
+      window.addEventListener("focus", loadSignatureFromStorage);
       window.addEventListener("storage", (event) => {
-        if (event.key === SIGNATURE_STORAGE_KEY) loadSignatureAndApply();
+        if (event.key === SIGNATURE_STORAGE_KEY) {
+          loadSignatureFromStorage();
+        }
       });
 
       if (!formInputs.testDate.value) {
@@ -768,7 +772,7 @@
         autoResizeTextarea(formInputs.testResult)
       );
       formInputs.testDate.addEventListener("change", () => syncField("testDate"));
-      loadSignatureAndApply();
+      loadSignatureFromStorage();
     </script>
   </body>
 </html>
