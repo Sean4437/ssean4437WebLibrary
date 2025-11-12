@@ -9,7 +9,6 @@
     <title>工程白板拍照工具</title>
     <style>
       :root {
-        --board-scale: 0.85;
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
           BlinkMacSystemFont, sans-serif;
         line-height: 1.5;
@@ -216,6 +215,14 @@
         background-repeat: no-repeat;
       }
 
+      .stage-content img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
       .stage-placeholder {
         position: absolute;
         inset: 0;
@@ -229,20 +236,30 @@
         text-align: center;
       }
 
-      .whiteboard {
+      .whiteboard-wrapper {
+        --board-scale: 0.85;
         position: absolute;
         left: 50%;
         top: 70%;
         transform: translate(-50%, -50%) scale(var(--board-scale));
         transform-origin: center;
         width: min(440px, 90%);
+        touch-action: none;
+      }
+
+      .whiteboard-wrapper.dragging {
+        opacity: 0.94;
+        cursor: grabbing;
+      }
+
+      .whiteboard {
+        width: 100%;
         background: rgba(248, 250, 252, 0.94);
         border-radius: 18px;
         border: 4px solid #cbd5f5;
         box-shadow: 0 18px 32px rgba(15, 23, 42, 0.35);
         padding: 0.85rem;
         backdrop-filter: blur(2px);
-        touch-action: none;
       }
 
       .whiteboard.solid-mode {
@@ -441,7 +458,7 @@
     <div class="app-shell">
       <div>
         <h1>工程白板拍照工具</h1>
-        <p class="version-note">⚠ 已更新版本 v1.2，請使用此介面最新版功能</p>
+        <p class="version-note">? 已更新版本 v1.3，請使用此介面最新版功能</p>
       </div>
 
       <section class="data-panel">
@@ -511,56 +528,59 @@
 
       <div class="stage" id="captureArea">
         <div class="stage-content" id="photoLayer">
+          <img id="photoImage" alt="拍攝照片預覽" hidden />
           <div class="stage-placeholder" id="placeholder">
             <strong>請拍照或上傳照片</strong>
             <span>白板會疊在照片下方區域，可拖曳調整位置與大小。</span>
           </div>
         </div>
-        <div class="whiteboard" id="whiteboard">
-          <div class="whiteboard-header">
-            <h2>現場試驗紀錄板</h2>
-            <small>拖曳白板可移動位置</small>
-          </div>
-          <div class="board-title">
-            <label>工程名稱</label>
-            <div class="board-value" id="displayProjectName">（尚未輸入）</div>
-          </div>
-          <div class="board-layout">
-            <div class="board-sidebar">
-              <label>
-                檢查位置
-                <div class="board-value" id="displayInspectionLocation">—</div>
-              </label>
-              <label>
-                設計規範
-                <div class="board-value" id="displayDesignSpec">—</div>
-              </label>
-              <label>
-                試驗項目
-                <div class="board-value" id="displayTestItem">—</div>
-              </label>
+        <div class="whiteboard-wrapper" id="whiteboardWrapper">
+          <div class="whiteboard" id="whiteboard">
+            <div class="whiteboard-header">
+              <h2>現場試驗紀錄板</h2>
+              <small>拖曳白板可移動位置</small>
             </div>
-            <div class="board-main">
-              <label>檢查紀錄</label>
-              <div class="board-notes" id="displayTestResult">—</div>
+            <div class="board-title">
+              <label>工程名稱</label>
+              <div class="board-value" id="displayProjectName">（尚未輸入）</div>
             </div>
-          </div>
-          <div class="board-footer">
-            <div class="form-field">
-              <label>檢查日期</label>
-              <div class="board-value" id="displayTestDate">—</div>
+            <div class="board-layout">
+              <div class="board-sidebar">
+                <label>
+                  檢查位置
+                  <div class="board-value" id="displayInspectionLocation">—</div>
+                </label>
+                <label>
+                  設計規範
+                  <div class="board-value" id="displayDesignSpec">—</div>
+                </label>
+                <label>
+                  試驗項目
+                  <div class="board-value" id="displayTestItem">—</div>
+                </label>
+              </div>
+              <div class="board-main">
+                <label>檢查紀錄</label>
+                <div class="board-notes" id="displayTestResult">—</div>
+              </div>
             </div>
-            <div class="form-field">
-              <label>檢查人員</label>
-              <div class="board-value" id="displayInspector">—</div>
-            </div>
-            <div class="signature-display">
-              <label>簽名</label>
-              <div class="signature-preview">
-                <span class="signature-placeholder" id="signaturePlaceholder"
-                  >尚未簽名</span
-                >
-                <img id="signaturePreview" alt="簽名預覽" hidden />
+            <div class="board-footer">
+              <div class="form-field">
+                <label>檢查日期</label>
+                <div class="board-value" id="displayTestDate">—</div>
+              </div>
+              <div class="form-field">
+                <label>檢查人員</label>
+                <div class="board-value" id="displayInspector">—</div>
+              </div>
+              <div class="signature-display">
+                <label>簽名</label>
+                <div class="signature-preview">
+                  <span class="signature-placeholder" id="signaturePlaceholder"
+                    >尚未簽名</span
+                  >
+                  <img id="signaturePreview" alt="簽名預覽" hidden />
+                </div>
               </div>
             </div>
           </div>
@@ -591,7 +611,9 @@
       const takePhotoInput = document.getElementById("takePhotoInput");
       const uploadInput = document.getElementById("uploadInput");
       const photoLayer = document.getElementById("photoLayer");
+      const photoImage = document.getElementById("photoImage");
       const placeholder = document.getElementById("placeholder");
+      const whiteboardWrapper = document.getElementById("whiteboardWrapper");
       const whiteboard = document.getElementById("whiteboard");
       const exportBtn = document.getElementById("exportBtn");
       const captureArea = document.getElementById("captureArea");
@@ -735,7 +757,9 @@
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (event) => {
-          photoLayer.style.backgroundImage = `url(${event.target.result})`;
+          photoLayer.style.backgroundImage = "";
+          photoImage.src = event.target.result;
+          photoImage.hidden = false;
           placeholder.style.display = "none";
         };
         reader.readAsDataURL(file);
@@ -748,8 +772,8 @@
           return;
         }
         state.dragging = true;
-        whiteboard.classList.add("dragging");
-        const boardRect = whiteboard.getBoundingClientRect();
+        whiteboardWrapper.classList.add("dragging");
+        const boardRect = whiteboardWrapper.getBoundingClientRect();
         const stageRect = captureArea.getBoundingClientRect();
         const pointerX = event.clientX ?? event.touches?.[0]?.clientX ?? 0;
         const pointerY = event.clientY ?? event.touches?.[0]?.clientY ?? 0;
@@ -764,7 +788,7 @@
         event.preventDefault();
         const pointerX = event.clientX ?? event.touches?.[0]?.clientX ?? 0;
         const pointerY = event.clientY ?? event.touches?.[0]?.clientY ?? 0;
-        const boardRect = whiteboard.getBoundingClientRect();
+        const boardRect = whiteboardWrapper.getBoundingClientRect();
         const stageRect = state.stageRect;
 
         const newLeft = clamp(
@@ -778,15 +802,14 @@
           stageRect.height - boardRect.height / 2
         );
 
-        whiteboard.style.left = `${(newLeft / stageRect.width) * 100}%`;
-        whiteboard.style.top = `${(newTop / stageRect.height) * 100}%`;
-        whiteboard.style.transform = "translate(-50%, -50%)";
+        whiteboardWrapper.style.left = `${(newLeft / stageRect.width) * 100}%`;
+        whiteboardWrapper.style.top = `${(newTop / stageRect.height) * 100}%`;
       };
 
       const endDrag = () => {
         if (state.dragging) {
           state.dragging = false;
-          whiteboard.classList.remove("dragging");
+          whiteboardWrapper.classList.remove("dragging");
         }
       };
 
@@ -851,10 +874,7 @@
       const updateBoardScale = (value) => {
         const percent = Math.max(10, Math.min(120, Number(value)));
         const scale = percent / 100;
-        document.documentElement.style.setProperty(
-          "--board-scale",
-          scale.toString()
-        );
+        whiteboardWrapper.style.setProperty("--board-scale", scale.toString());
         boardScaleValue.textContent = `${percent}%`;
       };
 
@@ -905,7 +925,7 @@
         handleFiles(event.target.files)
       );
 
-      whiteboard.addEventListener("pointerdown", startDrag);
+      whiteboardWrapper.addEventListener("pointerdown", startDrag);
       window.addEventListener("pointermove", dragMove);
       window.addEventListener("pointerup", endDrag);
       window.addEventListener("pointercancel", endDrag);
@@ -941,3 +961,4 @@
     </script>
   </body>
 </html>
+
