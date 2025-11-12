@@ -125,14 +125,14 @@
       .whiteboard {
         position: absolute;
         left: 50%;
-        top: 72%;
+        top: 70%;
         transform: translate(-50%, -50%);
-        width: min(80%, 420px);
+        width: min(88%, 460px);
         background: rgba(248, 250, 252, 0.94);
         border-radius: 18px;
         border: 4px solid #cbd5f5;
         box-shadow: 0 20px 35px rgba(15, 23, 42, 0.35);
-        padding: 0.8rem;
+        padding: 0.95rem;
         backdrop-filter: blur(2px);
         touch-action: none;
       }
@@ -191,15 +191,16 @@
       }
 
       .board-layout {
-        display: flex;
-        gap: 0.6rem;
+        display: grid;
+        grid-template-columns: 115px 1fr;
+        gap: 0.55rem;
+        align-items: stretch;
       }
 
       .board-sidebar {
-        flex: 0 0 120px;
         display: flex;
         flex-direction: column;
-        gap: 0.4rem;
+        gap: 0.5rem;
       }
 
       .board-sidebar label {
@@ -214,15 +215,8 @@
         padding: 0.35rem 0.4rem;
       }
 
-      .board-main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-      }
-
       .board-main textarea {
-        flex: 1;
-        min-height: 180px;
+        min-height: 220px;
         line-height: 1.4;
         font-size: 0.95rem;
       }
@@ -275,6 +269,12 @@
         border: 1px solid #cbd5f5;
         touch-action: none;
         background: #fff;
+      }
+
+      @media (max-width: 400px) {
+        .board-layout {
+          grid-template-columns: 1fr;
+        }
       }
 
       .action-bar {
