@@ -1,0 +1,237 @@
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/styles.css b/styles.css
+new file mode 100644
+index 0000000000000000000000000000000000000000..538c470368cc27a19a861b21531d3ff6c45baef0
+--- /dev/null
++++ b/styles.css
+@@ -0,0 +1,227 @@
++:root {
++  color-scheme: light dark;
++  font-family: "Noto Sans TC", "Segoe UI", sans-serif;
++  background-color: #f5f5f5;
++  color: #111;
++}
++
++body {
++  margin: 0;
++  min-height: 100vh;
++  display: flex;
++  flex-direction: column;
++  background: linear-gradient(180deg, #f5f5f5 0%, #ebf4ff 100%);
++}
++
++header.toolbar {
++  display: flex;
++  flex-wrap: wrap;
++  gap: 1rem;
++  align-items: center;
++  justify-content: space-between;
++  padding: 1rem 1.5rem;
++  background: rgba(255, 255, 255, 0.85);
++  backdrop-filter: blur(8px);
++  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
++  position: sticky;
++  top: 0;
++  z-index: 10;
++}
++
++header label {
++  font-weight: 600;
++  margin-right: 0.5rem;
++}
++
++.layout {
++  flex: 1;
++  display: grid;
++  gap: 1.5rem;
++  padding: 1.5rem;
++  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
++}
++
++section {
++  background: rgba(255, 255, 255, 0.92);
++  border-radius: 1rem;
++  padding: 1.5rem;
++  box-shadow: 0 12px 32px rgba(15, 35, 95, 0.08);
++  display: flex;
++  flex-direction: column;
++  gap: 1rem;
++}
++
++h2 {
++  margin: 0;
++  font-size: 1.25rem;
++}
++
++#camera-stream {
++  width: 100%;
++  max-height: 260px;
++  background: #000;
++  border-radius: 0.75rem;
++  object-fit: cover;
++}
++
++.camera-actions {
++  display: flex;
++  gap: 0.75rem;
++}
++
++button {
++  flex: 1;
++  padding: 0.75rem 1rem;
++  border-radius: 0.75rem;
++  border: none;
++  font-size: 1rem;
++  font-weight: 600;
++  color: #fff;
++  cursor: pointer;
++  background: linear-gradient(135deg, #4f46e5, #3b82f6);
++  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
++}
++
++button:disabled {
++  opacity: 0.6;
++  cursor: not-allowed;
++}
++
++button:hover:not(:disabled),
++button:focus-visible:not(:disabled) {
++  transform: translateY(-1px);
++  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
++}
++
++.button-disabled {
++  background: linear-gradient(135deg, #94a3b8, #cbd5f5);
++  color: #1e293b;
++  box-shadow: none;
++}
++
++.button-success {
++  background: linear-gradient(135deg, #16a34a, #22c55e);
++}
++
++.button-error {
++  background: linear-gradient(135deg, #dc2626, #f97316);
++}
++
++#photo-preview {
++  width: 100%;
++  border-radius: 0.75rem;
++  background: #f0f0f0;
++  object-fit: contain;
++  display: none;
++}
++
++#board-input {
++  min-height: 120px;
++  border-radius: 0.75rem;
++  border: 1px solid rgba(0, 0, 0, 0.12);
++  padding: 0.75rem;
++  font-size: 1rem;
++  resize: vertical;
++  font-family: inherit;
++}
++
++.whiteboard-wrapper {
++  width: 100%;
++  aspect-ratio: 16 / 9;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  overflow: hidden;
++  position: relative;
++  border-radius: 0.75rem;
++  background: rgba(15, 23, 42, 0.1);
++}
++
++#whiteboard {
++  width: 100%;
++  height: 100%;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  transform-origin: center center;
++  border-radius: 0.5rem;
++  transition: transform 0.2s ease;
++  background: #ffffff;
++}
++
++#whiteboard-content {
++  white-space: pre-wrap;
++  width: 90%;
++  height: 90%;
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  text-align: center;
++  font-size: clamp(1rem, 4vw, 2rem);
++  color: #000000;
++}
++
++input[type="color"],
++input[type="date"],
++input[type="range"] {
++  border-radius: 0.5rem;
++  border: 1px solid rgba(0, 0, 0, 0.12);
++  padding: 0.25rem 0.5rem;
++  font-size: 1rem;
++}
++
++#board-zoom {
++  width: 140px;
++}
++
++footer.share-bar {
++  display: flex;
++  gap: 1rem;
++  align-items: center;
++  justify-content: space-between;
++  padding: 1rem 1.5rem;
++  background: rgba(30, 64, 175, 0.1);
++  border-top: 1px solid rgba(30, 64, 175, 0.2);
++}
++
++.share-info {
++  display: flex;
++  flex-direction: column;
++  gap: 0.35rem;
++  font-weight: 500;
++  color: #1e293b;
++}
++
++.share-info code {
++  font-family: "Fira Code", "Consolas", monospace;
++  background: rgba(30, 64, 175, 0.08);
++  border-radius: 0.5rem;
++  padding: 0.4rem 0.6rem;
++  display: inline-block;
++  word-break: break-all;
++}
++
++footer.share-bar button {
++  max-width: 160px;
++  flex: none;
++}
++
++@media (max-width: 768px) {
++  header.toolbar {
++    flex-direction: column;
++    align-items: stretch;
++  }
++
++  .camera-actions {
++    flex-direction: column;
++  }
++
++  footer.share-bar {
++    flex-direction: column;
++    align-items: stretch;
++  }
++
++  footer.share-bar button {
++    width: 100%;
++  }
++}
+ 
+EOF
+)

@@ -1,0 +1,71 @@
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/index.html b/index.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..f4a6cc2a4b334670eaf18537bc46e90139a5031b
+--- /dev/null
++++ b/index.html
+@@ -0,0 +1,61 @@
++<!DOCTYPE html>
++<html lang="zh-Hant">
++<head>
++  <meta charset="UTF-8" />
++  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++  <title>虛擬白板與相機</title>
++  <link rel="stylesheet" href="styles.css" />
++</head>
++<body>
++  <header class="toolbar">
++    <div class="date-field">
++      <label for="session-date">日期：</label>
++      <input type="date" id="session-date" />
++    </div>
++    <div class="color-controls">
++      <label for="board-color">白板顏色：</label>
++      <input type="color" id="board-color" value="#ffffff" />
++      <label for="text-color">文字顏色：</label>
++      <input type="color" id="text-color" value="#000000" />
++    </div>
++    <div class="zoom-control">
++      <label for="board-zoom">白板縮放：</label>
++      <input type="range" id="board-zoom" min="50" max="200" value="100" />
++      <span id="zoom-value">100%</span>
++    </div>
++  </header>
++
++  <main class="layout">
++    <section class="camera-panel">
++      <h2>相機</h2>
++      <video id="camera-stream" autoplay playsinline></video>
++      <div class="camera-actions">
++        <button id="start-camera">啟動相機</button>
++        <button id="capture-photo">拍照</button>
++      </div>
++      <canvas id="capture-canvas" hidden></canvas>
++      <img id="photo-preview" alt="拍攝照片預覽" />
++    </section>
++
++    <section class="whiteboard-panel">
++      <h2>虛擬白板</h2>
++      <textarea id="board-input" placeholder="輸入要顯示在白板上的內容..."></textarea>
++      <div class="whiteboard-wrapper">
++        <div id="whiteboard">
++          <div id="whiteboard-content"></div>
++        </div>
++      </div>
++    </section>
++  </main>
++
++  <footer class="share-bar" aria-live="polite">
++    <div class="share-info">
++      <span>目前頁面網址：</span>
++      <code id="share-url">讀取中...</code>
++    </div>
++    <button id="copy-url" type="button">複製網址</button>
++  </footer>
++
++  <script src="script.js"></script>
++</body>
++</html>
+ 
+EOF
+)
