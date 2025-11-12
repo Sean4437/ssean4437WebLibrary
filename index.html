@@ -191,6 +191,10 @@
         background: #0f172a;
       }
 
+      .stage-content.exporting {
+        background: transparent;
+      }
+
       .stage-content img {
         width: 100%;
         height: 100%;
@@ -241,51 +245,62 @@
 
       .board-row {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
+        align-items: center;
+        gap: 0.75rem;
       }
 
-      .board-field {
-        flex: 1;
-        min-width: 200px;
-        display: flex;
-        flex-direction: column;
-        gap: 0.15rem;
-      }
-
-      .board-field label {
-        font-size: 0.86rem;
+      .board-row label {
+        flex: 0 0 90px;
+        font-size: 0.92rem;
         letter-spacing: 0.05em;
       }
 
       .board-value {
-        min-height: 34px;
+        flex: 1;
+        min-height: 36px;
         border: 1px solid #cbd5f5;
         border-radius: 10px;
-        padding: 0.45rem 0.6rem;
+        padding: 0.45rem 0.65rem;
         background: #fff;
-        font-size: 0.95rem;
+        font-size: 1rem;
         font-weight: 600;
         color: #0f172a;
         white-space: pre-wrap;
       }
 
+      .board-block {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .board-block label {
+        font-size: 0.9rem;
+        letter-spacing: 0.05em;
+      }
+
       .board-notes {
-        min-height: 120px;
+        min-height: 3.2rem;
         border: 1px solid #cbd5f5;
         border-radius: 14px;
-        padding: 0.75rem;
+        padding: 0.65rem 0.75rem;
         background: #fff;
         font-size: 1rem;
-        line-height: 1.45;
+        line-height: 1.4;
         white-space: pre-wrap;
       }
 
-      .board-footer {
+      .signature-placeholder-box {
+        flex: 1;
+        min-height: 80px;
+        border: 1px dashed #cbd5f5;
+        border-radius: 12px;
+        background: #fff;
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        align-items: stretch;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        font-size: 0.95rem;
       }
 
       .action-bar {
@@ -350,6 +365,10 @@
         background: rgba(34, 197, 94, 0.9);
         color: #052e13;
       }
+
+      .hidden-input {
+        display: none !important;
+      }
     </style>
   </head>
   <body>
@@ -407,24 +426,20 @@
           <div class="whiteboard" id="whiteboard">
             <div class="whiteboard-content">
               <div class="board-row">
-                <div class="board-field">
-                  <label>工程名稱</label>
-                  <div class="board-value" id="displayProjectName">—</div>
-                </div>
-                <div class="board-field">
-                  <label>檢查位置</label>
-                  <div class="board-value" id="displayInspectionLocation">—</div>
-                </div>
+                <label>工程名稱</label>
+                <div class="board-value" id="displayProjectName">—</div>
               </div>
-              <div>
+              <div class="board-row">
+                <label>檢查位置</label>
+                <div class="board-value" id="displayInspectionLocation">—</div>
+              </div>
+              <div class="board-block">
                 <label>檢查紀錄</label>
                 <div class="board-notes" id="displayTestResult">—</div>
               </div>
-              <div class="board-footer">
-                <div class="board-field" style="flex: 0 0 200px">
-                  <label>檢查日期</label>
-                  <div class="board-value" id="displayTestDate">—</div>
-                </div>
+              <div class="board-row">
+                <label>檢查日期</label>
+                <div class="board-value" id="displayTestDate">—</div>
               </div>
             </div>
           </div>
@@ -566,8 +581,10 @@
       };
 
       const toggleExportAppearance = (enable) => {
-        captureArea.classList.toggle("exporting", Boolean(enable));
-        whiteboard.classList.toggle("exporting", Boolean(enable));
+        const state = Boolean(enable);
+        captureArea.classList.toggle("exporting", state);
+        photoLayer.classList.toggle("exporting", state);
+        whiteboard.classList.toggle("exporting", state);
       };
 
       const syncField = (key) => {
