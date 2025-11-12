@@ -107,20 +107,19 @@
 
       .panel-actions {
         margin-top: 0.8rem;
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 0.75rem;
         align-items: center;
       }
 
-      .size-control {
+      .panel-control {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        flex: 1;
+        gap: 0.6rem;
       }
 
-      .size-control input[type="range"] {
+      .panel-control input[type="range"] {
         flex: 1;
       }
 
@@ -400,10 +399,23 @@
         </div>
         <div class="panel-hint">輸入完畢後按下「套用到白板」。</div>
         <div class="panel-actions">
-          <label class="size-control">
+          <label class="panel-control">
             <span>白板尺寸</span>
             <input type="range" id="boardScale" min="10" max="120" value="85" />
             <span id="boardScaleValue">85%</span>
+          </label>
+          <label class="panel-control">
+            <span>白板顏色</span>
+            <input type="color" id="boardColor" value="#f8fafc" />
+          </label>
+          <label class="panel-control">
+            <span>透明度</span>
+            <input type="range" id="boardOpacity" min="70" max="100" value="96" />
+            <span id="boardOpacityValue">96%</span>
+          </label>
+          <label class="panel-control">
+            <span>文字顏色</span>
+            <input type="color" id="textColor" value="#0f172a" />
           </label>
           <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
         </div>
@@ -471,6 +483,10 @@
       const captureArea = document.getElementById("captureArea");
       const boardScaleInput = document.getElementById("boardScale");
       const boardScaleValue = document.getElementById("boardScaleValue");
+      const boardColorInput = document.getElementById("boardColor");
+      const boardOpacityInput = document.getElementById("boardOpacity");
+      const boardOpacityValue = document.getElementById("boardOpacityValue");
+      const textColorInput = document.getElementById("textColor");
       const applyDataBtn = document.getElementById("applyDataBtn");
       const clearBoardBtn = document.getElementById("clearBoardBtn");
       const exportBtn = document.getElementById("exportBtn");
@@ -600,6 +616,28 @@
         syncAllFields();
       };
 
+      const updateBoardColor = (color) => {
+        whiteboard.style.setProperty("--board-bg", color);
+        whiteboard.style.backgroundColor = color;
+      };
+
+      const updateBoardOpacity = (percent) => {
+        const value = Math.max(30, Math.min(100, Number(percent)));
+        whiteboard.style.opacity = (value / 100).toString();
+        boardOpacityValue.textContent = `${value}%`;
+      };
+
+      const updateTextColor = (color) => {
+        whiteboard.style.color = color;
+        whiteboard.querySelectorAll(".board-value, .board-notes, label").forEach((el) => {
+          if (el.tagName.toLowerCase() === "label") {
+            el.style.color = color;
+          } else {
+            el.style.color = color;
+          }
+        });
+      };
+
       const toggleWhiteboardSolid = (enable) => {
         whiteboard.classList.toggle("solid-mode", Boolean(enable));
       };
@@ -690,6 +728,15 @@
       boardScaleInput.addEventListener("input", (event) =>
         updateBoardScale(event.target.value)
       );
+      boardColorInput.addEventListener("input", (event) =>
+        updateBoardColor(event.target.value)
+      );
+      boardOpacityInput.addEventListener("input", (event) =>
+        updateBoardOpacity(event.target.value)
+      );
+      textColorInput.addEventListener("input", (event) =>
+        updateTextColor(event.target.value)
+      );
 
       exportBtn.addEventListener("click", exportBoardImage);
       window.addEventListener("resize", updateStageAspect);
@@ -698,6 +745,9 @@
       formInputs.testDate.valueAsDate = new Date();
       syncAllFields();
       updateBoardScale(boardScaleInput.value);
+      updateBoardColor(boardColorInput.value);
+      updateBoardOpacity(boardOpacityInput.value);
+      updateTextColor(textColorInput.value);
       autoResizeTextarea(formInputs.testResult);
       formInputs.testResult.addEventListener("input", () =>
         autoResizeTextarea(formInputs.testResult)
