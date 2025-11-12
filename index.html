@@ -673,6 +673,8 @@
         Object.values(formInputs).forEach((input) => (input.value = ""));
         formInputs.testDate.valueAsDate = new Date();
         syncAllFields();
+        localStorage.removeItem(SIGNATURE_STORAGE_KEY);
+        applySignatureImage(null);
       };
 
       const loadSignatureAndApply = () => {
