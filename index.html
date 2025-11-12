@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
@@ -6,12 +6,12 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
-    <title>¤uµ{¥ÕªO©ç·Ó¤u¨ã</title>
+    <title>å·¥ç¨‹ç™½æ¿æ‹ç…§å·¥å…·</title>
     <style>
       :root {
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
           BlinkMacSystemFont, sans-serif;
-        line-height: 1.5;
+        line-height: 1.45;
         color: #0f172a;
         background: #0f172a;
       }
@@ -22,16 +22,15 @@
 
       body {
         margin: 0;
-        background: radial-gradient(circle, #1e293b, #0f172a);
-        min-height: 100vh;
         padding: 1.25rem;
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 170px);
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 150px);
+        background: radial-gradient(circle, #1e293b, #0f172a);
         display: flex;
         justify-content: center;
       }
 
       .app-shell {
-        width: min(540px, 100%);
+        width: min(560px, 100%);
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -41,43 +40,43 @@
         color: #f8fafc;
         text-align: center;
         margin: 0;
-        font-size: clamp(1.5rem, 6vw, 2.25rem);
+        font-size: clamp(1.4rem, 5vw, 2.1rem);
         letter-spacing: 0.08em;
       }
 
       .version-note {
         text-align: center;
-        margin-top: 0.35rem;
         color: #facc15;
         font-size: 0.95rem;
+        margin-top: 0.3rem;
         font-weight: 600;
       }
 
-      .data-panel {
-        background: rgba(15, 23, 42, 0.4);
+      .panel {
+        background: rgba(15, 23, 42, 0.45);
         border-radius: 20px;
-        padding: 1rem 1.15rem;
-        border: 1px solid rgba(148, 163, 184, 0.4);
-        backdrop-filter: blur(12px);
+        padding: 1rem 1.1rem;
+        border: 1px solid rgba(148, 163, 184, 0.35);
         color: #e2e8f0;
+        backdrop-filter: blur(12px);
       }
 
-      .data-panel h3 {
+      .panel h3 {
         margin: 0 0 0.75rem;
         font-size: 1.05rem;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.05em;
       }
 
       .data-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 0.75rem;
       }
 
       .form-field {
         display: flex;
         flex-direction: column;
-        gap: 0.3rem;
+        gap: 0.25rem;
       }
 
       .form-field label {
@@ -87,7 +86,7 @@
       .form-field input,
       .form-field textarea {
         border-radius: 12px;
-        border: 1px solid rgba(226, 232, 240, 0.4);
+        border: 1px solid rgba(226, 232, 240, 0.35);
         background: rgba(15, 23, 42, 0.6);
         color: #f8fafc;
         font: inherit;
@@ -95,12 +94,18 @@
       }
 
       .form-field textarea {
-        min-height: 120px;
+        min-height: 110px;
         resize: vertical;
       }
 
+      .panel-hint {
+        margin-top: 0.4rem;
+        font-size: 0.83rem;
+        color: #cbd5f5;
+      }
+
       .panel-actions {
-        margin-top: 0.85rem;
+        margin-top: 0.8rem;
         display: flex;
         flex-wrap: wrap;
         gap: 0.75rem;
@@ -110,7 +115,7 @@
       .size-control {
         display: flex;
         align-items: center;
-        gap: 0.6rem;
+        gap: 0.5rem;
         flex: 1;
       }
 
@@ -120,131 +125,12 @@
 
       .ghost-btn {
         border-radius: 999px;
-        border: 1px solid rgba(226, 232, 240, 0.4);
+        border: 1px solid rgba(226, 232, 240, 0.45);
         background: transparent;
         color: #e2e8f0;
         font-weight: 600;
         padding: 0.6rem 1.25rem;
         cursor: pointer;
-      }
-
-      .panel-hint {
-        margin: 0.35rem 0 0;
-        font-size: 0.85rem;
-        color: #cbd5f5;
-      }
-
-      .signature-editor {
-        margin-top: 1rem;
-        background: rgba(15, 23, 42, 0.35);
-        border-radius: 16px;
-        padding: 0.75rem;
-        border: 1px solid rgba(148, 163, 184, 0.3);
-      }
-
-      .signature-editor h4 {
-        margin: 0 0 0.35rem;
-        font-size: 0.95rem;
-        letter-spacing: 0.05em;
-      }
-
-      .signature-toolbar {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.6rem;
-        align-items: center;
-        margin-bottom: 0.4rem;
-      }
-
-      .signature-toolbar label {
-        font-size: 0.85rem;
-      }
-
-      .signature-toolbar input[type="range"] {
-        flex: 1;
-      }
-
-      .current-signature {
-        margin-top: 0.6rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.3rem;
-      }
-
-      .signature-editor-actions {
-        margin-top: 0.6rem;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 0.6rem;
-        align-items: center;
-      }
-
-      .signature-editor-actions input,
-      .signature-editor-actions select {
-        border-radius: 999px;
-        border: 1px solid rgba(226, 232, 240, 0.5);
-        background: rgba(15, 23, 42, 0.5);
-        color: #f8fafc;
-        padding: 0.55rem 0.9rem;
-        font: inherit;
-      }
-
-      .saved-signatures {
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
-        margin-top: 0.75rem;
-      }
-
-      .saved-signature-card {
-        display: flex;
-        gap: 0.75rem;
-        align-items: center;
-        padding: 0.45rem 0.6rem;
-        border-radius: 14px;
-        background: rgba(15, 23, 42, 0.5);
-        border: 1px solid rgba(148, 163, 184, 0.3);
-      }
-
-      .saved-signature-card img {
-        width: 96px;
-        height: 64px;
-        object-fit: contain;
-        background: #fff;
-        border-radius: 10px;
-        border: 1px solid rgba(148, 163, 184, 0.4);
-        padding: 0.25rem;
-      }
-
-      .saved-signature-card button {
-        border: none;
-        border-radius: 999px;
-        padding: 0.4rem 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      .saved-signature-card .signature-info {
-        flex: 1;
-        color: #f1f5f9;
-      }
-
-      .signature-card-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
-        margin-top: 0.35rem;
-      }
-
-      .saved-signature-card .apply-btn {
-        background: linear-gradient(135deg, #34d399, #10b981);
-        color: #052e13;
-      }
-
-      .saved-signature-card .delete-btn {
-        background: transparent;
-        border: 1px solid rgba(248, 250, 252, 0.4);
-        color: #e2e8f0;
       }
 
       .controls {
@@ -256,14 +142,13 @@
       .btn {
         border: none;
         border-radius: 999px;
-        padding: 0.75rem 1.25rem;
+        padding: 0.75rem 1.1rem;
         font-weight: 700;
         font-size: 1rem;
         cursor: pointer;
         color: #fff;
         background: linear-gradient(135deg, #2563eb, #3b82f6);
         box-shadow: 0 10px 18px rgba(37, 99, 235, 0.3);
-        transition: transform 0.1s ease, box-shadow 0.2s ease;
       }
 
       .btn-secondary {
@@ -278,10 +163,10 @@
         width: 100%;
         border-radius: 24px;
         overflow: hidden;
-        background: #1f2937;
+        background: #0f172a;
         box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45);
         border: 6px solid rgba(248, 250, 252, 0.1);
-        --stage-aspect: calc(16 / 9 * 100%);
+        --stage-aspect: 56.25%;
       }
 
       .stage::before {
@@ -293,23 +178,16 @@
       .stage-content {
         position: absolute;
         inset: 0;
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0f172a;
       }
 
       .stage-content img {
-        position: absolute;
-        inset: 0;
         width: 100%;
         height: 100%;
         object-fit: contain;
-      }
-        border-radius: 24px;
-        overflow: hidden;
-        background: #1f2937;
-        box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45);
-        border: 6px solid rgba(248, 250, 252, 0.1);
       }
 
       .stage-placeholder {
@@ -319,10 +197,9 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        color: #cbd5f5;
         gap: 0.35rem;
-        padding: 1.5rem;
         text-align: center;
+        color: #cbd5f5;
       }
 
       .whiteboard-wrapper {
@@ -332,27 +209,17 @@
         top: 70%;
         transform: translate(-50%, -50%) scale(var(--board-scale));
         transform-origin: center;
-        width: min(440px, 90%);
+        width: min(480px, 90%);
         touch-action: none;
-      }
-
-      .whiteboard-wrapper.dragging {
-        opacity: 0.94;
-        cursor: grabbing;
       }
 
       .whiteboard {
         width: 100%;
-        background: rgba(248, 250, 252, 0.94);
+        background: rgba(248, 250, 252, 0.96);
         border-radius: 18px;
         border: 4px solid #cbd5f5;
         box-shadow: 0 18px 32px rgba(15, 23, 42, 0.35);
-        padding: 0.85rem;
-        backdrop-filter: blur(2px);
-      }
-
-      .whiteboard.solid-mode {
-        background: #f8fafc;
+        padding: 0.9rem;
       }
 
       .whiteboard-content {
@@ -369,44 +236,37 @@
 
       .board-field {
         flex: 1;
-        min-width: 180px;
+        min-width: 200px;
         display: flex;
         flex-direction: column;
-        gap: 0.2rem;
+        gap: 0.15rem;
       }
 
       .board-field label {
-        font-size: 0.85rem;
+        font-size: 0.86rem;
         letter-spacing: 0.05em;
       }
 
       .board-value {
-        min-height: 32px;
+        min-height: 34px;
         border: 1px solid #cbd5f5;
         border-radius: 10px;
-        padding: 0.4rem 0.55rem;
+        padding: 0.45rem 0.6rem;
         background: #fff;
-        color: #0f172a;
-        font-size: 0.96rem;
+        font-size: 0.95rem;
         font-weight: 600;
+        color: #0f172a;
         white-space: pre-wrap;
       }
 
-      .board-notes-area {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-      }
-
       .board-notes {
-        min-height: 250px;
+        min-height: 260px;
         border: 1px solid #cbd5f5;
         border-radius: 14px;
         padding: 0.75rem;
         background: #fff;
-        line-height: 1.45;
         font-size: 1rem;
-        color: #0f172a;
+        line-height: 1.45;
         white-space: pre-wrap;
       }
 
@@ -415,49 +275,6 @@
         flex-wrap: wrap;
         gap: 0.5rem;
         align-items: stretch;
-      }
-
-      .signature-display {
-        flex: 1 1 320px;
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
-      }
-
-      .signature-preview-grid {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-      }
-
-      .signature-preview {
-        flex: 1 1 220px;
-        border: 1px dashed #94a3b8;
-        border-radius: 12px;
-        padding: 0.65rem;
-        min-height: 160px;
-        background: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .signature-preview img {
-        max-width: 100%;
-        max-height: 130px;
-        object-fit: contain;
-      }
-
-      .signature-placeholder {
-        color: #94a3b8;
-        font-size: 0.9rem;
-      }canvas {
-        width: 100%;
-        height: 180px;
-        border-radius: 10px;
-        border: 1px solid #cbd5f5;
-        touch-action: none;
-        background: #fff;
       }
 
       .action-bar {
@@ -472,9 +289,8 @@
         padding: 0.85rem 1rem;
         border-radius: 24px;
         background: rgba(15, 23, 42, 0.85);
-        box-shadow: 0 20px 35px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 20px 35px rgba(0, 0, 0, 0.45);
         backdrop-filter: blur(12px);
-        z-index: 30;
       }
 
       .action-btn {
@@ -484,17 +300,15 @@
         font-weight: 700;
         font-size: 1rem;
         cursor: pointer;
-        transition: transform 0.1s ease, box-shadow 0.15s ease;
       }
 
       .action-btn.primary {
         background: linear-gradient(135deg, #059669, #10b981);
         color: #fff;
-        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.35);
       }
 
       .action-btn.secondary {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.08);
         color: #f8fafc;
         border: 1px solid rgba(255, 255, 255, 0.2);
       }
@@ -505,18 +319,15 @@
         left: 50%;
         transform: translateX(-50%);
         width: min(520px, calc(100% - 1.5rem));
-        background: rgba(15, 23, 42, 0.9);
-        color: #f8fafc;
         padding: 0.75rem 1rem;
         border-radius: 16px;
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.45);
+        background: rgba(15, 23, 42, 0.9);
+        color: #f8fafc;
+        text-align: center;
+        font-size: 0.95rem;
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.3s ease, transform 0.3s ease;
-        transform-origin: bottom;
-        z-index: 25;
-        text-align: center;
-        font-size: 0.95rem;
       }
 
       .toast-message.visible {
@@ -528,111 +339,57 @@
         background: rgba(34, 197, 94, 0.9);
         color: #052e13;
       }
-
-      .hidden-input {
-        display: none;
-      }
-
-      @media (max-width: 420px) {
-        .board-layout {
-          grid-template-columns: 1fr;
-        }
-      }
     </style>
   </head>
   <body>
     <div class="app-shell">
       <div>
-        <h1>¤uµ{¥ÕªO©ç·Ó¤u¨ã</h1>
-        <p class="version-note">? ¤w§ó·sª©¥» v1.3¡A½Ğ¨Ï¥Î¦¹¤¶­±³Ì·sª©¥\¯à</p>
+        <h1>å·¥ç¨‹ç™½æ¿æ‹ç…§å·¥å…·</h1>
+        <p class="version-note">âš  å·²æ›´æ–°ç‰ˆæœ¬ v2.0ï¼Œè«‹ä½¿ç”¨æ­¤ä»‹é¢æœ€æ–°ç‰ˆåŠŸèƒ½</p>
       </div>
 
-      <section class="data-panel">
-        <h3>¸ê®Æ¿é¤J­±ªO¡]¿é¤J§¹«á®M¥Î¦Ü¥ÕªO¡^</h3>
+      <section class="panel">
+        <h3>è³‡æ–™è¼¸å…¥é¢æ¿</h3>
         <div class="data-grid">
           <div class="form-field">
-            <label for="inputProjectName">¤uµ{¦WºÙ</label>
-            <input
-              type="text"
-              id="inputProjectName"
-              placeholder="¨Ò¡GÀY«Î¶m³£¥«­pµe°Ï24M¯S1¸¹¹D¸ô©İ¼e¤uµ{"
-            />
+            <label for="inputProjectName">å·¥ç¨‹åç¨±</label>
+            <input id="inputProjectName" type="text" placeholder="è«‹è¼¸å…¥å·¥ç¨‹åç¨±" />
           </div>
           <div class="form-field">
-            <label for="inputInspectionLocation">ÀË¬d¦ì¸m</label>
-            <input type="text" id="inputInspectionLocation" placeholder="¿é¤J¦ì¸m" />
+            <label for="inputInspectionLocation">æª¢æŸ¥ä½ç½®</label>
+            <input id="inputInspectionLocation" type="text" placeholder="è«‹è¼¸å…¥æª¢æŸ¥ä½ç½®" />
           </div>
           <div class="form-field">
-            <label for="inputTestDate">ÀË¬d¤é´Á</label>
-            <input type="date" id="inputTestDate" />
+            <label for="inputTestDate">æª¢æŸ¥æ—¥æœŸ</label>
+            <input id="inputTestDate" type="date" />
           </div>
           <div class="form-field" style="grid-column: 1 / -1">
-            <label for="inputTestResult">ÀË¬d¬ö¿ı</label>
-            <textarea
-              id="inputTestResult"
-              placeholder="¨Ò¦p¡GOK+500~OK+590 ¼Ù¬qÀË¬d¡A´ú¶qµ²ªG..."
-            ></textarea>
+            <label for="inputTestResult">æª¢æŸ¥ç´€éŒ„</label>
+            <textarea id="inputTestResult" placeholder="å¯«ä¸‹æª¢æŸ¥å…§å®¹ã€æ¸¬é‡çµæœç­‰"></textarea>
           </div>
         </div>
-        <div class="signature-editor">
-          <h4>Ã±¦W½s¿è°Ï¡]³o¸ÌÃ±¦W¡A®M¥Î«á·|Åã¥Ü¦b¥ÕªO¡^</h4>
-          <div class="signature-toolbar">
-            <label for="brushSize">µ§¨ê²Ê²Ó</label>
-            <input type="range" id="brushSize" min="2" max="10" value="3" />
-            <label for="brushColor">Ã±¦WÃC¦â</label>
-            <input type="color" id="brushColor" value="#0f172a" />
-          </div>
-          <canvas id="signatureCanvas"></canvas>
-          <div class="current-signature">
-            <label>¥Ø«eÃ±¦W¹wÄı</label>
-            <div class="signature-preview">
-              <span class="signature-placeholder" id="currentSignaturePlaceholder"
-                >©|¥¼Ã±¦W</span
-              >
-              <img id="currentSignaturePreview" alt="¥Ø«eÃ±¦W" hidden />
-            </div>
-          </div>
-          <div class="signature-editor-actions">
-            <input
-              type="text"
-              id="signatureLabel"
-              placeholder="Ã±¦W¼ĞÅÒ¡]¥i¯dªÅ¡^"
-            />
-            <select id="signatureSlot">
-              <option value="slot1">®M¥Î¨ìÃ±¦W 1</option>
-              <option value="slot2">®M¥Î¨ìÃ±¦W 2</option>
-            </select>
-            <button type="button" id="applySignatureBtn" class="ghost-btn">
-              ®M¥ÎÃ±¦W
-            </button>
-            <button type="button" id="saveSignatureBtn" class="ghost-btn">
-              Àx¦sÃ±¦W
-            </button>
-          </div>
-          <div class="saved-signatures" id="savedSignatures"></div>
-        </div>
+        <div class="panel-hint">è¼¸å…¥å®Œç•¢å¾ŒæŒ‰ä¸‹ã€Œå¥—ç”¨åˆ°ç™½æ¿ã€ã€‚</div>
         <div class="panel-actions">
           <label class="size-control">
-            <span>¥ÕªO¤Ø¤o</span>
+            <span>ç™½æ¿å°ºå¯¸</span>
             <input type="range" id="boardScale" min="10" max="120" value="85" />
             <span id="boardScaleValue">85%</span>
           </label>
-          <button type="button" class="ghost-btn" id="applyDataBtn">®M¥Î¨ì¥ÕªO</button>
+          <button type="button" class="ghost-btn" id="applyDataBtn">å¥—ç”¨åˆ°ç™½æ¿</button>
         </div>
-        <p class="panel-hint">¥ı¦b¦¹¿é¤J¡A«ö¡u®M¥Î¨ì¥ÕªO¡v«á¦A¶i¦æ©ç·Ó©Î¶×¥X¡C</p>
       </section>
 
       <div class="controls">
-        <button class="btn" id="takePhotoBtn">©ç·Ó</button>
-        <button class="btn btn-secondary" id="uploadPhotoBtn">¤W¶Ç·Ó¤ù</button>
+        <button class="btn" id="takePhotoBtn">æ‹ç…§</button>
+        <button class="btn btn-secondary" id="uploadPhotoBtn">ä¸Šå‚³ç…§ç‰‡</button>
       </div>
 
       <div class="stage" id="captureArea">
         <div class="stage-content" id="photoLayer">
-          <img id="photoImage" alt="©çÄá·Ó¤ù¹wÄı" hidden />
+          <img id="photoImage" alt="æ‹æ”é è¦½" hidden />
           <div class="stage-placeholder" id="placeholder">
-            <strong>½Ğ©ç·Ó©Î¤W¶Ç·Ó¤ù</strong>
-            <span>¥ÕªO·|Å|¦b·Ó¤ù¤U¤è°Ï°ì¡A¥i©ì¦²½Õ¾ã¦ì¸m»P¤j¤p¡C</span>
+            <strong>è«‹æ‹ç…§æˆ–ä¸Šå‚³ç…§ç‰‡</strong>
+            <span>ç™½æ¿æœƒé¡¯ç¤ºåœ¨ç•«é¢ä¸Šï¼Œå¯æ‹–æ›³èˆ‡ç¸®æ”¾ã€‚</span>
           </div>
         </div>
         <div class="whiteboard-wrapper" id="whiteboardWrapper">
@@ -640,43 +397,22 @@
             <div class="whiteboard-content">
               <div class="board-row">
                 <div class="board-field">
-                  <label>¤uµ{¦WºÙ</label>
-                  <div class="board-value" id="displayProjectName">¡X</div>
+                  <label>å·¥ç¨‹åç¨±</label>
+                  <div class="board-value" id="displayProjectName">â€”</div>
                 </div>
                 <div class="board-field">
-                  <label>ÀË¬d¦ì¸m</label>
-                  <div class="board-value" id="displayInspectionLocation">¡X</div>
+                  <label>æª¢æŸ¥ä½ç½®</label>
+                  <div class="board-value" id="displayInspectionLocation">â€”</div>
                 </div>
               </div>
-              <div class="board-notes-area">
-                <label>ÀË¬d¬ö¿ı</label>
-                <div class="board-notes" id="displayTestResult">¡X</div>
+              <div>
+                <label>æª¢æŸ¥ç´€éŒ„</label>
+                <div class="board-notes" id="displayTestResult">â€”</div>
               </div>
               <div class="board-footer">
-                <div class="board-field board-field--date">
-                  <label>ÀË¬d¤é´Á</label>
-                  <div class="board-value" id="displayTestDate">¡X</div>
-                </div>
-                <div class="signature-display">
-                  <label>Ã±¦W</label>
-                  <div class="signature-preview-grid">
-                    <div class="signature-preview">
-                      <span
-                        class="signature-placeholder"
-                        id="signaturePlaceholder1"
-                        >Ã±¦W 1 ©|¥¼®M¥Î</span
-                      >
-                      <img id="signaturePreview1" alt="Ã±¦W 1" hidden />
-                    </div>
-                    <div class="signature-preview">
-                      <span
-                        class="signature-placeholder"
-                        id="signaturePlaceholder2"
-                        >Ã±¦W 2 ©|¥¼®M¥Î</span
-                      >
-                      <img id="signaturePreview2" alt="Ã±¦W 2" hidden />
-                    </div>
-                  </div>
+                <div class="board-field" style="flex: 0 0 200px">
+                  <label>æª¢æŸ¥æ—¥æœŸ</label>
+                  <div class="board-value" id="displayTestDate">â€”</div>
                 </div>
               </div>
             </div>
@@ -685,19 +421,13 @@
       </div>
 
       <div class="action-bar">
-        <button class="action-btn secondary" id="clearSignatureBtn">²M°£Ã±¦W</button>
-        <button class="action-btn primary" id="exportBtn">¶×¥X¾ã±i¹Ï¤ù</button>
+        <button class="action-btn secondary" id="clearBoardBtn">æ¸…é™¤ç™½æ¿</button>
+        <button class="action-btn primary" id="exportBtn">åŒ¯å‡ºæ•´å¼µåœ–ç‰‡</button>
       </div>
 
       <p id="toastMessage" class="toast-message" role="status" aria-live="polite"></p>
 
-      <input
-        type="file"
-        accept="image/*"
-        capture="environment"
-        class="hidden-input"
-        id="takePhotoInput"
-      />
+      <input type="file" accept="image/*" capture="environment" class="hidden-input" id="takePhotoInput" />
       <input type="file" accept="image/*" class="hidden-input" id="uploadInput" />
     </div>
 
@@ -712,38 +442,13 @@
       const placeholder = document.getElementById("placeholder");
       const whiteboardWrapper = document.getElementById("whiteboardWrapper");
       const whiteboard = document.getElementById("whiteboard");
-      const exportBtn = document.getElementById("exportBtn");
       const captureArea = document.getElementById("captureArea");
-      const toastMessage = document.getElementById("toastMessage");
-      const boardScale = document.getElementById("boardScale");
+      const boardScaleInput = document.getElementById("boardScale");
       const boardScaleValue = document.getElementById("boardScaleValue");
       const applyDataBtn = document.getElementById("applyDataBtn");
-
-      const signatureCanvas = document.getElementById("signatureCanvas");
-      const ctx = signatureCanvas.getContext("2d");
-      const clearSignatureBtn = document.getElementById("clearSignatureBtn");
-      const brushSize = document.getElementById("brushSize");
-      const brushColor = document.getElementById("brushColor");
-      const currentSignaturePreview = document.getElementById(
-        "currentSignaturePreview"
-      );
-      const currentSignaturePlaceholder = document.getElementById(
-        "currentSignaturePlaceholder"
-      );
-      const signatureSlotSelect = document.getElementById("signatureSlot");
-      const signatureLabelInput = document.getElementById("signatureLabel");
-      const applySignatureBtn = document.getElementById("applySignatureBtn");
-      const saveSignatureBtn = document.getElementById("saveSignatureBtn");
-      const savedSignaturesContainer =
-        document.getElementById("savedSignatures");
-      const signaturePreview1 = document.getElementById("signaturePreview1");
-      const signaturePreview2 = document.getElementById("signaturePreview2");
-      const signaturePlaceholder1 = document.getElementById(
-        "signaturePlaceholder1"
-      );
-      const signaturePlaceholder2 = document.getElementById(
-        "signaturePlaceholder2"
-      );
+      const clearBoardBtn = document.getElementById("clearBoardBtn");
+      const exportBtn = document.getElementById("exportBtn");
+      const toastMessage = document.getElementById("toastMessage");
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -759,122 +464,35 @@
         testDate: document.getElementById("displayTestDate"),
       };
 
-      const SIGNATURE_STORAGE_KEY = "whiteboard_saved_signatures_v1";
-
-      const state = {
-        dragging: false,
-        dragOffset: { x: 0, y: 0 },
-        stageRect: null,
-        drawing: false,
-        lastPoint: { x: 0, y: 0 },
-        toastTimer: null,
-        signatureEmpty: true,
-        signatureSlots: { slot1: null, slot2: null },
-        savedSignatures: [],
-      };
-      photoImage.addEventListener("load", updateStageAspect);
-
-      const formatDateValue = (date = new Date()) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        return `${year}-${month}-${day}`;
-      };
-
-      const formatExportTimestamp = () => {
-        const date = new Date();
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        const hour = String(date.getHours()).padStart(2, "0");
-        const minute = String(date.getMinutes()).padStart(2, "0");
-        const second = String(date.getSeconds()).padStart(2, "0");
-        return `${year}-${month}-${day}_${hour}-${minute}-${second}`;
-      };
-
       const showToast = (message, variant = "info") => {
         toastMessage.textContent = message;
         toastMessage.dataset.variant = variant;
         toastMessage.classList.add("visible");
-        if (state.toastTimer) clearTimeout(state.toastTimer);
-        state.toastTimer = setTimeout(() => {
-          toastMessage.classList.remove("visible");
-        }, 4500);
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(
+          () => toastMessage.classList.remove("visible"),
+          4500
+        );
       };
 
-      const setCanvasSize = () => {
-        const ratio = window.devicePixelRatio || 1;
-        const { width, height } = signatureCanvas.getBoundingClientRect();
-        signatureCanvas.width = width * ratio;
-        signatureCanvas.height = height * ratio;
-        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        clearSignature();
-      };
-
-      const clearSignature = () => {
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(0, 0, signatureCanvas.width, signatureCanvas.height);
-        state.signatureEmpty = true;
-        updateSignaturePreview();
-      };
-
-      const getCanvasPoint = (event) => {
-        const rect = signatureCanvas.getBoundingClientRect();
-        const x = (event.clientX ?? event.touches?.[0]?.clientX ?? 0) - rect.left;
-        const y = (event.clientY ?? event.touches?.[0]?.clientY ?? 0) - rect.top;
-        return { x, y };
-      };
-
-      const startDraw = (event) => {
-        state.drawing = true;
-        if (state.signatureEmpty) {
-          state.signatureEmpty = false;
-        }
-        state.lastPoint = getCanvasPoint(event);
-      };
-
-      const draw = (event) => {
-        if (!state.drawing) return;
-        event.preventDefault();
-        const point = getCanvasPoint(event);
-        ctx.strokeStyle = brushColor.value;
-        ctx.lineWidth = brushSize.value;
-        ctx.beginPath();
-        ctx.moveTo(state.lastPoint.x, state.lastPoint.y);
-        ctx.lineTo(point.x, point.y);
-        ctx.stroke();
-        state.lastPoint = point;
-      };
-      const updateSignaturePreview = () => {
-        if (state.signatureEmpty) {
-          currentSignaturePreview.hidden = true;
-          currentSignaturePlaceholder.hidden = false;
+      const updateStageAspect = () => {
+        if (photoImage.hidden || !photoImage.naturalWidth) {
+          captureArea.style.setProperty("--stage-aspect", "56.25%");
           return;
         }
-        const dataUrl = signatureCanvas.toDataURL("image/png");
-        currentSignaturePreview.src = dataUrl;
-        currentSignaturePreview.hidden = false;
-        currentSignaturePlaceholder.hidden = true;
+        const ratio = (photoImage.naturalHeight / photoImage.naturalWidth) * 100;
+        captureArea.style.setProperty("--stage-aspect", `${ratio}%`);
       };
 
-      const stopDraw = () => {
-        if (state.drawing) {
-          state.drawing = false;
-          updateSignaturePreview();
-        }
-      };
-
-      const handleFiles = (files) => {
+      const handlePhotoFiles = (files) => {
         const [file] = files || [];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (event) => {
-          photoLayer.style.backgroundImage = "";
           photoImage.src = event.target.result;
           photoImage.hidden = false;
           placeholder.style.display = "none";
+          updateStageAspect();
         };
         reader.readAsDataURL(file);
       };
@@ -882,49 +500,65 @@
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
       const startDrag = (event) => {
-        if (event.target.closest("input, textarea, button, select")) {
-          return;
-        }
-        state.dragging = true;
-        whiteboardWrapper.classList.add("dragging");
-        const boardRect = whiteboardWrapper.getBoundingClientRect();
-        const stageRect = captureArea.getBoundingClientRect();
-        const pointerX = event.clientX ?? event.touches?.[0]?.clientX ?? 0;
-        const pointerY = event.clientY ?? event.touches?.[0]?.clientY ?? 0;
-        state.dragOffset.x = pointerX - boardRect.left;
-        state.dragOffset.y = pointerY - boardRect.top;
-        state.stageRect = stageRect;
-        event.preventDefault();
+        if (event.target.closest("input, textarea, button, select")) return;
+        whiteboardWrapper.dataset.dragging = "true";
+        const rect = whiteboardWrapper.getBoundingClientRect();
+        whiteboardWrapper.dataset.offsetX =
+          (event.clientX ?? event.touches?.[0]?.clientX ?? 0) - rect.left;
+        whiteboardWrapper.dataset.offsetY =
+          (event.clientY ?? event.touches?.[0]?.clientY ?? 0) - rect.top;
+        whiteboardWrapper.dataset.stageRect = JSON.stringify(
+          captureArea.getBoundingClientRect()
+        );
       };
 
       const dragMove = (event) => {
-        if (!state.dragging) return;
+        if (whiteboardWrapper.dataset.dragging !== "true") return;
         event.preventDefault();
+        const stageRect = JSON.parse(whiteboardWrapper.dataset.stageRect);
+        const boardRect = whiteboardWrapper.getBoundingClientRect();
+        const offsetX = parseFloat(whiteboardWrapper.dataset.offsetX);
+        const offsetY = parseFloat(whiteboardWrapper.dataset.offsetY);
         const pointerX = event.clientX ?? event.touches?.[0]?.clientX ?? 0;
         const pointerY = event.clientY ?? event.touches?.[0]?.clientY ?? 0;
-        const boardRect = whiteboardWrapper.getBoundingClientRect();
-        const stageRect = state.stageRect;
-
         const newLeft = clamp(
-          pointerX - stageRect.left - state.dragOffset.x + boardRect.width / 2,
+          pointerX - stageRect.left - offsetX + boardRect.width / 2,
           boardRect.width / 2,
           stageRect.width - boardRect.width / 2
         );
         const newTop = clamp(
-          pointerY - stageRect.top - state.dragOffset.y + boardRect.height / 2,
+          pointerY - stageRect.top - offsetY + boardRect.height / 2,
           boardRect.height / 2,
           stageRect.height - boardRect.height / 2
         );
-
         whiteboardWrapper.style.left = `${(newLeft / stageRect.width) * 100}%`;
         whiteboardWrapper.style.top = `${(newTop / stageRect.height) * 100}%`;
       };
 
       const endDrag = () => {
-        if (state.dragging) {
-          state.dragging = false;
-          whiteboardWrapper.classList.remove("dragging");
-        }
+        whiteboardWrapper.dataset.dragging = "false";
+      };
+
+      const updateBoardScale = (value) => {
+        const percent = Math.max(10, Math.min(120, Number(value)));
+        whiteboardWrapper.style.setProperty(
+          "--board-scale",
+          (percent / 100).toString()
+        );
+        boardScaleValue.textContent = `${percent}%`;
+      };
+
+      const syncField = (key) => {
+        const value = formInputs[key].value.trim();
+        displayTargets[key].textContent = value || "â€”";
+      };
+
+      const syncAllFields = () => Object.keys(formInputs).forEach(syncField);
+
+      const clearBoard = () => {
+        Object.values(formInputs).forEach((input) => (input.value = ""));
+        formInputs.testDate.valueAsDate = new Date();
+        syncAllFields();
       };
 
       const toggleWhiteboardSolid = (enable) => {
@@ -948,274 +582,81 @@
 
       const handleShareOrDownload = async (blob, filename) => {
         const file = new File([blob], filename, { type: "image/png" });
-        if (
-          navigator.canShare &&
-          navigator.canShare({ files: [file] }) &&
-          navigator.share
-        ) {
+        if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
           try {
             await navigator.share({
               files: [file],
-              title: "¤uµ{¥ÕªO·Ó¤ù",
-              text: "½Ğ¦b¤À¨É­±ªO¤¤¿ï¾Ü¡uÀx¦s¼v¹³¡v§Y¥i¦s¤J¬ÛÃ¯¡C",
+              title: "å·¥ç¨‹ç™½æ¿ç…§ç‰‡",
+              text: "åœ¨åˆ†äº«é¢æ¿ä¸­é¸æ“‡å„²å­˜å½±åƒå³å¯ã€‚",
             });
-            showToast("¤w¶}±Ò¤À¨É­±ªO¡A½Ğ¿ï¾Ü¡uÀx¦s¼v¹³¡v¡C", "success");
+            showToast("å·²é–‹å•Ÿåˆ†äº«é¢æ¿ï¼Œè«‹é¸æ“‡å„²å­˜å½±åƒã€‚", "success");
             return;
           } catch (error) {
-            if (error.name === "AbortError") {
-              showToast("¤w¨ú®ø¤À¨É¡A§ï¬°¤U¸ü¼v¹³¡C");
-            } else {
-              console.warn("Share failed, fallback to download", error);
-              showToast("¤À¨É­±ªO¤£¥i¥Î¡A§ï¬°¤U¸ü¼v¹³¡C");
+            if (error.name !== "AbortError") {
+              showToast("åˆ†äº«é¢æ¿ä¸å¯ç”¨ï¼Œå°‡è‡ªå‹•ä¸‹è¼‰å½±åƒã€‚");
             }
           }
         }
-
         downloadBlob(blob, filename);
         openPreviewTab(blob);
-        showToast("¤w¤U¸ü¨Ã¶}±Ò¹wÄı¡A¦p§ä¤£¨ì¹Ï¤ù½Ğ¦ÜÀÉ®× App ©Îªø«ö¹Ï¤ùÀx¦s¡C");
+        showToast("å·²ä¸‹è¼‰ä¸¦é–‹å•Ÿé è¦½ï¼Œå¦‚æ‰¾ä¸åˆ°åœ–ç‰‡è«‹åˆ°æª”æ¡ˆ Appã€‚", "success");
       };
 
-      const syncField = (key) => {
-        const value = formInputs[key].value.trim();
-        displayTargets[key].textContent = value || "¡X";
-      };
-
-      const syncAllFields = () => {
-        Object.keys(formInputs).forEach((key) => syncField(key));
-      };
-
-      const updateBoardScale = (value) => {
-        const percent = Math.max(10, Math.min(120, Number(value)));
-        const scale = percent / 100;
-        whiteboardWrapper.style.setProperty("--board-scale", scale.toString());
-        boardScaleValue.textContent = `${percent}%`;
-      };
-
-      const getCurrentSignatureDataUrl = () => {
-        if (state.signatureEmpty) {
-          showToast("©|¥¼Ã±¦W¡A½Ğ¥ı©óÃ±¦W°ÏÃ±¦W«á¦A¾Ş§@¡C");
-          return null;
-        }
-        return signatureCanvas.toDataURL("image/png");
-      };
-
-      const applySignatureToSlot = (slot, dataUrl) => {
-        const mapping = {
-          slot1: {
-            preview: signaturePreview1,
-            placeholder: signaturePlaceholder1,
-          },
-          slot2: {
-            preview: signaturePreview2,
-            placeholder: signaturePlaceholder2,
-          },
-        };
-        const target = mapping[slot] || mapping.slot1;
-        if (!dataUrl) {
-          target.preview.hidden = true;
-          target.placeholder.hidden = false;
-          state.signatureSlots[slot] = null;
-          return;
-        }
-        target.preview.src = dataUrl;
-        target.preview.hidden = false;
-        target.placeholder.hidden = true;
-        state.signatureSlots[slot] = dataUrl;
-      };
-
-      const persistSavedSignatures = () => {
-        try {
-          localStorage.setItem(
-            SIGNATURE_STORAGE_KEY,
-            JSON.stringify(state.savedSignatures)
-          );
-        } catch (error) {
-          console.warn("µLªkÀx¦sÃ±¦W²M³æ¡G", error);
-        }
-      };
-
-      const renderSavedSignatures = () => {
-        savedSignaturesContainer.innerHTML = "";
-        if (!state.savedSignatures.length) {
-          savedSignaturesContainer.innerHTML =
-            '<p class="panel-hint">©|¥¼Àx¦sÃ±¦W¡C</p>';
-          return;
-        }
-        state.savedSignatures.forEach((signature) => {
-          const card = document.createElement("div");
-          card.className = "saved-signature-card";
-          const img = document.createElement("img");
-          img.src = signature.dataUrl;
-          img.alt = signature.label;
-
-          const info = document.createElement("div");
-          info.className = "signature-info";
-          info.innerHTML = `<strong>${signature.label}</strong>`;
-
-          const actions = document.createElement("div");
-          actions.className = "signature-card-actions";
-
-          const applyBtn = document.createElement("button");
-          applyBtn.className = "apply-btn";
-          applyBtn.textContent = "®M¥ÎÃ±¦W";
-          applyBtn.addEventListener("click", () => {
-            applySignatureToSlot(signatureSlotSelect.value, signature.dataUrl);
-            showToast(`¤w®M¥ÎÃ±¦W¡u${signature.label}¡v¡C`, "success");
-          });
-
-          const deleteBtn = document.createElement("button");
-          deleteBtn.className = "delete-btn";
-          deleteBtn.textContent = "§R°£";
-          deleteBtn.addEventListener("click", () => {
-            state.savedSignatures = state.savedSignatures.filter(
-              (item) => item.id !== signature.id
-            );
-            persistSavedSignatures();
-            renderSavedSignatures();
-            showToast(`¤w§R°£Ã±¦W¡u${signature.label}¡v¡C`);
-          });
-
-          actions.append(applyBtn, deleteBtn);
-          info.append(actions);
-          card.append(img, info);
-          savedSignaturesContainer.append(card);
-        });
-      };
-
-      const loadSavedSignatures = () => {
-        try {
-          const stored = localStorage.getItem(SIGNATURE_STORAGE_KEY);
-          state.savedSignatures = stored ? JSON.parse(stored) : [];
-        } catch (error) {
-          console.warn("Åª¨úÃ±¦W²M³æ¥¢±Ñ¡G", error);
-          state.savedSignatures = [];
-        }
-        renderSavedSignatures();
-      };
-
-      const updateStageAspect = () => {
-        if (
-          photoImage.hidden ||
-          !photoImage.naturalWidth ||
-          !photoImage.naturalHeight
-        ) {
-          captureArea.style.removeProperty("--stage-aspect");
-          return;
-        }
-        const ratio =
-          (photoImage.naturalHeight / photoImage.naturalWidth) * 100 || 56.25;
-        captureArea.style.setProperty("--stage-aspect", `${ratio}%`);
-      };
-
-      const exportImage = async () => {
+      const exportBoardImage = async () => {
         exportBtn.disabled = true;
-        exportBtn.textContent = "¶×¥X¤¤¡K";
+        exportBtn.textContent = "åŒ¯å‡ºä¸­â€¦";
         toggleWhiteboardSolid(true);
-        const timestampLabel = formatExportTimestamp();
-        const filename = `whiteboard_${timestampLabel}.png`;
         try {
-          const canvasCapture = await html2canvas(captureArea, {
+          const canvas = await html2canvas(captureArea, {
             backgroundColor: null,
             scale: window.devicePixelRatio || 2,
           });
-
-          const blob = await new Promise((resolve, reject) => {
-            canvasCapture.toBlob(
-              (result) => {
-                if (result) {
-                  resolve(result);
-                } else {
-                  reject(new Error("µLªk¥Í¦¨¹Ï¤ù"));
-                }
-              },
-              "image/png",
-              1
-            );
-          });
-
-          await handleShareOrDownload(blob, filename);
+          const blob = await new Promise((resolve, reject) =>
+            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("failed"))), "image/png", 1)
+          );
+          const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
+          await handleShareOrDownload(blob, `whiteboard_${timestamp}.png`);
         } catch (error) {
           console.error(error);
-          showToast("¶×¥X¥¢±Ñ¡A½Ğ¦A¸Õ¤@¦¸¡C");
-          alert("¶×¥X¥¢±Ñ¡A½Ğ¦A¸Õ¤@¦¸¡C");
+          showToast("åŒ¯å‡ºå¤±æ•—ï¼Œè«‹å†è©¦ä¸€æ¬¡ã€‚");
         } finally {
           toggleWhiteboardSolid(false);
           exportBtn.disabled = false;
-          exportBtn.textContent = "¶×¥X¾ã±i¹Ï¤ù";
+          exportBtn.textContent = "åŒ¯å‡ºæ•´å¼µåœ–ç‰‡";
         }
       };
 
       takePhotoBtn.addEventListener("click", () => takePhotoInput.click());
       uploadPhotoBtn.addEventListener("click", () => uploadInput.click());
-      takePhotoInput.addEventListener("change", (event) =>
-        handleFiles(event.target.files)
-      );
-      uploadInput.addEventListener("change", (event) =>
-        handleFiles(event.target.files)
-      );
+      takePhotoInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
+      uploadInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
 
       whiteboardWrapper.addEventListener("pointerdown", startDrag);
-      window.addEventListener("pointermove", dragMove);
+      window.addEventListener("pointermove", dragMove, { passive: false });
       window.addEventListener("pointerup", endDrag);
       window.addEventListener("pointercancel", endDrag);
 
-      signatureCanvas.addEventListener("pointerdown", startDraw);
-      signatureCanvas.addEventListener("pointermove", draw);
-      window.addEventListener("pointerup", stopDraw);
-      window.addEventListener("pointercancel", stopDraw);
-
-      clearSignatureBtn.addEventListener("click", () => {
-        clearSignature();
-        showToast("¤w²M°£Ã±¦W¡A½Ğ­«·sÃ±¦W«á¦A®M¥Î¡C");
-      });
-      exportBtn.addEventListener("click", exportImage);
-
       applyDataBtn.addEventListener("click", () => {
         syncAllFields();
-        showToast("¤w±N¶ñ¼g¸ê®Æ®M¥Î¨ì¥ÕªO¡C", "success");
+        showToast("ç™½æ¿å…§å®¹å·²æ›´æ–°ã€‚", "success");
       });
 
-      boardScale.addEventListener("input", (event) =>
+      clearBoardBtn.addEventListener("click", () => {
+        clearBoard();
+        showToast("ç™½æ¿æ–‡å­—å·²æ¸…é™¤ã€‚", "success");
+      });
+
+      boardScaleInput.addEventListener("input", (event) =>
         updateBoardScale(event.target.value)
       );
 
-      applySignatureBtn.addEventListener("click", () => {
-        const dataUrl = getCurrentSignatureDataUrl();
-        if (!dataUrl) return;
-        applySignatureToSlot(signatureSlotSelect.value, dataUrl);
-        showToast("Ã±¦W¤w®M¥Î¨ì¥ÕªO¡C", "success");
-      });
+      exportBtn.addEventListener("click", exportBoardImage);
+      window.addEventListener("resize", updateStageAspect);
+      photoImage.addEventListener("load", updateStageAspect);
 
-      saveSignatureBtn.addEventListener("click", () => {
-        const dataUrl = getCurrentSignatureDataUrl();
-        if (!dataUrl) return;
-        const label =
-          signatureLabelInput.value.trim() ||
-          `Ã±¦W ${state.savedSignatures.length + 1}`;
-        state.savedSignatures.unshift({
-          id: Date.now().toString(),
-          label,
-          dataUrl,
-        });
-        signatureLabelInput.value = "";
-        persistSavedSignatures();
-        renderSavedSignatures();
-        showToast(`¤wÀx¦s¡u${label}¡v¡C`, "success");
-      });
-
-      window.addEventListener("resize", setCanvasSize);
-
-      formInputs.testDate.value = formatDateValue();
+      formInputs.testDate.valueAsDate = new Date();
       syncAllFields();
-      updateBoardScale(boardScale.value);
-      setCanvasSize();
-      updateSignaturePreview();
-      loadSavedSignatures();
+      updateBoardScale(boardScaleInput.value);
     </script>
   </body>
 </html>
-
-
-
-
