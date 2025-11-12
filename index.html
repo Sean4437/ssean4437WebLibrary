@@ -9,7 +9,6 @@
     <title>工程白板拍照工具</title>
     <style>
       :root {
-        --board-scale: 0.85;
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
           BlinkMacSystemFont, sans-serif;
         line-height: 1.5;
@@ -233,8 +232,7 @@
         position: absolute;
         left: 50%;
         top: 70%;
-        transform: translate(-50%, -50%) scale(var(--board-scale));
-        transform-origin: center;
+        transform: translate(-50%, -50%);
         width: 85%;
         max-width: 480px;
         background: rgba(248, 250, 252, 0.94);
@@ -498,7 +496,7 @@
         <div class="panel-actions">
           <label class="size-control">
             <span>白板尺寸</span>
-            <input type="range" id="boardScale" min="60" max="120" value="85" />
+            <input type="range" id="boardScale" min="10" max="120" value="85" />
             <span id="boardScaleValue">85%</span>
           </label>
           <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
@@ -726,7 +724,10 @@
       };
 
       const stopDraw = () => {
-        state.drawing = false;
+        if (state.drawing) {
+          state.drawing = false;
+          updateSignaturePreview();
+        }
       };
 
       const handleFiles = (files) => {
@@ -848,11 +849,8 @@
       };
 
       const updateBoardScale = (value) => {
-        const percent = Number(value);
-        document.documentElement.style.setProperty(
-          "--board-scale",
-          (percent / 100).toString()
-        );
+        const percent = Math.max(10, Math.min(120, Number(value)));
+        whiteboard.style.width = `${percent}%`;
         boardScaleValue.textContent = `${percent}%`;
       };
 
