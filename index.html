@@ -25,6 +25,7 @@
         background: radial-gradient(circle, #1e293b, #0f172a);
         min-height: 100vh;
         padding: 1.25rem;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 160px);
         display: flex;
         justify-content: center;
       }
@@ -34,6 +35,7 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
+        position: relative;
       }
 
       h1 {
@@ -50,6 +52,79 @@
         color: #facc15;
         font-size: 0.95rem;
         font-weight: 600;
+      }
+
+      .action-bar {
+        position: fixed;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(520px, calc(100% - 1.5rem));
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        border-radius: 24px;
+        background: rgba(15, 23, 42, 0.85);
+        box-shadow: 0 20px 35px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(12px);
+        z-index: 30;
+      }
+
+      .action-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 0.85rem 1.25rem;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: transform 0.1s ease, box-shadow 0.15s ease;
+      }
+
+      .action-btn.primary {
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #fff;
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.35);
+      }
+
+      .action-btn.secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: #f8fafc;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .action-btn:active {
+        transform: translateY(1px);
+      }
+
+      .export-message {
+        position: fixed;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(520px, calc(100% - 1.5rem));
+        background: rgba(15, 23, 42, 0.9);
+        color: #f8fafc;
+        padding: 0.75rem 1rem;
+        border-radius: 16px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        transform-origin: bottom;
+        z-index: 25;
+        text-align: center;
+        font-size: 0.95rem;
+      }
+
+      .export-message.visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-8px);
+      }
+
+      .export-message[data-variant="success"] {
+        background: rgba(34, 197, 94, 0.9);
+        color: #052e13;
       }
 
       .controls {
@@ -134,6 +209,10 @@
         padding: 0.9rem;
         backdrop-filter: blur(2px);
         touch-action: none;
+      }
+
+      .whiteboard.solid-mode {
+        background: #f8fafc;
       }
 
       .whiteboard.dragging {
@@ -225,12 +304,6 @@
         background: #fff;
       }
 
-      .export-btn {
-        width: 100%;
-        margin-top: 0.5rem;
-        background: linear-gradient(135deg, #059669, #10b981);
-      }
-
       .hidden-input {
         display: none;
       }
@@ -246,9 +319,6 @@
       <div class="controls">
         <button class="btn" id="takePhotoBtn">拍照</button>
         <button class="btn btn-secondary" id="uploadPhotoBtn">上傳照片</button>
-        <button class="btn btn-secondary" id="clearSignatureBtn">
-          清除簽名
-        </button>
       </div>
 
       <div class="stage" id="captureArea">
@@ -301,9 +371,24 @@
             </div>
             <canvas id="signatureCanvas"></canvas>
           </div>
-          <button class="btn export-btn" id="exportBtn">匯出整張圖片</button>
         </div>
       </div>
+
+      <div class="action-bar">
+        <button class="action-btn secondary" id="clearSignatureBtn">
+          清除簽名
+        </button>
+        <button class="action-btn primary" id="exportBtn">
+          匯出整張圖片
+        </button>
+      </div>
+
+      <p
+        id="exportMessage"
+        class="export-message"
+        role="status"
+        aria-live="polite"
+      ></p>
 
       <input
         type="file"
@@ -333,12 +418,14 @@
       const clearSignatureBtn = document.getElementById("clearSignatureBtn");
       const brushSize = document.getElementById("brushSize");
       const brushColor = document.getElementById("brushColor");
+      const exportMessage = document.getElementById("exportMessage");
 
       const state = {
         dragging: false,
         dragOffset: { x: 0, y: 0 },
         drawing: false,
         lastPoint: { x: 0, y: 0 },
+        messageTimer: null,
       };
 
       const formatDateValue = (date = new Date()) => {
@@ -346,6 +433,17 @@
         const month = String(date.getMonth() + 1).padStart(2, "0");
         const day = String(date.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
+      };
+
+      const formatExportTimestamp = () => {
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hour = String(date.getHours()).padStart(2, "0");
+        const minute = String(date.getMinutes()).padStart(2, "0");
+        const second = String(date.getSeconds()).padStart(2, "0");
+        return `${year}-${month}-${day}_${hour}-${minute}-${second}`;
       };
       dateInput.value = formatDateValue();
 
@@ -363,6 +461,72 @@
       const clearSignature = () => {
         ctx.fillStyle = "#fff";
         ctx.fillRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+      };
+
+      const toggleWhiteboardSolid = (enable) => {
+        whiteboard.classList.toggle("solid-mode", Boolean(enable));
+      };
+
+      const showExportMessage = (message, variant = "info") => {
+        if (!exportMessage) return;
+        exportMessage.textContent = message;
+        exportMessage.dataset.variant = variant;
+        exportMessage.classList.add("visible");
+        if (state.messageTimer) clearTimeout(state.messageTimer);
+        state.messageTimer = setTimeout(() => {
+          exportMessage.classList.remove("visible");
+        }, 5000);
+      };
+
+      const downloadBlob = (blob, filename) => {
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = filename;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      };
+
+      const openPreviewTab = (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank");
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      };
+
+      const handleShareOrDownload = async (blob, filename) => {
+        const file = new File([blob], filename, { type: "image/png" });
+        if (
+          navigator.canShare &&
+          navigator.canShare({ files: [file] }) &&
+          navigator.share
+        ) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "工程白板照片",
+              text: "請在分享面板中選擇「儲存影像」即可存入相簿。",
+            });
+            showExportMessage(
+              "已開啟分享面板，請選擇「儲存影像」。",
+              "success"
+            );
+            return;
+          } catch (error) {
+            if (error.name === "AbortError") {
+              showExportMessage("已取消分享，改為下載影像。");
+            } else {
+              console.warn("Share failed, fallback to download", error);
+              showExportMessage("分享面板不可用，改為下載影像。");
+            }
+          }
+        }
+
+        downloadBlob(blob, filename);
+        openPreviewTab(blob);
+        showExportMessage(
+          "已下載並開啟預覽，如找不到圖片請至檔案 App 的下載項目或長按圖片儲存。",
+          "info"
+        );
       };
 
       const startDraw = (event) => {
@@ -463,32 +627,36 @@
       const exportImage = async () => {
         exportBtn.disabled = true;
         exportBtn.textContent = "匯出中…";
-        const timestamp = new Date()
-          .toISOString()
-          .replace(/T/, "_")
-          .replace(/:/g, "-")
-          .split(".")[0];
+        const timestampLabel = formatExportTimestamp();
+        const filename = `whiteboard_${timestampLabel}.png`;
+        toggleWhiteboardSolid(true);
         try {
-          const canvas = await html2canvas(captureArea, {
+          const canvasCapture = await html2canvas(captureArea, {
             backgroundColor: null,
             scale: window.devicePixelRatio || 2,
           });
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) return;
-              const link = document.createElement("a");
-              link.href = URL.createObjectURL(blob);
-              link.download = `anchor_test_${timestamp}.png`;
-              link.click();
-              URL.revokeObjectURL(link.href);
-            },
-            "image/png",
-            1
-          );
+
+          const blob = await new Promise((resolve, reject) => {
+            canvasCapture.toBlob(
+              (result) => {
+                if (result) {
+                  resolve(result);
+                } else {
+                  reject(new Error("無法生成圖片"));
+                }
+              },
+              "image/png",
+              1
+            );
+          });
+
+          await handleShareOrDownload(blob, filename);
         } catch (error) {
-          alert("匯出失敗，請再試一次。");
           console.error(error);
+          alert("匯出失敗，請再試一次。");
+          showExportMessage("匯出失敗，請再試一次。", "info");
         } finally {
+          toggleWhiteboardSolid(false);
           exportBtn.disabled = false;
           exportBtn.textContent = "匯出整張圖片";
         }
