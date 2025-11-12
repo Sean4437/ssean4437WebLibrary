@@ -1,4 +1,4 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
-    <title>å·¥ç¨‹ç™½æ¿æ‹ç…§å·¥å…·</title>
+    <title>¤uµ{¥ÕªO©ç·Ó¤u¨ã</title>
     <style>
       :root {
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
@@ -276,12 +276,18 @@
       .stage {
         position: relative;
         width: 100%;
-        aspect-ratio: 16 / 9;
         border-radius: 24px;
         overflow: hidden;
         background: #1f2937;
         box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45);
         border: 6px solid rgba(248, 250, 252, 0.1);
+        --stage-aspect: calc(16 / 9 * 100%);
+      }
+
+      .stage::before {
+        content: "";
+        display: block;
+        padding-top: var(--stage-aspect);
       }
 
       .stage-content {
@@ -298,6 +304,12 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
+      }
+        border-radius: 24px;
+        overflow: hidden;
+        background: #1f2937;
+        box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45);
+        border: 6px solid rgba(248, 250, 252, 0.1);
       }
 
       .stage-placeholder {
@@ -531,96 +543,96 @@
   <body>
     <div class="app-shell">
       <div>
-        <h1>å·¥ç¨‹ç™½æ¿æ‹ç…§å·¥å…·</h1>
-        <p class="version-note">? å·²æ›´æ–°ç‰ˆæœ¬ v1.3ï¼Œè«‹ä½¿ç”¨æ­¤ä»‹é¢æœ€æ–°ç‰ˆåŠŸèƒ½</p>
+        <h1>¤uµ{¥ÕªO©ç·Ó¤u¨ã</h1>
+        <p class="version-note">? ¤w§ó·sª©¥» v1.3¡A½Ğ¨Ï¥Î¦¹¤¶­±³Ì·sª©¥\¯à</p>
       </div>
 
       <section class="data-panel">
-        <h3>è³‡æ–™è¼¸å…¥é¢æ¿ï¼ˆè¼¸å…¥å®Œå¾Œå¥—ç”¨è‡³ç™½æ¿ï¼‰</h3>
+        <h3>¸ê®Æ¿é¤J­±ªO¡]¿é¤J§¹«á®M¥Î¦Ü¥ÕªO¡^</h3>
         <div class="data-grid">
           <div class="form-field">
-            <label for="inputProjectName">å·¥ç¨‹åç¨±</label>
+            <label for="inputProjectName">¤uµ{¦WºÙ</label>
             <input
               type="text"
               id="inputProjectName"
-              placeholder="ä¾‹ï¼šé ­å±‹é„‰éƒ½å¸‚è¨ˆç•«å€24Mç‰¹1è™Ÿé“è·¯æ‹“å¯¬å·¥ç¨‹"
+              placeholder="¨Ò¡GÀY«Î¶m³£¥«­pµe°Ï24M¯S1¸¹¹D¸ô©İ¼e¤uµ{"
             />
           </div>
           <div class="form-field">
-            <label for="inputInspectionLocation">æª¢æŸ¥ä½ç½®</label>
-            <input type="text" id="inputInspectionLocation" placeholder="è¼¸å…¥ä½ç½®" />
+            <label for="inputInspectionLocation">ÀË¬d¦ì¸m</label>
+            <input type="text" id="inputInspectionLocation" placeholder="¿é¤J¦ì¸m" />
           </div>
           <div class="form-field">
-            <label for="inputTestDate">æª¢æŸ¥æ—¥æœŸ</label>
+            <label for="inputTestDate">ÀË¬d¤é´Á</label>
             <input type="date" id="inputTestDate" />
           </div>
           <div class="form-field" style="grid-column: 1 / -1">
-            <label for="inputTestResult">æª¢æŸ¥ç´€éŒ„</label>
+            <label for="inputTestResult">ÀË¬d¬ö¿ı</label>
             <textarea
               id="inputTestResult"
-              placeholder="ä¾‹å¦‚ï¼šOK+500~OK+590 æ¨‘æ®µæª¢æŸ¥ï¼Œæ¸¬é‡çµæœ..."
+              placeholder="¨Ò¦p¡GOK+500~OK+590 ¼Ù¬qÀË¬d¡A´ú¶qµ²ªG..."
             ></textarea>
           </div>
         </div>
         <div class="signature-editor">
-          <h4>ç°½åç·¨è¼¯å€ï¼ˆé€™è£¡ç°½åï¼Œå¥—ç”¨å¾Œæœƒé¡¯ç¤ºåœ¨ç™½æ¿ï¼‰</h4>
+          <h4>Ã±¦W½s¿è°Ï¡]³o¸ÌÃ±¦W¡A®M¥Î«á·|Åã¥Ü¦b¥ÕªO¡^</h4>
           <div class="signature-toolbar">
-            <label for="brushSize">ç­†åˆ·ç²—ç´°</label>
+            <label for="brushSize">µ§¨ê²Ê²Ó</label>
             <input type="range" id="brushSize" min="2" max="10" value="3" />
-            <label for="brushColor">ç°½åé¡è‰²</label>
+            <label for="brushColor">Ã±¦WÃC¦â</label>
             <input type="color" id="brushColor" value="#0f172a" />
           </div>
           <canvas id="signatureCanvas"></canvas>
           <div class="current-signature">
-            <label>ç›®å‰ç°½åé è¦½</label>
+            <label>¥Ø«eÃ±¦W¹wÄı</label>
             <div class="signature-preview">
               <span class="signature-placeholder" id="currentSignaturePlaceholder"
-                >å°šæœªç°½å</span
+                >©|¥¼Ã±¦W</span
               >
-              <img id="currentSignaturePreview" alt="ç›®å‰ç°½å" hidden />
+              <img id="currentSignaturePreview" alt="¥Ø«eÃ±¦W" hidden />
             </div>
           </div>
           <div class="signature-editor-actions">
             <input
               type="text"
               id="signatureLabel"
-              placeholder="ç°½åæ¨™ç±¤ï¼ˆå¯ç•™ç©ºï¼‰"
+              placeholder="Ã±¦W¼ĞÅÒ¡]¥i¯dªÅ¡^"
             />
             <select id="signatureSlot">
-              <option value="slot1">å¥—ç”¨åˆ°ç°½å 1</option>
-              <option value="slot2">å¥—ç”¨åˆ°ç°½å 2</option>
+              <option value="slot1">®M¥Î¨ìÃ±¦W 1</option>
+              <option value="slot2">®M¥Î¨ìÃ±¦W 2</option>
             </select>
             <button type="button" id="applySignatureBtn" class="ghost-btn">
-              å¥—ç”¨ç°½å
+              ®M¥ÎÃ±¦W
             </button>
             <button type="button" id="saveSignatureBtn" class="ghost-btn">
-              å„²å­˜ç°½å
+              Àx¦sÃ±¦W
             </button>
           </div>
           <div class="saved-signatures" id="savedSignatures"></div>
         </div>
         <div class="panel-actions">
           <label class="size-control">
-            <span>ç™½æ¿å°ºå¯¸</span>
+            <span>¥ÕªO¤Ø¤o</span>
             <input type="range" id="boardScale" min="10" max="120" value="85" />
             <span id="boardScaleValue">85%</span>
           </label>
-          <button type="button" class="ghost-btn" id="applyDataBtn">å¥—ç”¨åˆ°ç™½æ¿</button>
+          <button type="button" class="ghost-btn" id="applyDataBtn">®M¥Î¨ì¥ÕªO</button>
         </div>
-        <p class="panel-hint">å…ˆåœ¨æ­¤è¼¸å…¥ï¼ŒæŒ‰ã€Œå¥—ç”¨åˆ°ç™½æ¿ã€å¾Œå†é€²è¡Œæ‹ç…§æˆ–åŒ¯å‡ºã€‚</p>
+        <p class="panel-hint">¥ı¦b¦¹¿é¤J¡A«ö¡u®M¥Î¨ì¥ÕªO¡v«á¦A¶i¦æ©ç·Ó©Î¶×¥X¡C</p>
       </section>
 
       <div class="controls">
-        <button class="btn" id="takePhotoBtn">æ‹ç…§</button>
-        <button class="btn btn-secondary" id="uploadPhotoBtn">ä¸Šå‚³ç…§ç‰‡</button>
+        <button class="btn" id="takePhotoBtn">©ç·Ó</button>
+        <button class="btn btn-secondary" id="uploadPhotoBtn">¤W¶Ç·Ó¤ù</button>
       </div>
 
       <div class="stage" id="captureArea">
         <div class="stage-content" id="photoLayer">
-          <img id="photoImage" alt="æ‹æ”ç…§ç‰‡é è¦½" hidden />
+          <img id="photoImage" alt="©çÄá·Ó¤ù¹wÄı" hidden />
           <div class="stage-placeholder" id="placeholder">
-            <strong>è«‹æ‹ç…§æˆ–ä¸Šå‚³ç…§ç‰‡</strong>
-            <span>ç™½æ¿æœƒç–Šåœ¨ç…§ç‰‡ä¸‹æ–¹å€åŸŸï¼Œå¯æ‹–æ›³èª¿æ•´ä½ç½®èˆ‡å¤§å°ã€‚</span>
+            <strong>½Ğ©ç·Ó©Î¤W¶Ç·Ó¤ù</strong>
+            <span>¥ÕªO·|Å|¦b·Ó¤ù¤U¤è°Ï°ì¡A¥i©ì¦²½Õ¾ã¦ì¸m»P¤j¤p¡C</span>
           </div>
         </div>
         <div class="whiteboard-wrapper" id="whiteboardWrapper">
@@ -628,41 +640,41 @@
             <div class="whiteboard-content">
               <div class="board-row">
                 <div class="board-field">
-                  <label>å·¥ç¨‹åç¨±</label>
-                  <div class="board-value" id="displayProjectName">â€”</div>
+                  <label>¤uµ{¦WºÙ</label>
+                  <div class="board-value" id="displayProjectName">¡X</div>
                 </div>
                 <div class="board-field">
-                  <label>æª¢æŸ¥ä½ç½®</label>
-                  <div class="board-value" id="displayInspectionLocation">â€”</div>
+                  <label>ÀË¬d¦ì¸m</label>
+                  <div class="board-value" id="displayInspectionLocation">¡X</div>
                 </div>
               </div>
               <div class="board-notes-area">
-                <label>æª¢æŸ¥ç´€éŒ„</label>
-                <div class="board-notes" id="displayTestResult">â€”</div>
+                <label>ÀË¬d¬ö¿ı</label>
+                <div class="board-notes" id="displayTestResult">¡X</div>
               </div>
               <div class="board-footer">
                 <div class="board-field board-field--date">
-                  <label>æª¢æŸ¥æ—¥æœŸ</label>
-                  <div class="board-value" id="displayTestDate">â€”</div>
+                  <label>ÀË¬d¤é´Á</label>
+                  <div class="board-value" id="displayTestDate">¡X</div>
                 </div>
                 <div class="signature-display">
-                  <label>ç°½å</label>
+                  <label>Ã±¦W</label>
                   <div class="signature-preview-grid">
                     <div class="signature-preview">
                       <span
                         class="signature-placeholder"
                         id="signaturePlaceholder1"
-                        >ç°½å 1 å°šæœªå¥—ç”¨</span
+                        >Ã±¦W 1 ©|¥¼®M¥Î</span
                       >
-                      <img id="signaturePreview1" alt="ç°½å 1" hidden />
+                      <img id="signaturePreview1" alt="Ã±¦W 1" hidden />
                     </div>
                     <div class="signature-preview">
                       <span
                         class="signature-placeholder"
                         id="signaturePlaceholder2"
-                        >ç°½å 2 å°šæœªå¥—ç”¨</span
+                        >Ã±¦W 2 ©|¥¼®M¥Î</span
                       >
-                      <img id="signaturePreview2" alt="ç°½å 2" hidden />
+                      <img id="signaturePreview2" alt="Ã±¦W 2" hidden />
                     </div>
                   </div>
                 </div>
@@ -673,8 +685,8 @@
       </div>
 
       <div class="action-bar">
-        <button class="action-btn secondary" id="clearSignatureBtn">æ¸…é™¤ç°½å</button>
-        <button class="action-btn primary" id="exportBtn">åŒ¯å‡ºæ•´å¼µåœ–ç‰‡</button>
+        <button class="action-btn secondary" id="clearSignatureBtn">²M°£Ã±¦W</button>
+        <button class="action-btn primary" id="exportBtn">¶×¥X¾ã±i¹Ï¤ù</button>
       </div>
 
       <p id="toastMessage" class="toast-message" role="status" aria-live="polite"></p>
@@ -944,29 +956,29 @@
           try {
             await navigator.share({
               files: [file],
-              title: "å·¥ç¨‹ç™½æ¿ç…§ç‰‡",
-              text: "è«‹åœ¨åˆ†äº«é¢æ¿ä¸­é¸æ“‡ã€Œå„²å­˜å½±åƒã€å³å¯å­˜å…¥ç›¸ç°¿ã€‚",
+              title: "¤uµ{¥ÕªO·Ó¤ù",
+              text: "½Ğ¦b¤À¨É­±ªO¤¤¿ï¾Ü¡uÀx¦s¼v¹³¡v§Y¥i¦s¤J¬ÛÃ¯¡C",
             });
-            showToast("å·²é–‹å•Ÿåˆ†äº«é¢æ¿ï¼Œè«‹é¸æ“‡ã€Œå„²å­˜å½±åƒã€ã€‚", "success");
+            showToast("¤w¶}±Ò¤À¨É­±ªO¡A½Ğ¿ï¾Ü¡uÀx¦s¼v¹³¡v¡C", "success");
             return;
           } catch (error) {
             if (error.name === "AbortError") {
-              showToast("å·²å–æ¶ˆåˆ†äº«ï¼Œæ”¹ç‚ºä¸‹è¼‰å½±åƒã€‚");
+              showToast("¤w¨ú®ø¤À¨É¡A§ï¬°¤U¸ü¼v¹³¡C");
             } else {
               console.warn("Share failed, fallback to download", error);
-              showToast("åˆ†äº«é¢æ¿ä¸å¯ç”¨ï¼Œæ”¹ç‚ºä¸‹è¼‰å½±åƒã€‚");
+              showToast("¤À¨É­±ªO¤£¥i¥Î¡A§ï¬°¤U¸ü¼v¹³¡C");
             }
           }
         }
 
         downloadBlob(blob, filename);
         openPreviewTab(blob);
-        showToast("å·²ä¸‹è¼‰ä¸¦é–‹å•Ÿé è¦½ï¼Œå¦‚æ‰¾ä¸åˆ°åœ–ç‰‡è«‹è‡³æª”æ¡ˆ App æˆ–é•·æŒ‰åœ–ç‰‡å„²å­˜ã€‚");
+        showToast("¤w¤U¸ü¨Ã¶}±Ò¹wÄı¡A¦p§ä¤£¨ì¹Ï¤ù½Ğ¦ÜÀÉ®× App ©Îªø«ö¹Ï¤ùÀx¦s¡C");
       };
 
       const syncField = (key) => {
         const value = formInputs[key].value.trim();
-        displayTargets[key].textContent = value || "â€”";
+        displayTargets[key].textContent = value || "¡X";
       };
 
       const syncAllFields = () => {
@@ -982,7 +994,7 @@
 
       const getCurrentSignatureDataUrl = () => {
         if (state.signatureEmpty) {
-          showToast("å°šæœªç°½åï¼Œè«‹å…ˆæ–¼ç°½åå€ç°½åå¾Œå†æ“ä½œã€‚");
+          showToast("©|¥¼Ã±¦W¡A½Ğ¥ı©óÃ±¦W°ÏÃ±¦W«á¦A¾Ş§@¡C");
           return null;
         }
         return signatureCanvas.toDataURL("image/png");
@@ -1019,7 +1031,7 @@
             JSON.stringify(state.savedSignatures)
           );
         } catch (error) {
-          console.warn("ç„¡æ³•å„²å­˜ç°½åæ¸…å–®ï¼š", error);
+          console.warn("µLªkÀx¦sÃ±¦W²M³æ¡G", error);
         }
       };
 
@@ -1027,7 +1039,7 @@
         savedSignaturesContainer.innerHTML = "";
         if (!state.savedSignatures.length) {
           savedSignaturesContainer.innerHTML =
-            '<p class="panel-hint">å°šæœªå„²å­˜ç°½åã€‚</p>';
+            '<p class="panel-hint">©|¥¼Àx¦sÃ±¦W¡C</p>';
           return;
         }
         state.savedSignatures.forEach((signature) => {
@@ -1046,22 +1058,22 @@
 
           const applyBtn = document.createElement("button");
           applyBtn.className = "apply-btn";
-          applyBtn.textContent = "å¥—ç”¨ç°½å";
+          applyBtn.textContent = "®M¥ÎÃ±¦W";
           applyBtn.addEventListener("click", () => {
             applySignatureToSlot(signatureSlotSelect.value, signature.dataUrl);
-            showToast(`å·²å¥—ç”¨ç°½åã€Œ${signature.label}ã€ã€‚`, "success");
+            showToast(`¤w®M¥ÎÃ±¦W¡u${signature.label}¡v¡C`, "success");
           });
 
           const deleteBtn = document.createElement("button");
           deleteBtn.className = "delete-btn";
-          deleteBtn.textContent = "åˆªé™¤";
+          deleteBtn.textContent = "§R°£";
           deleteBtn.addEventListener("click", () => {
             state.savedSignatures = state.savedSignatures.filter(
               (item) => item.id !== signature.id
             );
             persistSavedSignatures();
             renderSavedSignatures();
-            showToast(`å·²åˆªé™¤ç°½åã€Œ${signature.label}ã€ã€‚`);
+            showToast(`¤w§R°£Ã±¦W¡u${signature.label}¡v¡C`);
           });
 
           actions.append(applyBtn, deleteBtn);
@@ -1076,7 +1088,7 @@
           const stored = localStorage.getItem(SIGNATURE_STORAGE_KEY);
           state.savedSignatures = stored ? JSON.parse(stored) : [];
         } catch (error) {
-          console.warn("è®€å–ç°½åæ¸…å–®å¤±æ•—ï¼š", error);
+          console.warn("Åª¨úÃ±¦W²M³æ¥¢±Ñ¡G", error);
           state.savedSignatures = [];
         }
         renderSavedSignatures();
@@ -1088,15 +1100,17 @@
           !photoImage.naturalWidth ||
           !photoImage.naturalHeight
         ) {
-          captureArea.style.aspectRatio = "";
+          captureArea.style.removeProperty("--stage-aspect");
           return;
         }
-        captureArea.style.aspectRatio = `${photoImage.naturalWidth} / ${photoImage.naturalHeight}`;
+        const ratio =
+          (photoImage.naturalHeight / photoImage.naturalWidth) * 100 || 56.25;
+        captureArea.style.setProperty("--stage-aspect", `${ratio}%`);
       };
 
       const exportImage = async () => {
         exportBtn.disabled = true;
-        exportBtn.textContent = "åŒ¯å‡ºä¸­â€¦";
+        exportBtn.textContent = "¶×¥X¤¤¡K";
         toggleWhiteboardSolid(true);
         const timestampLabel = formatExportTimestamp();
         const filename = `whiteboard_${timestampLabel}.png`;
@@ -1112,7 +1126,7 @@
                 if (result) {
                   resolve(result);
                 } else {
-                  reject(new Error("ç„¡æ³•ç”Ÿæˆåœ–ç‰‡"));
+                  reject(new Error("µLªk¥Í¦¨¹Ï¤ù"));
                 }
               },
               "image/png",
@@ -1123,12 +1137,12 @@
           await handleShareOrDownload(blob, filename);
         } catch (error) {
           console.error(error);
-          showToast("åŒ¯å‡ºå¤±æ•—ï¼Œè«‹å†è©¦ä¸€æ¬¡ã€‚");
-          alert("åŒ¯å‡ºå¤±æ•—ï¼Œè«‹å†è©¦ä¸€æ¬¡ã€‚");
+          showToast("¶×¥X¥¢±Ñ¡A½Ğ¦A¸Õ¤@¦¸¡C");
+          alert("¶×¥X¥¢±Ñ¡A½Ğ¦A¸Õ¤@¦¸¡C");
         } finally {
           toggleWhiteboardSolid(false);
           exportBtn.disabled = false;
-          exportBtn.textContent = "åŒ¯å‡ºæ•´å¼µåœ–ç‰‡";
+          exportBtn.textContent = "¶×¥X¾ã±i¹Ï¤ù";
         }
       };
 
@@ -1153,13 +1167,13 @@
 
       clearSignatureBtn.addEventListener("click", () => {
         clearSignature();
-        showToast("å·²æ¸…é™¤ç°½åï¼Œè«‹é‡æ–°ç°½åå¾Œå†å¥—ç”¨ã€‚");
+        showToast("¤w²M°£Ã±¦W¡A½Ğ­«·sÃ±¦W«á¦A®M¥Î¡C");
       });
       exportBtn.addEventListener("click", exportImage);
 
       applyDataBtn.addEventListener("click", () => {
         syncAllFields();
-        showToast("å·²å°‡å¡«å¯«è³‡æ–™å¥—ç”¨åˆ°ç™½æ¿ã€‚", "success");
+        showToast("¤w±N¶ñ¼g¸ê®Æ®M¥Î¨ì¥ÕªO¡C", "success");
       });
 
       boardScale.addEventListener("input", (event) =>
@@ -1170,7 +1184,7 @@
         const dataUrl = getCurrentSignatureDataUrl();
         if (!dataUrl) return;
         applySignatureToSlot(signatureSlotSelect.value, dataUrl);
-        showToast("ç°½åå·²å¥—ç”¨åˆ°ç™½æ¿ã€‚", "success");
+        showToast("Ã±¦W¤w®M¥Î¨ì¥ÕªO¡C", "success");
       });
 
       saveSignatureBtn.addEventListener("click", () => {
@@ -1178,7 +1192,7 @@
         if (!dataUrl) return;
         const label =
           signatureLabelInput.value.trim() ||
-          `ç°½å ${state.savedSignatures.length + 1}`;
+          `Ã±¦W ${state.savedSignatures.length + 1}`;
         state.savedSignatures.unshift({
           id: Date.now().toString(),
           label,
@@ -1187,7 +1201,7 @@
         signatureLabelInput.value = "";
         persistSavedSignatures();
         renderSavedSignatures();
-        showToast(`å·²å„²å­˜ã€Œ${label}ã€ã€‚`, "success");
+        showToast(`¤wÀx¦s¡u${label}¡v¡C`, "success");
       });
 
       window.addEventListener("resize", setCanvasSize);
