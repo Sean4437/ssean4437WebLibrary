@@ -1,10 +1,10 @@
  (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
 diff --git a/script.js b/script.js
 new file mode 100644
-index 0000000000000000000000000000000000000000..7e97d0622598df5c817c651fad9cca4337c48c85
+index 0000000000000000000000000000000000000000..afb6a21e1fe1fe0c6f0c205261f369059cd3cc51
 --- /dev/null
 +++ b/script.js
-@@ -0,0 +1,163 @@
+@@ -0,0 +1,165 @@
 +const dateInput = document.getElementById("session-date");
 +const boardInput = document.getElementById("board-input");
 +const whiteboard = document.getElementById("whiteboard");
@@ -23,60 +23,56 @@ index 0000000000000000000000000000000000000000..7e97d0622598df5c817c651fad9cca43
 +
 +let mediaStream;
 +
-+captureBtn.disabled = true;
-+
 +function setTodayDate() {
 +  if (!dateInput) return;
-+  const today = new Date();
-+  const year = today.getFullYear();
-+  const month = String(today.getMonth() + 1).padStart(2, "0");
-+  const day = String(today.getDate()).padStart(2, "0");
-+  dateInput.value = `${year}-${month}-${day}`;
++  const now = new Date();
++  const yyyy = now.getFullYear();
++  const mm = String(now.getMonth() + 1).padStart(2, "0");
++  const dd = String(now.getDate()).padStart(2, "0");
++  dateInput.value = `${yyyy}-${mm}-${dd}`;
 +}
 +
-+function updateWhiteboardContent() {
++function syncWhiteboardText() {
 +  whiteboardContent.textContent = boardInput.value;
 +}
 +
-+function updateBoardColor() {
++function syncBoardColor() {
 +  whiteboard.style.backgroundColor = boardColor.value;
 +}
 +
-+function updateTextColor() {
++function syncTextColor() {
 +  whiteboardContent.style.color = textColor.value;
 +}
 +
-+function updateZoom() {
++function syncZoom() {
 +  const scale = Number(zoomSlider.value) / 100;
-+  whiteboard.style.transform = `scale(${scale})`;
++  whiteboard.style.setProperty("--zoom", scale.toString());
 +  zoomValue.textContent = `${zoomSlider.value}%`;
 +}
 +
 +function updateShareUrl() {
 +  if (!shareUrl) return;
++  const { protocol, href } = window.location;
 +
-+  const isFileProtocol = window.location.protocol === "file:";
-+
-+  if (isFileProtocol) {
-+    shareUrl.textContent = "請先透過本機伺服器提供網址 (例如 http://192.168.x.x:8000)";
++  if (protocol === "file:") {
++    shareUrl.textContent = "請透過本機伺服器提供網址，例如 http://192.168.x.x:8000";
++    copyUrlBtn?.classList.add("button-disabled");
 +    if (copyUrlBtn) {
 +      copyUrlBtn.disabled = true;
 +      copyUrlBtn.textContent = "無法複製";
-+      copyUrlBtn.classList.add("button-disabled");
 +    }
 +    return;
 +  }
 +
-+  const url = window.location.href;
-+  shareUrl.textContent = url;
-+  shareUrl.dataset.url = url;
++  shareUrl.textContent = href;
++  shareUrl.dataset.url = href;
 +
 +  if (!copyUrlBtn) return;
 +
 +  if (navigator.clipboard) {
 +    copyUrlBtn.disabled = false;
 +    copyUrlBtn.textContent = "複製網址";
-+    copyUrlBtn.classList.remove("button-disabled");
++    copyUrlBtn.classList.remove("button-disabled", "button-error", "button-success");
 +  } else {
 +    copyUrlBtn.disabled = true;
 +    copyUrlBtn.textContent = "裝置不支援複製";
@@ -86,47 +82,48 @@ index 0000000000000000000000000000000000000000..7e97d0622598df5c817c651fad9cca43
 +
 +async function copyShareUrl() {
 +  if (!shareUrl?.dataset.url || !navigator.clipboard || !copyUrlBtn) return;
-+
 +  try {
 +    await navigator.clipboard.writeText(shareUrl.dataset.url);
 +    copyUrlBtn.textContent = "已複製";
++    copyUrlBtn.classList.remove("button-error");
 +    copyUrlBtn.classList.add("button-success");
 +    setTimeout(() => {
 +      copyUrlBtn.textContent = "複製網址";
 +      copyUrlBtn.classList.remove("button-success");
-+    }, 1500);
++    }, 1600);
 +  } catch (error) {
 +    console.error("複製網址失敗", error);
 +    copyUrlBtn.textContent = "複製失敗";
++    copyUrlBtn.classList.remove("button-success");
 +    copyUrlBtn.classList.add("button-error");
 +    setTimeout(() => {
 +      copyUrlBtn.textContent = "複製網址";
 +      copyUrlBtn.classList.remove("button-error");
-+    }, 1500);
++    }, 1600);
 +  }
 +}
 +
 +async function startCamera() {
 +  if (!navigator.mediaDevices?.getUserMedia) {
-+    alert("此裝置或瀏覽器不支援相機功能。");
++    alert("此裝置或瀏覽器不支援相機功能");
 +    return;
 +  }
 +
 +  try {
 +    mediaStream = await navigator.mediaDevices.getUserMedia({
-+      video: {
-+        facingMode: "environment",
-+      },
++      video: { facingMode: "environment" },
 +      audio: false,
 +    });
 +
 +    video.srcObject = mediaStream;
++    video.setAttribute("autoplay", "true");
++    video.setAttribute("playsinline", "true");
++
 +    startCameraBtn.disabled = true;
 +    captureBtn.disabled = false;
 +  } catch (error) {
 +    console.error("無法啟動相機", error);
-+    alert("啟動相機時發生問題，請確認權限或重新整理頁面。");
-+    captureBtn.disabled = true;
++    alert("啟動相機失敗，請確認權限或重新整理頁面");
 +  }
 +}
 +
@@ -136,7 +133,8 @@ index 0000000000000000000000000000000000000000..7e97d0622598df5c817c651fad9cca43
 +    return;
 +  }
 +
-+  const settings = mediaStream.getVideoTracks()[0]?.getSettings();
++  const track = mediaStream.getVideoTracks()[0];
++  const settings = track?.getSettings();
 +  const width = settings?.width || video.videoWidth || 640;
 +  const height = settings?.height || video.videoHeight || 480;
 +
@@ -148,26 +146,30 @@ index 0000000000000000000000000000000000000000..7e97d0622598df5c817c651fad9cca43
 +
 +  photoPreview.src = canvas.toDataURL("image/png");
 +  photoPreview.style.display = "block";
++  photoPreview.focus?.();
++}
++
++function cleanUpStream() {
++  mediaStream?.getTracks().forEach((track) => track.stop());
 +}
 +
 +setTodayDate();
-+updateWhiteboardContent();
-+updateBoardColor();
-+updateTextColor();
-+updateZoom();
++syncWhiteboardText();
++syncBoardColor();
++syncTextColor();
++syncZoom();
 +updateShareUrl();
 +
-+boardInput.addEventListener("input", updateWhiteboardContent);
-+boardColor.addEventListener("input", updateBoardColor);
-+textColor.addEventListener("input", updateTextColor);
-+zoomSlider.addEventListener("input", updateZoom);
++boardInput.addEventListener("input", syncWhiteboardText);
++boardColor.addEventListener("input", syncBoardColor);
++textColor.addEventListener("input", syncTextColor);
++zoomSlider.addEventListener("input", syncZoom);
 +startCameraBtn.addEventListener("click", startCamera);
 +captureBtn.addEventListener("click", capturePhoto);
 +copyUrlBtn?.addEventListener("click", copyShareUrl);
++
 +window.addEventListener("focus", updateShareUrl);
-+window.addEventListener("beforeunload", () => {
-+  mediaStream?.getTracks().forEach((track) => track.stop());
-+});
++window.addEventListener("beforeunload", cleanUpStream);
  
 EOF
 )
