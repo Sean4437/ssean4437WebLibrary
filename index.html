@@ -9,6 +9,7 @@
     <title>工程白板拍照工具</title>
     <style>
       :root {
+        --board-scale: 0.85;
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
           BlinkMacSystemFont, sans-serif;
         line-height: 1.5;
@@ -134,6 +135,36 @@
         color: #cbd5f5;
       }
 
+      .signature-editor {
+        margin-top: 1rem;
+        background: rgba(15, 23, 42, 0.35);
+        border-radius: 16px;
+        padding: 0.75rem;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+      }
+
+      .signature-editor h4 {
+        margin: 0 0 0.35rem;
+        font-size: 0.95rem;
+        letter-spacing: 0.05em;
+      }
+
+      .signature-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        align-items: center;
+        margin-bottom: 0.4rem;
+      }
+
+      .signature-toolbar label {
+        font-size: 0.85rem;
+      }
+
+      .signature-toolbar input[type="range"] {
+        flex: 1;
+      }
+
       .controls {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -202,7 +233,8 @@
         position: absolute;
         left: 50%;
         top: 70%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, -50%) scale(var(--board-scale));
+        transform-origin: center;
         width: 85%;
         max-width: 480px;
         background: rgba(248, 250, 252, 0.94);
@@ -290,29 +322,32 @@
         align-items: stretch;
       }
 
-      .signature-panel {
-        grid-column: 1 / -1;
+      .signature-display {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+
+      .signature-preview {
         border: 1px dashed #94a3b8;
         border-radius: 12px;
-        padding: 0.6rem;
+        padding: 0.5rem;
+        min-height: 140px;
         background: #fff;
-      }
-
-      .signature-toolbar {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
         align-items: center;
-        margin-bottom: 0.4rem;
+        justify-content: center;
       }
 
-      .signature-toolbar label {
-        font-size: 0.8rem;
-        font-weight: 500;
+      .signature-preview img {
+        max-width: 100%;
+        max-height: 120px;
+        object-fit: contain;
       }
 
-      .signature-toolbar input[type="range"] {
-        flex: 1;
+      .signature-placeholder {
+        color: #94a3b8;
+        font-size: 0.9rem;
       }
 
       canvas {
@@ -450,10 +485,20 @@
             ></textarea>
           </div>
         </div>
+        <div class="signature-editor">
+          <h4>簽名編輯區（這裡簽名，套用後會顯示在白板）</h4>
+          <div class="signature-toolbar">
+            <label for="brushSize">筆刷粗細</label>
+            <input type="range" id="brushSize" min="2" max="10" value="3" />
+            <label for="brushColor">簽名顏色</label>
+            <input type="color" id="brushColor" value="#0f172a" />
+          </div>
+          <canvas id="signatureCanvas"></canvas>
+        </div>
         <div class="panel-actions">
           <label class="size-control">
             <span>白板尺寸</span>
-            <input type="range" id="boardScale" min="60" max="95" value="85" />
+            <input type="range" id="boardScale" min="60" max="120" value="85" />
             <span id="boardScaleValue">85%</span>
           </label>
           <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
@@ -511,14 +556,14 @@
               <label>檢查人員</label>
               <div class="board-value" id="displayInspector">—</div>
             </div>
-            <div class="signature-panel">
-              <div class="signature-toolbar">
-                <label for="brushSize">筆刷粗細</label>
-                <input type="range" id="brushSize" min="2" max="10" value="3" />
-                <label for="brushColor">簽名顏色</label>
-                <input type="color" id="brushColor" value="#0f172a" />
+            <div class="signature-display">
+              <label>簽名</label>
+              <div class="signature-preview">
+                <span class="signature-placeholder" id="signaturePlaceholder"
+                  >尚未簽名</span
+                >
+                <img id="signaturePreview" alt="簽名預覽" hidden />
               </div>
-              <canvas id="signatureCanvas"></canvas>
             </div>
           </div>
         </div>
@@ -562,6 +607,8 @@
       const clearSignatureBtn = document.getElementById("clearSignatureBtn");
       const brushSize = document.getElementById("brushSize");
       const brushColor = document.getElementById("brushColor");
+      const signaturePreview = document.getElementById("signaturePreview");
+      const signaturePlaceholder = document.getElementById("signaturePlaceholder");
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -590,6 +637,7 @@
         drawing: false,
         lastPoint: { x: 0, y: 0 },
         toastTimer: null,
+        signatureEmpty: true,
       };
 
       const formatDateValue = (date = new Date()) => {
@@ -634,6 +682,8 @@
       const clearSignature = () => {
         ctx.fillStyle = "#fff";
         ctx.fillRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+        state.signatureEmpty = true;
+        updateSignaturePreview();
       };
 
       const getCanvasPoint = (event) => {
@@ -645,6 +695,9 @@
 
       const startDraw = (event) => {
         state.drawing = true;
+        if (state.signatureEmpty) {
+          state.signatureEmpty = false;
+        }
         state.lastPoint = getCanvasPoint(event);
       };
 
@@ -659,6 +712,17 @@
         ctx.lineTo(point.x, point.y);
         ctx.stroke();
         state.lastPoint = point;
+      };
+      const updateSignaturePreview = () => {
+        if (state.signatureEmpty) {
+          signaturePreview.hidden = true;
+          signaturePlaceholder.hidden = false;
+          return;
+        }
+        const dataUrl = signatureCanvas.toDataURL("image/png");
+        signaturePreview.src = dataUrl;
+        signaturePreview.hidden = false;
+        signaturePlaceholder.hidden = true;
       };
 
       const stopDraw = () => {
@@ -679,11 +743,7 @@
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
       const startDrag = (event) => {
-        if (
-          event.target.closest(
-            "input, textarea, button, select, .signature-panel"
-          )
-        ) {
+        if (event.target.closest("input, textarea, button, select")) {
           return;
         }
         state.dragging = true;
@@ -789,7 +849,10 @@
 
       const updateBoardScale = (value) => {
         const percent = Number(value);
-        whiteboard.style.width = `${percent}%`;
+        document.documentElement.style.setProperty(
+          "--board-scale",
+          (percent / 100).toString()
+        );
         boardScaleValue.textContent = `${percent}%`;
       };
 
@@ -850,16 +913,16 @@
       window.addEventListener("pointerup", stopDraw);
       window.addEventListener("pointercancel", stopDraw);
 
-      clearSignatureBtn.addEventListener("click", clearSignature);
-      exportBtn.addEventListener("click", exportImage);
-
-      Object.keys(formInputs).forEach((key) => {
-        formInputs[key].addEventListener("input", () => syncField(key));
+      clearSignatureBtn.addEventListener("click", () => {
+        clearSignature();
+        showToast("已清除簽名，請重新簽名後再套用。");
       });
+      exportBtn.addEventListener("click", exportImage);
 
       applyDataBtn.addEventListener("click", () => {
         syncAllFields();
-        showToast("已將填寫的資料套用到白板。", "success");
+        updateSignaturePreview();
+        showToast("已將填寫與簽名套用到白板。", "success");
       });
 
       boardScale.addEventListener("input", (event) =>
@@ -872,6 +935,7 @@
       syncAllFields();
       updateBoardScale(boardScale.value);
       setCanvasSize();
+      updateSignaturePreview();
     </script>
   </body>
 </html>
