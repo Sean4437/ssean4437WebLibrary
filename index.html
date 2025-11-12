@@ -1,8 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
     <title>工程白板拍照工具</title>
     <style>
       :root {
@@ -94,7 +97,7 @@
       }
 
       .form-field textarea {
-        min-height: 110px;
+        min-height: 90px;
         resize: none;
         overflow: hidden;
       }
@@ -164,8 +167,15 @@
         border-radius: 0;
         overflow: hidden;
         background: #0f172a;
+        box-shadow: none;
         border: 6px solid rgba(15, 23, 42, 0.7);
         --stage-aspect: 56.25%;
+      }
+
+      .stage.exporting {
+        background: transparent;
+        box-shadow: none;
+        border-color: transparent;
       }
 
       .stage::before {
@@ -183,14 +193,14 @@
         background: #0f172a;
       }
 
+      .stage-content.exporting {
+        background: transparent;
+      }
+
       .stage-content img {
         width: 100%;
         height: 100%;
         object-fit: contain;
-      }
-
-      .stage-content.exporting {
-        background: transparent;
       }
 
       .stage-placeholder {
@@ -219,10 +229,11 @@
       .whiteboard {
         width: 100%;
         background: var(--board-fill);
-        border: 4px solid var(--line-color);
         border-radius: 0;
+        border: 4px solid var(--line-color);
         padding: 0.75rem;
         color: var(--text-color);
+        box-shadow: none;
       }
 
       .whiteboard.exporting {
@@ -287,7 +298,7 @@
 
       .signature-placeholder-box {
         flex: 1;
-        min-height: 90px;
+        min-height: 80px;
         border: 1px dashed var(--line-color);
         border-radius: 12px;
         background: var(--board-fill);
@@ -296,13 +307,6 @@
         justify-content: center;
         color: var(--text-color);
         font-size: 0.95rem;
-        padding: 0.35rem;
-      }
-
-      .signature-placeholder-box img {
-        max-width: 100%;
-        max-height: 120px;
-        object-fit: contain;
       }
 
       .action-bar {
@@ -317,6 +321,7 @@
         padding: 0.85rem 1rem;
         border-radius: 24px;
         background: rgba(15, 23, 42, 0.85);
+        box-shadow: 0 20px 35px rgba(0, 0, 0, 0.45);
         backdrop-filter: blur(12px);
       }
 
@@ -376,7 +381,7 @@
     <div class="app-shell">
       <div>
         <h1>工程白板拍照工具</h1>
-        <p class="version-note">⚠ 已更新版本 v2.1，請使用此介面最新版功能</p>
+        <p class="version-note">⚠ 已更新版本 v2.0，請使用此介面最新版功能</p>
       </div>
 
       <section class="panel">
@@ -394,12 +399,16 @@
             <label for="inputTestDate">檢查日期</label>
             <input id="inputTestDate" type="date" />
           </div>
+          <div class="form-field">
+            <label for="inputInspector">檢查人員</label>
+            <input id="inputInspector" type="text" placeholder="請輸入檢查人員" />
+          </div>
           <div class="form-field" style="grid-column: 1 / -1">
             <label for="inputTestResult">檢查紀錄</label>
-            <textarea id="inputTestResult" placeholder="簡述檢查內容、測量結果等"></textarea>
+            <textarea id="inputTestResult" placeholder="寫下檢查內容、測量結果等"></textarea>
           </div>
         </div>
-        <div class="panel-hint">輸入完成後按「套用到白板」。</div>
+        <div class="panel-hint">輸入完畢後按下「套用到白板」。</div>
         <div class="panel-actions">
           <label class="panel-control">
             <span>白板尺寸</span>
@@ -412,7 +421,7 @@
           </label>
           <label class="panel-control">
             <span>透明度</span>
-            <input type="range" id="boardOpacity" min="30" max="100" value="96" />
+            <input type="range" id="boardOpacity" min="70" max="100" value="96" />
             <span id="boardOpacityValue">96%</span>
           </label>
           <label class="panel-control">
@@ -423,12 +432,7 @@
             <span>格線顏色</span>
             <input type="color" id="lineColor" value="#cbd5f5" />
           </label>
-          <button type="button" class="ghost-btn" id="openSignaturePad">
-            開啟簽名板
-          </button>
-          <button type="button" class="ghost-btn" id="applyDataBtn">
-            套用到白板
-          </button>
+          <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
         </div>
       </section>
 
@@ -442,7 +446,7 @@
           <img id="photoImage" alt="拍攝預覽" hidden />
           <div class="stage-placeholder" id="placeholder">
             <strong>請拍照或上傳照片</strong>
-            <span>白板會顯示在畫面上，可拖曳、縮放及更改顏色。</span>
+            <span>白板會顯示在畫面上，可拖曳與縮放。</span>
           </div>
         </div>
         <div class="whiteboard-wrapper" id="whiteboardWrapper">
@@ -464,12 +468,9 @@
                 <label>檢查日期</label>
                 <div class="board-value" id="displayTestDate">—</div>
               </div>
-              <div class="board-block">
-                <label>簽名位置</label>
-                <div class="signature-placeholder-box" id="signatureBox">
-                  <span id="signaturePlaceholderText">（簽名預留位置）</span>
-                  <img id="signatureImage" alt="簽名" hidden />
-                </div>
+              <div class="board-row">
+                <label>檢查人員</label>
+                <div class="board-value" id="displayInspector">—</div>
               </div>
             </div>
           </div>
@@ -507,20 +508,16 @@
       const textColorInput = document.getElementById("textColor");
       const lineColorInput = document.getElementById("lineColor");
       const applyDataBtn = document.getElementById("applyDataBtn");
-      const openSignaturePadBtn = document.getElementById("openSignaturePad");
       const clearBoardBtn = document.getElementById("clearBoardBtn");
       const exportBtn = document.getElementById("exportBtn");
       const toastMessage = document.getElementById("toastMessage");
-      const signaturePlaceholderText = document.getElementById("signaturePlaceholderText");
-      const signatureImage = document.getElementById("signatureImage");
-
-      const SIGNATURE_STORAGE_KEY = "whiteboard_signature_data";
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
         inspectionLocation: document.getElementById("inputInspectionLocation"),
         testResult: document.getElementById("inputTestResult"),
         testDate: document.getElementById("inputTestDate"),
+        inspector: document.getElementById("inputInspector"),
       };
 
       const displayTargets = {
@@ -528,6 +525,7 @@
         inspectionLocation: document.getElementById("displayInspectionLocation"),
         testResult: document.getElementById("displayTestResult"),
         testDate: document.getElementById("displayTestDate"),
+        inspector: document.getElementById("displayInspector"),
       };
 
       const autoResizeTextarea = (textarea) => {
@@ -541,8 +539,8 @@
         toastMessage.dataset.variant = variant;
         toastMessage.classList.add("visible");
         clearTimeout(showToast.timer);
-        showToast.timer = setTimeout(() =>
-          toastMessage.classList.remove("visible"),
+        showToast.timer = setTimeout(
+          () => toastMessage.classList.remove("visible"),
           4500
         );
       };
@@ -554,22 +552,6 @@
         }
         const ratio = (photoImage.naturalHeight / photoImage.naturalWidth) * 100;
         captureArea.style.setProperty("--stage-aspect", `${ratio}%`);
-      };
-
-      const applySignatureImage = (dataUrl) => {
-        if (!dataUrl) {
-          signatureImage.hidden = true;
-          signaturePlaceholderText.hidden = false;
-          return;
-        }
-        signatureImage.src = dataUrl;
-        signatureImage.hidden = false;
-        signaturePlaceholderText.hidden = true;
-      };
-
-      const loadSignatureFromStorage = () => {
-        const dataUrl = localStorage.getItem(SIGNATURE_STORAGE_KEY);
-        applySignatureImage(dataUrl);
       };
 
       const handlePhotoFiles = (files) => {
@@ -643,6 +625,19 @@
         whiteboard.classList.toggle("exporting", state);
       };
 
+      const syncField = (key) => {
+        const value = formInputs[key].value.trim();
+        displayTargets[key].textContent = value || "—";
+      };
+
+      const syncAllFields = () => Object.keys(formInputs).forEach(syncField);
+
+      const clearBoard = () => {
+        Object.values(formInputs).forEach((input) => (input.value = ""));
+        formInputs.testDate.valueAsDate = new Date();
+        syncAllFields();
+      };
+
       const updateBoardColor = (color) => {
         document.documentElement.style.setProperty("--board-fill", color);
       };
@@ -661,51 +656,68 @@
         document.documentElement.style.setProperty("--line-color", color);
       };
 
-      const syncField = (key) => {
-        const value = formInputs[key].value.trim();
-        displayTargets[key].textContent = value || "—";
+      const toggleWhiteboardSolid = (enable) => {
+        whiteboard.classList.toggle("solid-mode", Boolean(enable));
       };
 
-      const syncAllFields = () => Object.keys(formInputs).forEach(syncField);
-
-      const clearBoard = () => {
-        Object.values(formInputs).forEach((input) => (input.value = ""));
-        formInputs.testDate.valueAsDate = new Date();
-        syncAllFields();
-        localStorage.removeItem(SIGNATURE_STORAGE_KEY);
-        applySignatureImage(null);
+      const downloadBlob = (blob, filename) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
       };
 
-      const openSignaturePad = () => {
-        window.open("signature_pad.html", "_blank");
+      const openPreviewTab = (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank");
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      };
+
+      const handleShareOrDownload = async (blob, filename) => {
+        const file = new File([blob], filename, { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "工程白板照片",
+              text: "在分享面板中選擇儲存影像即可。",
+            });
+            showToast("已開啟分享面板，請選擇儲存影像。", "success");
+            return;
+          } catch (error) {
+            if (error.name !== "AbortError") {
+              showToast("分享面板不可用，將自動下載影像。");
+            }
+          }
+        }
+        downloadBlob(blob, filename);
+        openPreviewTab(blob);
+        showToast("已下載並開啟預覽，如找不到圖片請到檔案 App。", "success");
       };
 
       const exportBoardImage = async () => {
         exportBtn.disabled = true;
         exportBtn.textContent = "匯出中…";
         toggleExportAppearance(true);
+        toggleWhiteboardSolid(true);
         try {
           const canvas = await html2canvas(captureArea, {
             backgroundColor: null,
             scale: window.devicePixelRatio || 2,
           });
           const blob = await new Promise((resolve, reject) =>
-            canvas.toBlob(
-              (b) => (b ? resolve(b) : reject(new Error("failed"))),
-              "image/png",
-              1
-            )
+            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("failed"))), "image/png", 1)
           );
-          const timestamp = new Date()
-            .toISOString()
-            .replace(/[T:]/g, "-")
-            .split(".")[0];
+          const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
           await handleShareOrDownload(blob, `whiteboard_${timestamp}.png`);
         } catch (error) {
           console.error(error);
           showToast("匯出失敗，請再試一次。");
         } finally {
           toggleExportAppearance(false);
+          toggleWhiteboardSolid(false);
           exportBtn.disabled = false;
           exportBtn.textContent = "匯出整張圖片";
         }
@@ -728,7 +740,7 @@
 
       clearBoardBtn.addEventListener("click", () => {
         clearBoard();
-        showToast("白板文字與簽名已清除。", "success");
+        showToast("白板文字已清除。", "success");
       });
 
       boardScaleInput.addEventListener("input", (event) =>
@@ -746,17 +758,10 @@
       lineColorInput.addEventListener("input", (event) =>
         updateLineColor(event.target.value)
       );
-      openSignaturePadBtn.addEventListener("click", openSignaturePad);
 
       exportBtn.addEventListener("click", exportBoardImage);
       window.addEventListener("resize", updateStageAspect);
       photoImage.addEventListener("load", updateStageAspect);
-      window.addEventListener("focus", loadSignatureFromStorage);
-      window.addEventListener("storage", (event) => {
-        if (event.key === SIGNATURE_STORAGE_KEY) {
-          loadSignatureFromStorage();
-        }
-      });
 
       if (!formInputs.testDate.value) {
         formInputs.testDate.valueAsDate = new Date();
@@ -771,8 +776,10 @@
       formInputs.testResult.addEventListener("input", () =>
         autoResizeTextarea(formInputs.testResult)
       );
-      formInputs.testDate.addEventListener("change", () => syncField("testDate"));
-      loadSignatureFromStorage();
+      formInputs.testDate.addEventListener("change", () =>
+        syncField("testDate")
+      );
     </script>
   </body>
 </html>
+
