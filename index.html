@@ -9,6 +9,9 @@
     <title>工程白板拍照工具</title>
     <style>
       :root {
+        --board-fill: #f8fafc;
+        --text-color: #0f172a;
+        --line-color: #cbd5f5;
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
           BlinkMacSystemFont, sans-serif;
         line-height: 1.45;
@@ -161,11 +164,11 @@
       .stage {
         position: relative;
         width: 100%;
-        border-radius: 24px;
+        border-radius: 0;
         overflow: hidden;
         background: #0f172a;
-        box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45);
-        border: 6px solid rgba(248, 250, 252, 0.1);
+        box-shadow: none;
+        border: 6px solid rgba(15, 23, 42, 0.7);
         --stage-aspect: 56.25%;
       }
 
@@ -225,11 +228,12 @@
 
       .whiteboard {
         width: 100%;
-        background: rgba(248, 250, 252, 0.96);
-        border-radius: 18px;
-        border: 4px solid #cbd5f5;
-        box-shadow: 0 18px 32px rgba(15, 23, 42, 0.35);
-        padding: 0.9rem;
+        background: var(--board-fill);
+        border-radius: 0;
+        border: 4px solid var(--line-color);
+        padding: 0.75rem;
+        color: var(--text-color);
+        box-shadow: none;
       }
 
       .whiteboard.exporting {
@@ -252,18 +256,19 @@
         flex: 0 0 72px;
         font-size: 0.9rem;
         letter-spacing: 0.04em;
+        color: var(--text-color);
       }
 
       .board-value {
         flex: 1;
         min-height: 34px;
-        border: 1px solid #cbd5f5;
+        border: 1px solid var(--line-color);
         border-radius: 10px;
         padding: 0.35rem 0.55rem;
-        background: #fff;
+        background: var(--board-fill);
         font-size: 0.96rem;
         font-weight: 600;
-        color: #0f172a;
+        color: var(--text-color);
         white-space: pre-wrap;
       }
 
@@ -276,29 +281,31 @@
       .board-block label {
         font-size: 0.88rem;
         letter-spacing: 0.04em;
+        color: var(--text-color);
       }
 
       .board-notes {
         min-height: 3.2rem;
-        border: 1px solid #cbd5f5;
+        border: 1px solid var(--line-color);
         border-radius: 14px;
         padding: 0.65rem 0.75rem;
-        background: #fff;
+        background: var(--board-fill);
         font-size: 1rem;
         line-height: 1.4;
+        color: var(--text-color);
         white-space: pre-wrap;
       }
 
       .signature-placeholder-box {
         flex: 1;
         min-height: 80px;
-        border: 1px dashed #cbd5f5;
+        border: 1px dashed var(--line-color);
         border-radius: 12px;
-        background: #fff;
+        background: var(--board-fill);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #94a3b8;
+        color: var(--text-color);
         font-size: 0.95rem;
       }
 
@@ -417,6 +424,10 @@
             <span>文字顏色</span>
             <input type="color" id="textColor" value="#0f172a" />
           </label>
+          <label class="panel-control">
+            <span>格線顏色</span>
+            <input type="color" id="lineColor" value="#cbd5f5" />
+          </label>
           <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
         </div>
       </section>
@@ -487,6 +498,7 @@
       const boardOpacityInput = document.getElementById("boardOpacity");
       const boardOpacityValue = document.getElementById("boardOpacityValue");
       const textColorInput = document.getElementById("textColor");
+      const lineColorInput = document.getElementById("lineColor");
       const applyDataBtn = document.getElementById("applyDataBtn");
       const clearBoardBtn = document.getElementById("clearBoardBtn");
       const exportBtn = document.getElementById("exportBtn");
@@ -617,8 +629,7 @@
       };
 
       const updateBoardColor = (color) => {
-        whiteboard.style.setProperty("--board-bg", color);
-        whiteboard.style.backgroundColor = color;
+        document.documentElement.style.setProperty("--board-fill", color);
       };
 
       const updateBoardOpacity = (percent) => {
@@ -628,14 +639,11 @@
       };
 
       const updateTextColor = (color) => {
-        whiteboard.style.color = color;
-        whiteboard.querySelectorAll(".board-value, .board-notes, label").forEach((el) => {
-          if (el.tagName.toLowerCase() === "label") {
-            el.style.color = color;
-          } else {
-            el.style.color = color;
-          }
-        });
+        document.documentElement.style.setProperty("--text-color", color);
+      };
+
+      const updateLineColor = (color) => {
+        document.documentElement.style.setProperty("--line-color", color);
       };
 
       const toggleWhiteboardSolid = (enable) => {
@@ -737,20 +745,29 @@
       textColorInput.addEventListener("input", (event) =>
         updateTextColor(event.target.value)
       );
+      lineColorInput.addEventListener("input", (event) =>
+        updateLineColor(event.target.value)
+      );
 
       exportBtn.addEventListener("click", exportBoardImage);
       window.addEventListener("resize", updateStageAspect);
       photoImage.addEventListener("load", updateStageAspect);
 
-      formInputs.testDate.valueAsDate = new Date();
+      if (!formInputs.testDate.value) {
+        formInputs.testDate.valueAsDate = new Date();
+      }
       syncAllFields();
       updateBoardScale(boardScaleInput.value);
       updateBoardColor(boardColorInput.value);
       updateBoardOpacity(boardOpacityInput.value);
       updateTextColor(textColorInput.value);
+      updateLineColor(lineColorInput.value);
       autoResizeTextarea(formInputs.testResult);
       formInputs.testResult.addEventListener("input", () =>
         autoResizeTextarea(formInputs.testResult)
+      );
+      formInputs.testDate.addEventListener("change", () =>
+        syncField("testDate")
       );
     </script>
   </body>
