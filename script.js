@@ -8,6 +8,9 @@ const scaleControl = document.getElementById("scaleControl");
 const scaleValue = document.getElementById("scaleValue");
 const photoInput = document.getElementById("photoInput");
 const clearImageButton = document.getElementById("clearImage");
+const floatingBoard = document.getElementById("floatingBoard");
+const floatingBoardBackdrop = document.getElementById("floatingBoardBackdrop");
+const closeFloatingBoardButton = document.getElementById("closeFloatingBoard");
 
 const formatDateInputValue = (date) => {
   const year = date.getFullYear();
@@ -55,6 +58,22 @@ const clearBoardImage = () => {
   photoInput.value = "";
 };
 
+const openFloatingBoard = () => {
+  floatingBoard.classList.remove("hidden");
+  floatingBoard.setAttribute("aria-hidden", "false");
+  document.body.classList.add("no-scroll");
+};
+
+const closeFloatingBoard = () => {
+  floatingBoard.classList.add("hidden");
+  floatingBoard.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("no-scroll");
+};
+
+const handlePhotoButtonClick = () => {
+  openFloatingBoard();
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   initDateField();
   updateBoardColor(boardColorInput.value);
@@ -70,6 +89,14 @@ document.addEventListener("DOMContentLoaded", () => {
   scaleControl.addEventListener("input", (event) =>
     updateScale(event.target.value)
   );
+  photoInput.addEventListener("click", handlePhotoButtonClick);
   photoInput.addEventListener("change", handlePhotoUpload);
   clearImageButton.addEventListener("click", clearBoardImage);
+  closeFloatingBoardButton.addEventListener("click", closeFloatingBoard);
+  floatingBoardBackdrop.addEventListener("click", closeFloatingBoard);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !floatingBoard.classList.contains("hidden")) {
+      closeFloatingBoard();
+    }
+  });
 });

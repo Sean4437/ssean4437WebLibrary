@@ -19,6 +19,14 @@ body {
   color: #111827;
 }
 
+.hidden {
+  display: none !important;
+}
+
+body.no-scroll {
+  overflow: hidden;
+}
+
 .app-header,
 .app-footer {
   text-align: center;
@@ -101,7 +109,54 @@ main {
   color: #111827;
 }
 
+.floating-board {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+
+.floating-board__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(2px);
+}
+
+.floating-board__panel {
+  position: relative;
+  margin: 3vh auto;
+  background: transparent;
+  max-width: min(960px, 95vw);
+  height: 94vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.floating-board__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.icon-button {
+  border: none;
+  background: transparent;
+  font-size: 1.35rem;
+  line-height: 1;
+  padding: 0.2rem;
+  cursor: pointer;
+}
+
 .whiteboard-viewport {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
   background: #ffffff;
   border-radius: 12px;
   padding: 1rem;
@@ -113,6 +168,7 @@ main {
 
 .whiteboard {
   --board-scale: 1;
+  flex: 1;
   background: var(--board-bg);
   color: var(--text-color);
   width: min(100%, 900px);
@@ -155,5 +211,10 @@ main {
 
   .whiteboard {
     padding: 1rem;
+  }
+
+  .floating-board__panel {
+    margin: 1vh auto;
+    height: 98vh;
   }
 }

@@ -12,7 +12,7 @@
   <body>
     <header class="app-header">
       <h1>Mobile Whiteboard Canvas</h1>
-      <p>使用手機拍照、輸入文字，自由調整白板尺寸與色彩。</p>
+      <p>先點「新增照片」開啟相機，同時會浮出白板供你即時輸入。</p>
     </header>
 
     <main>
@@ -60,25 +60,48 @@
           清除照片
         </button>
       </section>
-
-      <section class="whiteboard-viewport">
-        <div class="whiteboard" id="whiteboard">
-          <div
-            id="whiteboardContent"
-            class="whiteboard-content"
-            contenteditable="true"
-            role="textbox"
-            aria-label="白板文字內容"
-          >
-            點一下即可輸入文字、筆記或待辦事項。
-          </div>
-          <img id="boardImage" alt="白板上的照片" hidden />
-        </div>
-      </section>
     </main>
 
+    <div class="floating-board hidden" id="floatingBoard" aria-hidden="true">
+      <div class="floating-board__backdrop" id="floatingBoardBackdrop"></div>
+      <div
+        class="floating-board__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="floatingBoardTitle"
+      >
+        <header class="floating-board__header">
+          <h2 id="floatingBoardTitle">浮動白板</h2>
+          <button
+            type="button"
+            id="closeFloatingBoard"
+            class="icon-button"
+            aria-label="關閉浮動白板"
+          >
+            ✕
+          </button>
+        </header>
+        <section class="whiteboard-viewport">
+          <div class="whiteboard" id="whiteboard">
+            <div
+              id="whiteboardContent"
+              class="whiteboard-content"
+              contenteditable="true"
+              role="textbox"
+              aria-label="白板文字內容"
+            >
+              點一下即可輸入文字、筆記或待辦事項。
+            </div>
+            <img id="boardImage" alt="白板上的照片" hidden />
+          </div>
+        </section>
+      </div>
+    </div>
+
     <footer class="app-footer">
-      <small>貼士：用兩根手指可在手機上捲動畫面，白板內容會跟著縮放設定調整。</small>
+      <small
+        >貼士：若需要手動開關白板，可再次點「新增照片」或按右上角關閉。</small
+      >
     </footer>
 
     <script src="script.js"></script>
