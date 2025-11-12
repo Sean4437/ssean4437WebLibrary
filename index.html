@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
-    <title>工程白板拍照工具</title>
+    <title>工�??�板?�照工具</title>
     <style>
       :root {
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
@@ -312,53 +312,53 @@
   <body>
     <div class="app-shell">
       <div>
-        <h1>工程白板拍照工具</h1>
-        <p class="version-note">⚠ 已更新版本，請使用此介面最新版功能</p>
+        <h1>工�??�板?�照工具</h1>
+        <p class="version-note">??已更?��??��?請使?�此介面?�?��??�能</p>
       </div>
 
       <div class="controls">
-        <button class="btn" id="takePhotoBtn">拍照</button>
-        <button class="btn btn-secondary" id="uploadPhotoBtn">上傳照片</button>
+        <button class="btn" id="takePhotoBtn">?�照</button>
+        <button class="btn btn-secondary" id="uploadPhotoBtn">上傳?��?</button>
       </div>
 
       <div class="stage" id="captureArea">
         <div class="stage-content" id="photoLayer">
           <div class="stage-placeholder" id="placeholder">
-            <strong>請拍照或上傳照片</strong>
-            <span>白板會疊在照片下方三分之一，亦可拖曳到其他位置。</span>
+            <strong>請�??��?上傳?��?</strong>
+            <span>?�板?��??�照?��??��??��?一，亦?��??�到?��?位置??/span>
           </div>
         </div>
         <div class="whiteboard" id="whiteboard">
           <div class="whiteboard-header">
-            <h2>現場試驗紀錄板</h2>
-            <small>拖曳以調整位置</small>
+            <h2>?�場試�?紀?�板</h2>
+            <small>?�曳以調?��?�?/small>
           </div>
           <div class="whiteboard-body">
             <div class="field">
-              <label for="projectName">工程名稱</label>
-              <input type="text" id="projectName" placeholder="輸入工程名稱" />
+              <label for="projectName">工�??�稱</label>
+              <input type="text" id="projectName" placeholder="輸入工�??�稱" />
             </div>
             <div class="field">
-              <label for="agency">主辦機關</label>
-              <input type="text" id="agency" placeholder="輸入主辦機關" />
+              <label for="agency">主辦機�?</label>
+              <input type="text" id="agency" placeholder="輸入主辦機�?" />
             </div>
             <div class="field">
-              <label for="contractor">承包商</label>
-              <input type="text" id="contractor" placeholder="輸入承包商" />
+              <label for="contractor">?��???/label>
+              <input type="text" id="contractor" placeholder="輸入?��??? />
             </div>
             <div class="field">
-              <label for="testItem">試驗項目</label>
-              <input type="text" id="testItem" placeholder="輸入試驗項目" />
+              <label for="testItem">試�??�目</label>
+              <input type="text" id="testItem" placeholder="輸入試�??�目" />
             </div>
             <div class="field">
-              <label for="testDate">日期</label>
+              <label for="testDate">?��?</label>
               <input type="date" id="testDate" />
             </div>
             <div class="field field--full">
-              <label for="testResult">試驗結果</label>
+              <label for="testResult">試�?結�?</label>
               <textarea
                 id="testResult"
-                placeholder="輸入測試結果、備註或注意事項"
+                placeholder="輸入測試結�??��?註�?注�?事�?"
               ></textarea>
             </div>
           </div>
@@ -366,7 +366,7 @@
             <div class="signature-toolbar">
               <label for="brushSize">筆刷粗細</label>
               <input type="range" id="brushSize" min="2" max="10" value="3" />
-              <label for="brushColor">簽名顏色</label>
+              <label for="brushColor">簽�?顏色</label>
               <input type="color" id="brushColor" value="#0f172a" />
             </div>
             <canvas id="signatureCanvas"></canvas>
@@ -376,10 +376,10 @@
 
       <div class="action-bar">
         <button class="action-btn secondary" id="clearSignatureBtn">
-          清除簽名
+          清除簽�?
         </button>
         <button class="action-btn primary" id="exportBtn">
-          匯出整張圖片
+          ?�出?�張?��?
         </button>
       </div>
 
@@ -503,20 +503,20 @@
           try {
             await navigator.share({
               files: [file],
-              title: "工程白板照片",
-              text: "請在分享面板中選擇「儲存影像」即可存入相簿。",
+              title: "工�??�板?��?",
+              text: "請在?�享?�板中選?�「儲存影?�」即?��??�相簿�?,
             });
             showExportMessage(
-              "已開啟分享面板，請選擇「儲存影像」。",
+              "已�??��?享面?��?請選?�「儲存影?�」�?,
               "success"
             );
             return;
           } catch (error) {
             if (error.name === "AbortError") {
-              showExportMessage("已取消分享，改為下載影像。");
+              showExportMessage("已�?消�?享�??�為下�?影�???);
             } else {
               console.warn("Share failed, fallback to download", error);
-              showExportMessage("分享面板不可用，改為下載影像。");
+              showExportMessage("?�享?�板不可?��??�為下�?影�???);
             }
           }
         }
@@ -524,7 +524,7 @@
         downloadBlob(blob, filename);
         openPreviewTab(blob);
         showExportMessage(
-          "已下載並開啟預覽，如找不到圖片請至檔案 App 的下載項目或長按圖片儲存。",
+          "已�?載並?��??�覽，�??��??��??��??��?�?App ?��?載�??��??��??��??��???,
           "info"
         );
       };
@@ -626,7 +626,7 @@
 
       const exportImage = async () => {
         exportBtn.disabled = true;
-        exportBtn.textContent = "匯出中…";
+        exportBtn.textContent = "?�出中�?;
         const timestampLabel = formatExportTimestamp();
         const filename = `whiteboard_${timestampLabel}.png`;
         toggleWhiteboardSolid(true);
@@ -642,7 +642,7 @@
                 if (result) {
                   resolve(result);
                 } else {
-                  reject(new Error("無法生成圖片"));
+                  reject(new Error("?��??��??��?"));
                 }
               },
               "image/png",
@@ -653,12 +653,12 @@
           await handleShareOrDownload(blob, filename);
         } catch (error) {
           console.error(error);
-          alert("匯出失敗，請再試一次。");
-          showExportMessage("匯出失敗，請再試一次。", "info");
+          alert("?�出失�?，�??�試一次�?);
+          showExportMessage("?�出失�?，�??�試一次�?, "info");
         } finally {
           toggleWhiteboardSolid(false);
           exportBtn.disabled = false;
-          exportBtn.textContent = "匯出整張圖片";
+          exportBtn.textContent = "?�出?�張?��?";
         }
       };
 
