@@ -13,6 +13,8 @@
         --text-color: #0f172a;
         --line-color: #000000;
         --board-rotation: 0deg;
+        --board-scale-x: 0.45;
+        --board-scale-y: 0.45;
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
           BlinkMacSystemFont, sans-serif;
         line-height: 1.45;
@@ -224,17 +226,62 @@
       }
 
       .whiteboard-wrapper {
-        --board-scale: 0.45;
         --board-width: min(480px, 90%);
         position: absolute;
         left: 50%;
         top: 70%;
-        transform: translate(-50%, -50%) scale(var(--board-scale)) rotate(var(--board-rotation));
+        transform: translate(-50%, -50%) rotate(var(--board-rotation))
+          scale(var(--board-scale-x), var(--board-scale-y));
         transform-origin: center;
         width: var(--board-width);
         touch-action: none;
+        transition: box-shadow 0.15s ease;
       }
 
+      .whiteboard-wrapper.is-resizing {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+      }
+
+      .resize-handle {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #38bdf8;
+        border: 2px solid #fff;
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
+        display: none;
+        z-index: 10;
+        touch-action: none;
+      }
+
+      .whiteboard-wrapper.show-handles .resize-handle {
+        display: block;
+      }
+
+      .resize-handle[data-handle="top-left"] {
+        top: -8px;
+        left: -8px;
+        cursor: nwse-resize;
+      }
+
+      .resize-handle[data-handle="top-right"] {
+        top: -8px;
+        right: -8px;
+        cursor: nesw-resize;
+      }
+
+      .resize-handle[data-handle="bottom-right"] {
+        bottom: -8px;
+        right: -8px;
+        cursor: nwse-resize;
+      }
+
+      .resize-handle[data-handle="bottom-left"] {
+        bottom: -8px;
+        left: -8px;
+        cursor: nesw-resize;
+      }
       .whiteboard {
         width: 100%;
         background: var(--board-fill);
@@ -465,6 +512,10 @@
           </div>
         </div>
         <div class="whiteboard-wrapper" id="whiteboardWrapper">
+          <button class="resize-handle" data-handle="top-left" type="button" aria-label="調整白板 左上"></button>
+          <button class="resize-handle" data-handle="top-right" type="button" aria-label="調整白板 右上"></button>
+          <button class="resize-handle" data-handle="bottom-right" type="button" aria-label="調整白板 右下"></button>
+          <button class="resize-handle" data-handle="bottom-left" type="button" aria-label="調整白板 左下"></button>
           <div class="whiteboard" id="whiteboard">
             <div class="whiteboard-content">
               <div class="board-row">
@@ -518,6 +569,7 @@
       const captureArea = document.getElementById("captureArea");
       const boardScaleInput = document.getElementById("boardScale");
       const boardScaleValue = document.getElementById("boardScaleValue");
+      const resizeHandles = document.querySelectorAll(".resize-handle");
       const boardWidthInput = document.getElementById("boardWidth");
       const boardWidthValue = document.getElementById("boardWidthValue");
       const boardRotationInput = document.getElementById("boardRotation");
@@ -533,6 +585,9 @@
       const toastMessage = document.getElementById("toastMessage");
       const photoWatermark = document.getElementById("photoWatermark");
       whiteboardWrapper.dataset.userPositioned = "false";
+      let boardScaleBase = Number(boardScaleInput.value) / 100;
+      let boardStretchX = 1;
+      let boardStretchY = 1;
 
       const isMobileDevice = /android|iphone|ipad|ipod|mobile/i.test(
         (navigator.userAgent || "").toLowerCase()
@@ -760,6 +815,14 @@
 
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
+      const applyBoardScale = () => {
+        const scaleX = boardScaleBase * boardStretchX;
+        const scaleY = boardScaleBase * boardStretchY;
+        whiteboardWrapper.style.setProperty("--board-scale-x", scaleX.toString());
+        whiteboardWrapper.style.setProperty("--board-scale-y", scaleY.toString());
+        boardScaleValue.textContent = `${Math.round(boardScaleBase * 100)}%`;
+      };
+
       const startDrag = (event) => {
         if (event.target.closest("input, textarea, button, select")) return;
         whiteboardWrapper.dataset.dragging = "true";
@@ -831,14 +894,64 @@
 
       const updateBoardScale = (value) => {
         const percent = Math.max(10, Math.min(120, Number(value)));
-        whiteboardWrapper.style.setProperty(
-          "--board-scale",
-          (percent / 100).toString()
-        );
-        boardScaleValue.textContent = `${percent}%`;
+        boardScaleBase = percent / 100;
+        applyBoardScale();
         if (whiteboardWrapper.dataset.userPositioned !== "true") {
           requestAnimationFrame(positionBoardAtBottomLeft);
         }
+      };
+
+      const RESIZE_DIRECTIONS = {
+        "top-left": { x: -1, y: -1 },
+        "top-right": { x: 1, y: -1 },
+        "bottom-right": { x: 1, y: 1 },
+        "bottom-left": { x: -1, y: 1 },
+      };
+
+      const showHandles = () => whiteboardWrapper.classList.add("show-handles");
+      const hideHandles = () => {
+        if (whiteboardWrapper.dataset.resizingHandle) return;
+        whiteboardWrapper.classList.remove("show-handles");
+      };
+
+      const startHandleResize = (handle, event) => {
+        const dir = RESIZE_DIRECTIONS[handle];
+        if (!dir) return;
+        event.preventDefault();
+        event.stopPropagation();
+        whiteboardWrapper.dataset.userPositioned = "true";
+        whiteboardWrapper.classList.add("is-resizing");
+        whiteboardWrapper.dataset.resizingHandle = handle;
+        whiteboardWrapper.dataset.startPointerX =
+          event.clientX ?? event.touches?.[0]?.clientX ?? 0;
+        whiteboardWrapper.dataset.startPointerY =
+          event.clientY ?? event.touches?.[0]?.clientY ?? 0;
+        whiteboardWrapper.dataset.stretchX = boardStretchX.toString();
+        whiteboardWrapper.dataset.stretchY = boardStretchY.toString();
+      };
+
+      const handleResizeMove = (event) => {
+        const handle = whiteboardWrapper.dataset.resizingHandle;
+        if (!handle) return;
+        const dir = RESIZE_DIRECTIONS[handle];
+        if (!dir) return;
+        event.preventDefault();
+        const startX = parseFloat(whiteboardWrapper.dataset.startPointerX);
+        const startY = parseFloat(whiteboardWrapper.dataset.startPointerY);
+        const pointerX = event.clientX ?? event.touches?.[0]?.clientX ?? 0;
+        const pointerY = event.clientY ?? event.touches?.[0]?.clientY ?? 0;
+        const deltaX = ((pointerX - startX) / captureArea.offsetWidth) * dir.x;
+        const deltaY = ((pointerY - startY) / captureArea.offsetHeight) * dir.y;
+        const baseStretchX = parseFloat(whiteboardWrapper.dataset.stretchX) || 1;
+        const baseStretchY = parseFloat(whiteboardWrapper.dataset.stretchY) || 1;
+        boardStretchX = clamp(baseStretchX * (1 + deltaX), 0.4, 2.5);
+        boardStretchY = clamp(baseStretchY * (1 + deltaY), 0.4, 2.5);
+        applyBoardScale();
+      };
+
+      const endHandleResize = () => {
+        whiteboardWrapper.classList.remove("is-resizing");
+        delete whiteboardWrapper.dataset.resizingHandle;
       };
 
       const updateBoardWidth = (value) => {
@@ -986,6 +1099,16 @@
       boardScaleInput.addEventListener("input", (event) =>
         updateBoardScale(event.target.value)
       );
+      resizeHandles.forEach((handle) => {
+        handle.addEventListener("pointerdown", (event) =>
+          startHandleResize(handle.dataset.handle, event)
+        );
+      });
+      whiteboardWrapper.addEventListener("pointerenter", showHandles);
+      whiteboardWrapper.addEventListener("pointerleave", hideHandles);
+      window.addEventListener("pointermove", handleResizeMove, { passive: false });
+      window.addEventListener("pointerup", endHandleResize);
+      window.addEventListener("pointercancel", endHandleResize);
       boardWidthInput.addEventListener("input", (event) =>
         updateBoardWidth(event.target.value)
       );
