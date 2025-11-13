@@ -220,7 +220,8 @@
         font-size: clamp(0.65rem, 2.5vw, 0.9rem);
         letter-spacing: 0.18em;
         font-weight: 600;
-        text-shadow: 0 0 6px rgba(0, 0, 0, 0.45);
+        -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.85);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
         pointer-events: none;
         z-index: 5;
       }
@@ -910,10 +911,18 @@
         "bottom-left": { x: -1, y: 1 },
       };
 
-      const showHandles = () => whiteboardWrapper.classList.add("show-handles");
+      let handleHideTimer = null;
+      const showHandles = () => {
+        whiteboardWrapper.classList.add("show-handles");
+        clearTimeout(handleHideTimer);
+      };
       const hideHandles = () => {
         if (whiteboardWrapper.dataset.resizingHandle) return;
-        whiteboardWrapper.classList.remove("show-handles");
+        clearTimeout(handleHideTimer);
+        handleHideTimer = setTimeout(
+          () => whiteboardWrapper.classList.remove("show-handles"),
+          800
+        );
       };
 
       const startHandleResize = (handle, event) => {
@@ -1102,15 +1111,23 @@
         updateBoardScale(event.target.value)
       );
       resizeHandles.forEach((handle) => {
-        handle.addEventListener("pointerdown", (event) =>
-          startHandleResize(handle.dataset.handle, event)
+        ["pointerdown", "touchstart"].forEach((type) =>
+          handle.addEventListener(type, (event) =>
+            startHandleResize(handle.dataset.handle, event)
+          )
         );
       });
-      whiteboardWrapper.addEventListener("pointerenter", showHandles);
-      whiteboardWrapper.addEventListener("pointerleave", hideHandles);
+      ["pointerenter", "touchstart"].forEach((type) =>
+        whiteboardWrapper.addEventListener(type, showHandles, { passive: true })
+      );
+      ["pointerleave"].forEach((type) =>
+        whiteboardWrapper.addEventListener(type, hideHandles)
+      );
       window.addEventListener("pointermove", handleResizeMove, { passive: false });
+      window.addEventListener("touchmove", handleResizeMove, { passive: false });
       window.addEventListener("pointerup", endHandleResize);
       window.addEventListener("pointercancel", endHandleResize);
+      window.addEventListener("touchend", endHandleResize);
       boardWidthInput.addEventListener("input", (event) =>
         updateBoardWidth(event.target.value)
       );
