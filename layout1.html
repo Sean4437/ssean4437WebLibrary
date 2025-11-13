@@ -11,7 +11,8 @@
       :root {
         --board-fill: #f8fafc;
         --text-color: #0f172a;
-        --line-color: #cbd5f5;
+        --line-color: #000000;
+        --board-rotation: 0deg;
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
           BlinkMacSystemFont, sans-serif;
         line-height: 1.45;
@@ -166,16 +167,10 @@
         width: 100%;
         border-radius: 0;
         overflow: hidden;
-        background: #0f172a;
-        box-shadow: none;
-        border: 6px solid rgba(15, 23, 42, 0.7);
-        --stage-aspect: 56.25%;
-      }
-
-      .stage.exporting {
         background: transparent;
         box-shadow: none;
-        border-color: transparent;
+        border: none;
+        --stage-aspect: 56.25%;
       }
 
       .stage::before {
@@ -190,7 +185,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #0f172a;
+        background: transparent;
       }
 
       .stage-content.exporting {
@@ -217,33 +212,23 @@
 
       .photo-watermark {
         position: absolute;
-        right: 1rem;
-        bottom: 1rem;
-        padding: 0.35rem 0.8rem;
-        border-radius: 999px;
-        background: rgba(15, 23, 42, 0.65);
-        color: #f8fafc;
-        font-size: 0.85rem;
-        letter-spacing: 0.15em;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-        z-index: 5;
+        right: 0.85rem;
+        bottom: 0.75rem;
+        color: #fbbf24;
+        font-size: 0.9rem;
+        letter-spacing: 0.18em;
+        font-weight: 600;
+        text-shadow: 0 0 6px rgba(0, 0, 0, 0.45);
         pointer-events: none;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.2s ease;
-      }
-
-      body[data-layout-mode="layout2"] .photo-watermark {
-        opacity: 1;
-        visibility: visible;
+        z-index: 5;
       }
 
       .whiteboard-wrapper {
-        --board-scale: 0.85;
+        --board-scale: 0.45;
         position: absolute;
         left: 50%;
         top: 70%;
-        transform: translate(-50%, -50%) scale(var(--board-scale));
+        transform: translate(-50%, -50%) scale(var(--board-scale)) rotate(var(--board-rotation));
         transform-origin: center;
         width: min(480px, 90%);
         touch-action: none;
@@ -400,7 +385,7 @@
       }
     </style>
   </head>
-  <body data-layout-mode="layout2">
+  <body>
     <div class="app-shell">
 
       <section class="panel">
@@ -431,8 +416,13 @@
         <div class="panel-actions">
           <label class="panel-control">
             <span>白板尺寸</span>
-            <input type="range" id="boardScale" min="10" max="120" value="85" />
-            <span id="boardScaleValue">85%</span>
+            <input type="range" id="boardScale" min="10" max="120" value="45" />
+            <span id="boardScaleValue">45%</span>
+          </label>
+          <label class="panel-control">
+            <span>白板傾斜</span>
+            <input type="range" id="boardRotation" min="-20" max="20" value="0" />
+            <span id="boardRotationValue">0°</span>
           </label>
           <label class="panel-control">
             <span>白板顏色</span>
@@ -449,7 +439,7 @@
           </label>
           <label class="panel-control">
             <span>格線顏色</span>
-            <input type="color" id="lineColor" value="#cbd5f5" />
+            <input type="color" id="lineColor" value="#000000" />
           </label>
           <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
         </div>
@@ -494,9 +484,7 @@
             </div>
           </div>
         </div>
-        <div class="photo-watermark" id="photoWatermark" aria-hidden="true">
-          日期未設定
-        </div>
+        <div class="photo-watermark" id="photoWatermark">日期未設定</div>
       </div>
 
       <div class="action-bar">
@@ -524,6 +512,8 @@
       const captureArea = document.getElementById("captureArea");
       const boardScaleInput = document.getElementById("boardScale");
       const boardScaleValue = document.getElementById("boardScaleValue");
+      const boardRotationInput = document.getElementById("boardRotation");
+      const boardRotationValue = document.getElementById("boardRotationValue");
       const boardColorInput = document.getElementById("boardColor");
       const boardOpacityInput = document.getElementById("boardOpacity");
       const boardOpacityValue = document.getElementById("boardOpacityValue");
@@ -534,6 +524,11 @@
       const exportBtn = document.getElementById("exportBtn");
       const toastMessage = document.getElementById("toastMessage");
       const photoWatermark = document.getElementById("photoWatermark");
+      whiteboardWrapper.dataset.userPositioned = "false";
+
+      const isMobileDevice = /android|iphone|ipad|ipod|mobile/i.test(
+        (navigator.userAgent || "").toLowerCase()
+      );
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -551,13 +546,6 @@
         inspector: document.getElementById("displayInspector"),
       };
 
-      const formatDateInputValue = (date) => {
-        if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        return `${date.getFullYear()}-${month}-${day}`;
-      };
-
       const formatWatermarkDate = (value) => {
         if (!value) return "日期未設定";
         const [year, month, day] = value.split("-");
@@ -568,7 +556,13 @@
       const updateWatermarkDate = () => {
         if (!photoWatermark) return;
         photoWatermark.textContent = formatWatermarkDate(formInputs.testDate.value);
-        photoWatermark.setAttribute("aria-hidden", "false");
+      };
+
+      const formatDateInputValue = (date) => {
+        if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${date.getFullYear()}-${month}-${day}`;
       };
 
       const readFileAsDataURL = (file) =>
@@ -683,28 +677,31 @@
 
       const applyPhotoDateMetadata = async (file) => {
         if (!file) return;
+        let resolvedDate = null;
+        let usedExif = false;
         try {
           const exifDate = await extractExifDate(file);
           if (exifDate) {
-            formInputs.testDate.value = exifDate;
-            syncField("testDate");
-            showToast("已套用照片拍攝日期。", "success");
-            return;
+            resolvedDate = exifDate;
+            usedExif = true;
           }
         } catch (error) {
           console.warn("EXIF 解析失敗", error);
         }
 
-        if (!formInputs.testDate.value) {
-          const fallbackDate =
+        if (!resolvedDate) {
+          resolvedDate =
             file.lastModified && Number.isFinite(file.lastModified)
               ? formatDateInputValue(new Date(file.lastModified))
               : formatDateInputValue(new Date());
-          formInputs.testDate.value = fallbackDate;
-          syncField("testDate");
-        } else {
-          updateWatermarkDate();
         }
+
+        formInputs.testDate.value = resolvedDate;
+        syncField("testDate");
+        showToast(
+          usedExif ? "已套用照片拍攝日期，如需修改可手動調整。" : "已套用拍攝日期，如需修改可手動調整。",
+          "success"
+        );
       };
 
       const autoResizeTextarea = (textarea) => {
@@ -727,21 +724,25 @@
       const updateStageAspect = () => {
         if (photoImage.hidden || !photoImage.naturalWidth) {
           captureArea.style.setProperty("--stage-aspect", "56.25%");
+          requestAnimationFrame(positionBoardAtBottomLeft);
           return;
         }
         const ratio = (photoImage.naturalHeight / photoImage.naturalWidth) * 100;
         captureArea.style.setProperty("--stage-aspect", `${ratio}%`);
+        requestAnimationFrame(positionBoardAtBottomLeft);
       };
 
       const handlePhotoFiles = async (files) => {
         const [file] = files || [];
         if (!file) return;
         try {
-          const dataUrl = await readFileAsDataURL(file);
-          photoImage.src = dataUrl;
-          photoImage.hidden = false;
-          placeholder.style.display = "none";
-          updateStageAspect();
+        const dataUrl = await readFileAsDataURL(file);
+        photoImage.src = dataUrl;
+        photoImage.hidden = false;
+        placeholder.style.display = "none";
+        updateStageAspect();
+        whiteboardWrapper.dataset.userPositioned = "false";
+        requestAnimationFrame(positionBoardAtBottomLeft);
         } catch (error) {
           showToast("照片載入失敗，請重新選擇。");
           return;
@@ -754,6 +755,7 @@
       const startDrag = (event) => {
         if (event.target.closest("input, textarea, button, select")) return;
         whiteboardWrapper.dataset.dragging = "true";
+        whiteboardWrapper.dataset.userPositioned = "true";
         const rect = whiteboardWrapper.getBoundingClientRect();
         whiteboardWrapper.dataset.offsetX =
           (event.clientX ?? event.touches?.[0]?.clientX ?? 0) - rect.left;
@@ -791,6 +793,34 @@
         whiteboardWrapper.dataset.dragging = "false";
       };
 
+      const positionBoardAtBottomLeft = () => {
+        if (whiteboardWrapper.dataset.userPositioned === "true") return;
+        const stageRect = captureArea.getBoundingClientRect();
+        if (!stageRect.width || !stageRect.height) return;
+        const boardRect = whiteboardWrapper.getBoundingClientRect();
+        if (!boardRect.width || !boardRect.height) return;
+        const photoRect =
+          !photoImage.hidden && photoImage.naturalWidth
+            ? photoImage.getBoundingClientRect()
+            : stageRect;
+        const paddingX = Math.max(8, stageRect.width * 0.012);
+        const paddingY = Math.max(8, stageRect.height * 0.012);
+        const leftEdge = Math.max(photoRect.left, stageRect.left) + paddingX;
+        const bottomEdge = Math.min(photoRect.bottom, stageRect.bottom) - paddingY;
+        const centerX = clamp(
+          leftEdge - stageRect.left + boardRect.width / 2,
+          boardRect.width / 2,
+          stageRect.width - boardRect.width / 2
+        );
+        const centerY = clamp(
+          bottomEdge - stageRect.top - boardRect.height / 2,
+          boardRect.height / 2,
+          stageRect.height - boardRect.height / 2
+        );
+        whiteboardWrapper.style.left = `${(centerX / stageRect.width) * 100}%`;
+        whiteboardWrapper.style.top = `${(centerY / stageRect.height) * 100}%`;
+      };
+
       const updateBoardScale = (value) => {
         const percent = Math.max(10, Math.min(120, Number(value)));
         whiteboardWrapper.style.setProperty(
@@ -798,6 +828,9 @@
           (percent / 100).toString()
         );
         boardScaleValue.textContent = `${percent}%`;
+        if (whiteboardWrapper.dataset.userPositioned !== "true") {
+          requestAnimationFrame(positionBoardAtBottomLeft);
+        }
       };
 
       const toggleExportAppearance = (enable) => {
@@ -827,6 +860,12 @@
         document.documentElement.style.setProperty("--board-fill", color);
       };
 
+      const updateBoardRotation = (value) => {
+        const angle = Math.max(-90, Math.min(90, Number(value)));
+        document.documentElement.style.setProperty("--board-rotation", `${angle}deg`);
+        boardRotationValue.textContent = `${angle}°`;
+      };
+
       const updateBoardOpacity = (percent) => {
         const value = Math.max(30, Math.min(100, Number(percent)));
         whiteboard.style.opacity = (value / 100).toString();
@@ -854,15 +893,14 @@
         setTimeout(() => URL.revokeObjectURL(url), 2000);
       };
 
-      const openPreviewTab = (blob) => {
-        const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-      };
-
       const handleShareOrDownload = async (blob, filename) => {
         const file = new File([blob], filename, { type: "image/png" });
-        if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+        if (
+          isMobileDevice &&
+          navigator.canShare &&
+          navigator.canShare({ files: [file] }) &&
+          navigator.share
+        ) {
           try {
             await navigator.share({
               files: [file],
@@ -878,8 +916,7 @@
           }
         }
         downloadBlob(blob, filename);
-        openPreviewTab(blob);
-        showToast("已下載並開啟預覽，如找不到圖片請到檔案 App。", "success");
+        showToast("已下載圖片，可直接選擇儲存位置。", "success");
       };
 
       const exportBoardImage = async () => {
@@ -893,10 +930,10 @@
             scale: window.devicePixelRatio || 2,
           });
           const blob = await new Promise((resolve, reject) =>
-            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("failed"))), "image/png", 1)
+            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("failed"))), "image/jpeg", 0.92)
           );
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
-          await handleShareOrDownload(blob, `whiteboard_${timestamp}.png`);
+          await handleShareOrDownload(blob, `whiteboard_${timestamp}.jpg`);
         } catch (error) {
           console.error(error);
           showToast("匯出失敗，請再試一次。");
@@ -931,6 +968,9 @@
       boardScaleInput.addEventListener("input", (event) =>
         updateBoardScale(event.target.value)
       );
+      boardRotationInput.addEventListener("input", (event) =>
+        updateBoardRotation(event.target.value)
+      );
       boardColorInput.addEventListener("input", (event) =>
         updateBoardColor(event.target.value)
       );
@@ -953,10 +993,13 @@
       }
       syncAllFields();
       updateBoardScale(boardScaleInput.value);
+      updateBoardRotation(boardRotationInput.value);
       updateBoardColor(boardColorInput.value);
       updateBoardOpacity(boardOpacityInput.value);
       updateTextColor(textColorInput.value);
       updateLineColor(lineColorInput.value);
+      updateWatermarkDate();
+      requestAnimationFrame(positionBoardAtBottomLeft);
       autoResizeTextarea(formInputs.testResult);
       formInputs.testResult.addEventListener("input", () =>
         autoResizeTextarea(formInputs.testResult)
@@ -964,7 +1007,6 @@
       formInputs.testDate.addEventListener("change", () =>
         syncField("testDate")
       );
-      updateWatermarkDate();
     </script>
   </body>
 </html>
