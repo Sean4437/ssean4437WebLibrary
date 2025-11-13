@@ -8,7 +8,7 @@
       :root {
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
           BlinkMacSystemFont, sans-serif;
-        line-height: 1.6;
+        line-height: 1.65;
         color: #0f172a;
         background: #0b1220;
       }
@@ -20,61 +20,143 @@
       body {
         margin: 0;
         min-height: 100vh;
-        padding: clamp(1.5rem, 4vw, 3rem);
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        padding: clamp(1.5rem, 4vw, 4rem);
+        background: radial-gradient(circle at top, #152238 0%, #050910 70%);
       }
 
       main {
-        width: min(520px, 100%);
-        background: rgba(248, 250, 252, 0.97);
-        border-radius: 24px;
-        padding: clamp(1.5rem, 4vw, 2.5rem);
-        box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
+        width: min(720px, 100%);
+        margin: 0 auto;
+        background: #f8fafc;
+        border-radius: 32px;
+        padding: clamp(1.75rem, 4vw, 3rem);
+        box-shadow: 0 25px 50px rgba(5, 8, 16, 0.45);
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 1.5rem;
       }
 
       h1 {
         margin: 0;
-        font-size: clamp(1.4rem, 4vw, 2rem);
-        letter-spacing: 0.12em;
-        text-align: center;
+        font-size: clamp(1.4rem, 4vw, 2.1rem);
+        letter-spacing: 0.16em;
+        color: #0f172a;
+      }
+
+      .subtitle {
+        margin: 0.5rem 0 0;
+        color: #475569;
+        font-size: 1rem;
+      }
+
+      section {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.2rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      section:last-of-type {
+        border-bottom: none;
+        margin-bottom: 1rem;
+        padding-bottom: 0;
+      }
+
+      h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1.05rem;
+        letter-spacing: 0.1em;
         color: #0f172a;
       }
 
       p {
-        margin: 1rem 0;
+        margin: 0.4rem 0;
         color: #1f2937;
         font-size: 1rem;
       }
 
-      .note {
-        font-size: 0.92rem;
-        color: #475569;
+      ul {
+        margin: 0.4rem 0 0.8rem;
+        padding-left: 1.2rem;
+        color: #1f2937;
       }
 
-      .footer {
+      ul li {
+        margin-bottom: 0.35rem;
+      }
+
+      .meta {
         text-align: center;
-        font-size: 0.9rem;
-        margin-top: 1.5rem;
-        color: #6b7280;
+        font-size: 0.92rem;
+        color: #64748b;
+        margin-top: 1.2rem;
       }
     </style>
   </head>
   <body>
     <main>
-      <h1>版權宣告</h1>
-      <p>© 2024–2025 Sean4437. All Rights Reserved.</p>
-      <p>
-        本網頁程式及其相關資源係原作者創作，未經授權不得重製、修改、販售、部分摘錄、轉載或進行任何衍生作品。
-      </p>
-      <p>
-        本作品僅供授權範圍內使用，禁止任何未經授權之商業用途。如需合作或再利用請先取得書面同意。
-      </p>
-      <p class="note">
-        Copyright notices help宣示著作權與使用範圍，實際法律保障仍依各地著作權法施行。
-      </p>
-      <div class="footer">工程白板拍照工具 | 版本 v2.0</div>
+      <header>
+        <h1>版權宣告</h1>
+        <p class="subtitle">Copyright Notice</p>
+      </header>
+
+      <section>
+        <p><strong>© 2024–2025 自由黑胡椒蛋塔工作室（Free Pepper Tart Studio）</strong></p>
+        <p>All Rights Reserved.</p>
+      </section>
+
+      <section>
+        <h2>🔒 著作權與使用範圍</h2>
+        <p>
+          本網站與其所有子頁面、前端程式架構、功能流程、互動設計、圖像介面、排版、資料結構、腳本程式碼及相關資源，均為自由黑胡椒蛋塔工作室之原創作品，受中華民國著作權法及相關國際著作權條約完整保護。
+        </p>
+        <p>未經原作者事前書面授權，任何人不得：</p>
+        <ul>
+          <li>重製、修改、翻譯或反編譯本作品。</li>
+          <li>擷取部分程式碼、畫面或功能用於其他專案。</li>
+          <li>重新包裝後販售、散佈或公開傳輸。</li>
+          <li>上架應用程式市集（Google Play、App Store 等）。</li>
+          <li>用於商業目的、商用專案或提供第三方使用。</li>
+          <li>製作衍生作品或類似之競品工具。</li>
+        </ul>
+        <p>以上行為皆屬禁止，違者將依法追究民事與刑事責任。</p>
+      </section>
+
+      <section>
+        <h2>📝 授權與合作</h2>
+        <p>本工具僅限授權範圍內使用（如個人或內部流程使用）。若有以下需求，請務必先取得原作者書面同意：</p>
+        <ul>
+          <li>商業授權或商用整合</li>
+          <li>二次開發或功能改作</li>
+          <li>公家機關或公司導入</li>
+          <li>付費服務整合</li>
+          <li>API 或模組化合作</li>
+        </ul>
+        <p><strong>📧 聯絡方式：</strong>sean4437@gmail.com</p>
+      </section>
+
+      <section>
+        <h2>🛡️ 聲明</h2>
+        <p>本版權宣告旨在明確界定本作品的著作權範圍與使用條件，實際法律保障依各地著作權法規與相關國際條約執行。</p>
+      </section>
+
+      <section>
+        <h2>🧰 本工具資訊</h2>
+        <p>工程白板拍照工具（Field Whiteboard Capture Tool）</p>
+        <p>版本：v2.0</p>
+      </section>
+
+      <div class="meta">自由黑胡椒蛋塔工作室 | Free Pepper Tart Studio</div>
     </main>
   </body>
 </html>
+      ul {
+        margin: 0.4rem 0 0.8rem;
+        padding-left: 1.2rem;
+        color: #1f2937;
+      }
+
+      ul li {
+        margin-bottom: 0.4rem;
+      }
