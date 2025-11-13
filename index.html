@@ -44,43 +44,11 @@
         letter-spacing: 0.08em;
       }
 
-      .subtitle {
+      .version-note {
         margin: 0.35rem 0 0;
-        color: #94a3b8;
-        font-size: 1rem;
-      }
-
-      .info-panel {
-        background: rgba(15, 23, 42, 0.55);
-        border: 1px solid rgba(148, 163, 184, 0.3);
-        border-radius: 20px;
-        padding: 1.25rem;
-        box-shadow: 0 20px 45px rgba(2, 6, 23, 0.4);
-      }
-
-      .info-panel p {
-        margin: 0 0 0.65rem;
-        color: #cbd5f5;
-      }
-
-      .info-panel code {
         color: #facc15;
-        background: rgba(250, 204, 21, 0.08);
-        padding: 0.1rem 0.35rem;
-        border-radius: 6px;
-      }
-
-      .direct-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 0.6rem;
-      }
-
-      .direct-links a {
-        text-decoration: none;
-        color: #38bdf8;
-        font-weight: 600;
+        font-size: 1rem;
+        letter-spacing: 0.05em;
       }
 
       .layout-switcher {
@@ -173,30 +141,10 @@
         }
       }
 
-      .frame-toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-        color: #cbd5f5;
-      }
-
-      .frame-toolbar a {
-        color: #38bdf8;
-        text-decoration: none;
-        font-weight: 600;
-      }
-
       @media (max-width: 768px) {
         .layout-frame {
           height: 75vh;
           min-height: 520px;
-        }
-
-        .frame-toolbar {
-          flex-direction: column;
-          align-items: flex-start;
         }
       }
     </style>
@@ -205,26 +153,12 @@
     <main class="app-shell">
       <header>
         <h1 class="title">工程白板拍照工具</h1>
-        <p class="subtitle">index.html 現在僅作為版面切換框架；實際功能請於下方選擇的布局頁面中操作。</p>
+        <p class="version-note">⚠ 已更新版本 v2.0，請使用此介面最新版功能</p>
       </header>
 
-      <section class="info-panel">
-        <p>若其中一個布局出現問題，可直接開啟另一個檔案修復，不會互相影響。</p>
-        <div class="direct-links">
-          <a href="layout1.html" target="_blank" rel="noopener">➜ 直接開啟布局1</a>
-          <a href="layout2.html" target="_blank" rel="noopener">➜ 直接開啟布局2</a>
-          <a href="signature_pad.html" target="_blank" rel="noopener">➜ 簽名板 (備用)</a>
-        </div>
-      </section>
-
       <div class="layout-switcher" role="tablist" aria-label="版面切換">
-        <button class="layout-tab is-active" type="button" role="tab" aria-selected="true" data-layout-target="layout1.html">布局1 (原版)</button>
-        <button class="layout-tab" type="button" role="tab" aria-selected="false" data-layout-target="layout2.html">布局2 (含浮水印)</button>
-      </div>
-
-      <div class="frame-toolbar">
-        <span id="currentLayoutLabel">目前檢視：布局1 (原版)</span>
-        <a id="openLayoutLink" href="layout1.html" target="_blank" rel="noopener">另開視窗編輯</a>
+        <button class="layout-tab is-active" type="button" role="tab" aria-selected="true" data-layout-target="layout1.html">布局1</button>
+        <button class="layout-tab" type="button" role="tab" aria-selected="false" data-layout-target="layout2.html">布局2</button>
       </div>
 
       <div class="frame-wrapper" id="frameWrapper">
@@ -247,21 +181,12 @@
       const tabs = document.querySelectorAll('[data-layout-target]');
       const frameWrapper = document.getElementById('frameWrapper');
       const frame = document.getElementById('layoutFrame');
-      const currentLabel = document.getElementById('currentLayoutLabel');
-      const openLink = document.getElementById('openLayoutLink');
       const frameOverlay = document.getElementById('frameOverlay');
       const storageKey = 'whiteboard-preferred-layout';
       const availableLayouts = new Map(Array.from(tabs, (tab) => [tab.dataset.layoutTarget, tab]));
       let currentLayout = frame.getAttribute('src') || 'layout1.html';
       let pendingLayout = null;
       let frameLoadHandler = null;
-
-      const getLayoutLabel = (tab, fallback) => {
-        if (tab && typeof tab.textContent === 'string') {
-          return '目前檢視：' + tab.textContent.trim();
-        }
-        return '目前檢視：' + fallback;
-      };
 
       const setActiveLayout = (target) => {
         if (!availableLayouts.has(target)) {
@@ -292,8 +217,6 @@
           frame.src = target;
         }
 
-        currentLabel.textContent = getLayoutLabel(activeTab, target);
-        openLink.href = target;
         try {
           localStorage.setItem(storageKey, target);
         } catch (error) {

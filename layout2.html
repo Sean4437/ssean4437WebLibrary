@@ -215,29 +215,6 @@
         color: #cbd5f5;
       }
 
-      .photo-watermark {
-        position: absolute;
-        right: 1rem;
-        bottom: 1rem;
-        padding: 0.35rem 0.8rem;
-        border-radius: 999px;
-        background: rgba(15, 23, 42, 0.65);
-        color: #f8fafc;
-        font-size: 0.85rem;
-        letter-spacing: 0.15em;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-        z-index: 5;
-        pointer-events: none;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.2s ease;
-      }
-
-      body[data-layout-mode="layout2"] .photo-watermark {
-        opacity: 1;
-        visibility: visible;
-      }
-
       .whiteboard-wrapper {
         --board-scale: 0.85;
         position: absolute;
@@ -400,12 +377,8 @@
       }
     </style>
   </head>
-  <body data-layout-mode="layout2">
+  <body>
     <div class="app-shell">
-      <div>
-        <h1>工程白板拍照工具</h1>
-        <p class="version-note">⚠ 已更新版本 v2.0，請使用此介面最新版功能</p>
-      </div>
 
       <section class="panel">
         <h3>資料輸入面板</h3>
@@ -498,9 +471,6 @@
             </div>
           </div>
         </div>
-        <div class="photo-watermark" id="photoWatermark" aria-hidden="true">
-          日期未設定
-        </div>
       </div>
 
       <div class="action-bar">
@@ -537,7 +507,6 @@
       const clearBoardBtn = document.getElementById("clearBoardBtn");
       const exportBtn = document.getElementById("exportBtn");
       const toastMessage = document.getElementById("toastMessage");
-      const photoWatermark = document.getElementById("photoWatermark");
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -560,19 +529,6 @@
         const month = String(date.getMonth() + 1).padStart(2, "0");
         const day = String(date.getDate()).padStart(2, "0");
         return `${date.getFullYear()}-${month}-${day}`;
-      };
-
-      const formatWatermarkDate = (value) => {
-        if (!value) return "日期未設定";
-        const [year, month, day] = value.split("-");
-        if (!year || !month || !day) return value;
-        return `${year}/${month}/${day}`;
-      };
-
-      const updateWatermarkDate = () => {
-        if (!photoWatermark) return;
-        photoWatermark.textContent = formatWatermarkDate(formInputs.testDate.value);
-        photoWatermark.setAttribute("aria-hidden", "false");
       };
 
       const readFileAsDataURL = (file) =>
@@ -706,8 +662,6 @@
               : formatDateInputValue(new Date());
           formInputs.testDate.value = fallbackDate;
           syncField("testDate");
-        } else {
-          updateWatermarkDate();
         }
       };
 
@@ -814,9 +768,6 @@
       function syncField(key) {
         const value = formInputs[key].value.trim();
         displayTargets[key].textContent = value || "—";
-        if (key === "testDate") {
-          updateWatermarkDate();
-        }
       }
 
       const syncAllFields = () => Object.keys(formInputs).forEach(syncField);
@@ -968,7 +919,6 @@
       formInputs.testDate.addEventListener("change", () =>
         syncField("testDate")
       );
-      updateWatermarkDate();
     </script>
   </body>
 </html>
