@@ -55,6 +55,34 @@
         font-weight: 600;
       }
 
+      .layout-tabs {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.25rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+
+      .layout-tab {
+        flex: 1;
+        border: none;
+        background: transparent;
+        color: #cbd5f5;
+        font-size: 0.95rem;
+        letter-spacing: 0.08em;
+        padding: 0.45rem 0.2rem;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background 0.2s ease, color 0.2s ease;
+      }
+
+      .layout-tab.is-active {
+        background: linear-gradient(120deg, #38bdf8, #6366f1);
+        color: #0f172a;
+        font-weight: 600;
+      }
+
       .panel {
         background: rgba(15, 23, 42, 0.45);
         border-radius: 20px;
@@ -213,6 +241,29 @@
         gap: 0.35rem;
         text-align: center;
         color: #cbd5f5;
+      }
+
+      .photo-watermark {
+        position: absolute;
+        right: 1rem;
+        bottom: 1rem;
+        padding: 0.35rem 0.8rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.65);
+        color: #f8fafc;
+        font-size: 0.85rem;
+        letter-spacing: 0.15em;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        z-index: 5;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease;
+      }
+
+      body[data-layout-mode="layout2"] .photo-watermark {
+        opacity: 1;
+        visibility: visible;
       }
 
       .whiteboard-wrapper {
@@ -377,11 +428,28 @@
       }
     </style>
   </head>
-  <body>
+  <body data-layout-mode="layout1">
     <div class="app-shell">
       <div>
         <h1>工程白板拍照工具</h1>
         <p class="version-note">⚠ 已更新版本 v2.0，請使用此介面最新版功能</p>
+      </div>
+
+      <div class="layout-tabs" role="tablist" aria-label="版面切換">
+        <button
+          type="button"
+          class="layout-tab is-active"
+          data-layout-tab="layout1"
+          role="tab"
+          aria-selected="true"
+        >布局1</button>
+        <button
+          type="button"
+          class="layout-tab"
+          data-layout-tab="layout2"
+          role="tab"
+          aria-selected="false"
+        >布局2</button>
       </div>
 
       <section class="panel">
@@ -475,6 +543,9 @@
             </div>
           </div>
         </div>
+        <div class="photo-watermark" id="photoWatermark" aria-hidden="true">
+          日期未設定
+        </div>
       </div>
 
       <div class="action-bar">
@@ -511,6 +582,9 @@
       const clearBoardBtn = document.getElementById("clearBoardBtn");
       const exportBtn = document.getElementById("exportBtn");
       const toastMessage = document.getElementById("toastMessage");
+      const layoutTabs = document.querySelectorAll("[data-layout-tab]");
+      const photoWatermark = document.getElementById("photoWatermark");
+      let currentLayoutMode = document.body.dataset.layoutMode || "layout1";
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -526,6 +600,175 @@
         testResult: document.getElementById("displayTestResult"),
         testDate: document.getElementById("displayTestDate"),
         inspector: document.getElementById("displayInspector"),
+      };
+
+      const formatDateInputValue = (date) => {
+        if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${date.getFullYear()}-${month}-${day}`;
+      };
+
+      const formatWatermarkDate = (value) => {
+        if (!value) return "日期未設定";
+        const [year, month, day] = value.split("-");
+        if (!year || !month || !day) return value;
+        return `${year}/${month}/${day}`;
+      };
+
+      const updateWatermarkDate = () => {
+        if (!photoWatermark) return;
+        photoWatermark.textContent = formatWatermarkDate(formInputs.testDate.value);
+        const isLayout2 = document.body.dataset.layoutMode === "layout2";
+        photoWatermark.setAttribute("aria-hidden", String(!isLayout2));
+      };
+
+      const setLayoutMode = (mode = "layout1") => {
+        currentLayoutMode = mode;
+        document.body.dataset.layoutMode = mode;
+        layoutTabs.forEach((tab) => {
+          const isActive = tab.dataset.layoutTab === mode;
+          tab.classList.toggle("is-active", isActive);
+          tab.setAttribute("aria-selected", isActive ? "true" : "false");
+          tab.tabIndex = isActive ? 0 : -1;
+        });
+        updateWatermarkDate();
+      };
+
+      const readFileAsDataURL = (file) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error("failed to load file"));
+          reader.readAsDataURL(file);
+        });
+
+      const asciiFromView = (view, start, length) => {
+        let chars = "";
+        for (let i = 0; i < length && start + i < view.byteLength; i += 1) {
+          const code = view.getUint8(start + i);
+          if (!code) break;
+          chars += String.fromCharCode(code);
+        }
+        return chars;
+      };
+
+      const normalizeExifDate = (value) => {
+        if (!value) return null;
+        const match = value.match(/^(\d{4}):?(\d{2}):?(\d{2})/);
+        if (!match) return null;
+        const [, year, month, day] = match;
+        return `${year}-${month}-${day}`;
+      };
+
+      const TYPE_SIZES = {
+        1: 1,
+        2: 1,
+        3: 2,
+        4: 4,
+        5: 8,
+        7: 1,
+      };
+
+      const EXIF_DATE_TAGS = new Set([0x0132, 0x9003, 0x9004]);
+
+      const parseIfdForDate = (view, offset, base, little) => {
+        if (offset <= 0 || offset + 2 > view.byteLength) return null;
+        const entryCount = view.getUint16(offset, little);
+        let exifPointer = null;
+        let fallbackDate = null;
+        for (let i = 0; i < entryCount; i += 1) {
+          const entryOffset = offset + 2 + i * 12;
+          if (entryOffset + 12 > view.byteLength) break;
+          const tag = view.getUint16(entryOffset, little);
+          const type = view.getUint16(entryOffset + 2, little);
+          const count = view.getUint32(entryOffset + 4, little);
+          const valueSize = (TYPE_SIZES[type] || 0) * count;
+          const rawValueOffset = entryOffset + 8;
+          let valueOffset = rawValueOffset;
+          if (valueSize > 4) {
+            valueOffset = base + view.getUint32(rawValueOffset, little);
+          }
+          if (tag === 0x8769) {
+            exifPointer = base + view.getUint32(rawValueOffset, little);
+            continue;
+          }
+          if (EXIF_DATE_TAGS.has(tag) && type === 2 && count > 0) {
+            const raw = asciiFromView(view, valueOffset, count);
+            const normalized = normalizeExifDate(raw);
+            if (normalized) {
+              if (tag === 0x9003) return normalized;
+              fallbackDate = fallbackDate || normalized;
+            }
+          }
+        }
+        if (exifPointer) {
+          const nestedDate = parseIfdForDate(view, exifPointer, base, little);
+          if (nestedDate) return nestedDate;
+        }
+        return fallbackDate;
+      };
+
+      const readExifDateFromBuffer = (buffer) => {
+        const view = new DataView(buffer);
+        if (view.byteLength < 12 || view.getUint16(0, false) !== 0xffd8) return null;
+        let offset = 2;
+        while (offset + 4 < view.byteLength) {
+          if (view.getUint8(offset) !== 0xff) break;
+          const marker = view.getUint8(offset + 1);
+          const length = view.getUint16(offset + 2, false);
+          if (marker === 0xe1) {
+            const segmentStart = offset + 4;
+            const identifier = asciiFromView(view, segmentStart, 4);
+            if (identifier !== "Exif") {
+              offset += 2 + length;
+              continue;
+            }
+            const tiffStart = segmentStart + 6;
+            if (tiffStart + 8 > view.byteLength) break;
+            const little = view.getUint16(tiffStart, false) === 0x4949;
+            const firstIfdOffset = view.getUint32(tiffStart + 4, little);
+            return parseIfdForDate(view, tiffStart + firstIfdOffset, tiffStart, little);
+          }
+          offset += 2 + length;
+        }
+        return null;
+      };
+
+      const extractExifDate = async (file) => {
+        if (!file || !/image\/jpe?g/i.test(file.type || "")) return null;
+        try {
+          const buffer = await file.arrayBuffer();
+          return readExifDateFromBuffer(buffer);
+        } catch {
+          return null;
+        }
+      };
+
+      const applyPhotoDateMetadata = async (file) => {
+        if (!file) return;
+        try {
+          const exifDate = await extractExifDate(file);
+          if (exifDate) {
+            formInputs.testDate.value = exifDate;
+            syncField("testDate");
+            showToast("已套用照片拍攝日期。", "success");
+            return;
+          }
+        } catch (error) {
+          console.warn("EXIF 解析失敗", error);
+        }
+
+        if (!formInputs.testDate.value) {
+          const fallbackDate =
+            file.lastModified && Number.isFinite(file.lastModified)
+              ? formatDateInputValue(new Date(file.lastModified))
+              : formatDateInputValue(new Date());
+          formInputs.testDate.value = fallbackDate;
+          syncField("testDate");
+        } else {
+          updateWatermarkDate();
+        }
       };
 
       const autoResizeTextarea = (textarea) => {
@@ -554,17 +797,20 @@
         captureArea.style.setProperty("--stage-aspect", `${ratio}%`);
       };
 
-      const handlePhotoFiles = (files) => {
+      const handlePhotoFiles = async (files) => {
         const [file] = files || [];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          photoImage.src = event.target.result;
+        try {
+          const dataUrl = await readFileAsDataURL(file);
+          photoImage.src = dataUrl;
           photoImage.hidden = false;
           placeholder.style.display = "none";
           updateStageAspect();
-        };
-        reader.readAsDataURL(file);
+        } catch (error) {
+          showToast("照片載入失敗，請重新選擇。");
+          return;
+        }
+        await applyPhotoDateMetadata(file);
       };
 
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -625,10 +871,13 @@
         whiteboard.classList.toggle("exporting", state);
       };
 
-      const syncField = (key) => {
+      function syncField(key) {
         const value = formInputs[key].value.trim();
         displayTargets[key].textContent = value || "—";
-      };
+        if (key === "testDate") {
+          updateWatermarkDate();
+        }
+      }
 
       const syncAllFields = () => Object.keys(formInputs).forEach(syncField);
 
@@ -727,6 +976,9 @@
       uploadPhotoBtn.addEventListener("click", () => uploadInput.click());
       takePhotoInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
       uploadInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
+      layoutTabs.forEach((tab) =>
+        tab.addEventListener("click", () => setLayoutMode(tab.dataset.layoutTab))
+      );
 
       whiteboardWrapper.addEventListener("pointerdown", startDrag);
       window.addEventListener("pointermove", dragMove, { passive: false });
@@ -767,6 +1019,7 @@
         formInputs.testDate.valueAsDate = new Date();
       }
       syncAllFields();
+      setLayoutMode(currentLayoutMode);
       updateBoardScale(boardScaleInput.value);
       updateBoardColor(boardColorInput.value);
       updateBoardOpacity(boardOpacityInput.value);
@@ -779,6 +1032,7 @@
       formInputs.testDate.addEventListener("change", () =>
         syncField("testDate")
       );
+      updateWatermarkDate();
     </script>
   </body>
 </html>
