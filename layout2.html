@@ -212,10 +212,10 @@
 
       .photo-watermark {
         position: absolute;
-        right: 0.85rem;
-        bottom: 0.75rem;
+        right: clamp(0.35rem, 3vw, 0.85rem);
+        bottom: clamp(0.3rem, 2.5vw, 0.75rem);
         color: #fbbf24;
-        font-size: 0.9rem;
+        font-size: clamp(0.65rem, 2.5vw, 0.9rem);
         letter-spacing: 0.18em;
         font-weight: 600;
         text-shadow: 0 0 6px rgba(0, 0, 0, 0.45);
@@ -224,7 +224,7 @@
       }
 
       .whiteboard-wrapper {
-        --board-scale: 0.45;
+        --board-scale: clamp(0.35, calc(25vw / 100), 0.45);
         --board-width: min(480px, 90%);
         position: absolute;
         left: 50%;
@@ -1034,6 +1034,10 @@
       window.addEventListener("resize", updateStageAspect);
       photoImage.addEventListener("load", updateStageAspect);
 
+      if (isMobileDevice) {
+        boardScaleInput.value = "35";
+        boardScaleValue.textContent = "35%";
+      }
       if (!formInputs.testDate.value) {
         formInputs.testDate.valueAsDate = new Date();
       }
