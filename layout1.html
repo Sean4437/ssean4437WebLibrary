@@ -1009,6 +1009,10 @@
       window.addEventListener("resize", updateStageAspect);
       photoImage.addEventListener("load", updateStageAspect);
 
+      if (isMobileDevice) {
+        boardScaleInput.value = "35";
+        boardScaleValue.textContent = "35%";
+      }
       if (!formInputs.testDate.value) {
         formInputs.testDate.valueAsDate = new Date();
       }
