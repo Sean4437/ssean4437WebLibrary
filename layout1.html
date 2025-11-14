@@ -117,6 +117,53 @@
         align-items: center;
       }
 
+      .color-preset-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        grid-column: 1 / -1;
+      }
+
+      .color-swatch {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        background: transparent;
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.15s ease, border-color 0.2s ease;
+        padding: 0;
+      }
+
+      .color-swatch::before {
+        content: "";
+        position: absolute;
+        inset: 7px;
+        border-radius: 10px;
+        background: var(--swatch-color, #fff);
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.25);
+      }
+
+      .color-swatch:hover,
+      .color-swatch:focus-visible {
+        border-color: #38bdf8;
+        outline: none;
+        transform: translateY(-1px);
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
       .toggle-advanced {
         margin-top: 0.6rem;
         width: 100%;
@@ -476,6 +523,60 @@
             <input type="range" id="boardWidth" min="240" max="640" value="350" />
             <span id="boardWidthValue">350px</span>
           </label>
+          <div class="color-preset-group" role="group" aria-label="白板配色快捷">
+            <button
+              type="button"
+              class="color-swatch"
+              style="--swatch-color: #f8fafc"
+              data-color-preset
+              data-board-color="#f8fafc"
+              data-text-color="#0f172a"
+              data-line-color="#000000"
+              data-board-opacity="100"
+              aria-label="白色主題"
+            >
+              <span class="sr-only">白色主題</span>
+            </button>
+            <button
+              type="button"
+              class="color-swatch"
+              style="--swatch-color: #065f46"
+              data-color-preset
+              data-board-color="#065f46"
+              data-text-color="#f8fafc"
+              data-line-color="#f8fafc"
+              data-board-opacity="100"
+              aria-label="綠色主題"
+            >
+              <span class="sr-only">綠色主題</span>
+            </button>
+            <button
+              type="button"
+              class="color-swatch"
+              style="--swatch-color: rgba(15, 23, 42, 0.5)"
+              data-color-preset
+              data-board-color="#1f293b"
+              data-text-color="#f8fafc"
+              data-line-color="#f8fafc"
+              data-board-opacity="85"
+              aria-label="半透明灰主題"
+            >
+              <span class="sr-only">半透明灰主題</span>
+            </button>
+            <button
+              type="button"
+              class="color-swatch"
+              style="--swatch-color: rgba(255, 255, 255, 0.8)"
+              data-color-preset
+              data-board-color="#f8fafc"
+              data-text-color="#0f172a"
+              data-line-color="#000000"
+              data-board-opacity="82"
+              aria-label="半透明白主題"
+            >
+              <span class="sr-only">半透明白主題</span>
+            </button>
+          </div>
           <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
         </div>
         <button type="button" class="ghost-btn toggle-advanced" id="toggleAdvanced">顯示更多調整</button>
@@ -588,6 +689,7 @@
       const boardOpacityValue = document.getElementById("boardOpacityValue");
       const textColorInput = document.getElementById("textColor");
       const lineColorInput = document.getElementById("lineColor");
+      const colorPresetButtons = document.querySelectorAll("[data-color-preset]");
       const applyDataBtn = document.getElementById("applyDataBtn");
       const clearBoardBtn = document.getElementById("clearBoardBtn");
       const exportBtn = document.getElementById("exportBtn");
@@ -819,6 +921,28 @@
           return;
         }
         await applyPhotoDateMetadata(file);
+      };
+
+      const applyColorPreset = (button) => {
+        if (!button?.dataset) return;
+        const { boardColor, textColor, lineColor, boardOpacity } = button.dataset;
+        if (boardColor) {
+          boardColorInput.value = boardColor;
+          updateBoardColor(boardColor);
+        }
+        if (textColor) {
+          textColorInput.value = textColor;
+          updateTextColor(textColor);
+        }
+        if (lineColor) {
+          lineColorInput.value = lineColor;
+          updateLineColor(lineColor);
+        }
+        if (boardOpacity) {
+          boardOpacityInput.value = boardOpacity;
+          updateBoardOpacity(boardOpacity);
+        }
+        showToast("已套用預設配色。", "success");
       };
 
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -1095,6 +1219,9 @@
       );
       lineColorInput.addEventListener("input", (event) =>
         updateLineColor(event.target.value)
+      );
+      colorPresetButtons.forEach((button) =>
+        button.addEventListener("click", () => applyColorPreset(button))
       );
 
       exportBtn.addEventListener("click", exportBoardImage);
