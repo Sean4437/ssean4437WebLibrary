@@ -226,7 +226,7 @@
 
       .whiteboard-wrapper {
         --board-scale: clamp(0.35, calc(25vw / 100), 0.45);
-        --board-width: min(480px, 90%);
+        --board-width: min(400px, 80%);
         position: absolute;
         left: 50%;
         top: 70%;
@@ -238,11 +238,11 @@
 
       .whiteboard {
         width: 100%;
-        background: var(--board-fill);
+        background: #065f46;
         border-radius: 0;
-        border: 4px solid var(--line-color);
-        padding: 0.75rem;
-        color: var(--text-color);
+        border: 4px solid rgba(248, 250, 252, 0.95);
+        padding: 0.85rem;
+        color: #f8fafc;
         box-shadow: none;
         font-weight: 700;
       }
@@ -254,20 +254,21 @@
       .whiteboard-content {
         display: flex;
         flex-direction: column;
-        gap: 0.35rem;
+        gap: 0;
       }
 
       .board-row {
         display: flex;
         align-items: center;
-        gap: 0.2rem;
+        gap: 0;
       }
 
       .board-row label {
         flex: 0 0 72px;
         font-size: 0.86rem;
         letter-spacing: 0.03em;
-        color: var(--text-color);
+        color: rgba(248, 250, 252, 0.9);
+        margin: 0;
         position: relative;
         padding-right: 0.2rem;
       }
@@ -282,58 +283,40 @@
         content: "：";
       }
 
-      .board-company {
-        text-align: center;
-        font-size: 1.1rem;
-        font-weight: 700;
-        letter-spacing: 0.15em;
-        border: 1px solid var(--line-color);
-        border-radius: 10px;
-        padding: 0.4rem 0.6rem;
-        background: var(--board-fill);
-        color: var(--text-color);
-        margin-bottom: 0.4rem;
-        min-height: 38px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        white-space: pre-wrap;
-      }
-
       .board-value {
         flex: 1;
-        min-height: 34px;
-        border: 1px solid var(--line-color);
-        border-radius: 10px;
-        padding: 0.35rem 0.55rem;
-        background: var(--board-fill);
+        min-height: 22px;
+        border: none;
+        border-radius: 0;
+        padding: 0 0.1rem;
+        background: transparent;
         font-size: 0.96rem;
         font-weight: 600;
-        color: var(--text-color);
+        color: #fdfce5;
         white-space: pre-wrap;
       }
 
       .board-block {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: 0;
       }
 
       .board-block label {
         font-size: 0.88rem;
         letter-spacing: 0.04em;
-        color: var(--text-color);
+        color: rgba(248, 250, 252, 0.9);
       }
 
       .board-notes {
-        min-height: 3.2rem;
-        border: 1px solid var(--line-color);
-        border-radius: 14px;
-        padding: 0.65rem 0.75rem;
-        background: var(--board-fill);
+        min-height: 1.6rem;
+        border: none;
+        border-radius: 0;
+        padding: 0.1rem 0.2rem;
+        background: transparent;
         font-size: 1rem;
-        line-height: 1.4;
-        color: var(--text-color);
+        line-height: 1.2;
+        color: #fdfce5;
         white-space: pre-wrap;
       }
 
@@ -425,10 +408,6 @@
         <h3>資料輸入面板</h3>
         <div class="data-grid">
           <div class="form-field">
-            <label for="inputCompanyName">公司名稱</label>
-            <input id="inputCompanyName" type="text" placeholder="請輸入公司名稱" />
-          </div>
-          <div class="form-field">
             <label for="inputProjectName">工程名稱</label>
             <input id="inputProjectName" type="text" placeholder="請輸入工程名稱" />
           </div>
@@ -503,7 +482,6 @@
         <div class="whiteboard-wrapper" id="whiteboardWrapper">
           <div class="whiteboard" id="whiteboard">
             <div class="whiteboard-content">
-              <div class="board-company" id="displayCompanyName">—</div>
               <div class="board-row">
                 <label>工程名稱</label>
                 <div class="board-value" id="displayProjectName">—</div>
@@ -576,7 +554,6 @@
       );
 
       const formInputs = {
-        companyName: document.getElementById("inputCompanyName"),
         projectName: document.getElementById("inputProjectName"),
         inspectionLocation: document.getElementById("inputInspectionLocation"),
         testResult: document.getElementById("inputTestResult"),
@@ -585,7 +562,6 @@
       };
 
       const displayTargets = {
-        companyName: document.getElementById("displayCompanyName"),
         projectName: document.getElementById("displayProjectName"),
         inspectionLocation: document.getElementById("displayInspectionLocation"),
         testResult: document.getElementById("displayTestResult"),
