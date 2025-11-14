@@ -217,7 +217,7 @@
         color: #fbbf24;
         font-size: clamp(0.65rem, 2.5vw, 0.9rem);
         letter-spacing: 0.18em;
-        font-weight: 600;
+        font-weight: 800;
         -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.9);
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
         pointer-events: none;
@@ -226,7 +226,7 @@
 
       .whiteboard-wrapper {
         --board-scale: clamp(0.35, calc(25vw / 100), 0.45);
-        --board-width: min(480px, 90%);
+        --board-width: min(400px, 80%);
         position: absolute;
         left: 50%;
         top: 70%;
@@ -244,6 +244,7 @@
         padding: 0.75rem;
         color: var(--text-color);
         box-shadow: none;
+        font-weight: 700;
       }
 
       .whiteboard.exporting {
@@ -253,29 +254,42 @@
       .whiteboard-content {
         display: flex;
         flex-direction: column;
-        gap: 0.35rem;
+        gap: 0;
       }
 
       .board-row {
         display: flex;
         align-items: center;
-        gap: 0.2rem;
+        gap: 0;
       }
 
       .board-row label {
-        flex: 0 0 58px;
+        flex: 0 0 72px;
         font-size: 0.86rem;
         letter-spacing: 0.03em;
         color: var(--text-color);
+        margin: 0;
+        position: relative;
+        padding-right: 0.2rem;
+      }
+
+      .board-row label::after {
+        content: "：";
+        position: absolute;
+        right: 0;
+      }
+
+      .board-block label::after {
+        content: "：";
       }
 
       .board-value {
         flex: 1;
-        min-height: 34px;
-        border: 1px solid var(--line-color);
-        border-radius: 10px;
-        padding: 0.35rem 0.55rem;
-        background: var(--board-fill);
+        min-height: 22px;
+        border: none;
+        border-radius: 0;
+        padding: 0 0.1rem;
+        background: transparent;
         font-size: 0.96rem;
         font-weight: 600;
         color: var(--text-color);
@@ -285,7 +299,7 @@
       .board-block {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: 0;
       }
 
       .board-block label {
@@ -295,13 +309,13 @@
       }
 
       .board-notes {
-        min-height: 3.2rem;
-        border: 1px solid var(--line-color);
-        border-radius: 14px;
-        padding: 0.65rem 0.75rem;
-        background: var(--board-fill);
+        min-height: 1.6rem;
+        border: none;
+        border-radius: 0;
+        padding: 0.1rem 0.2rem;
+        background: transparent;
         font-size: 1rem;
-        line-height: 1.4;
+        line-height: 1.2;
         color: var(--text-color);
         white-space: pre-wrap;
       }

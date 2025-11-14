@@ -217,7 +217,7 @@
         color: #fbbf24;
         font-size: clamp(0.65rem, 2.5vw, 0.9rem);
         letter-spacing: 0.18em;
-        font-weight: 600;
+        font-weight: 800;
         -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.9);
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
         pointer-events: none;
@@ -244,6 +244,7 @@
         padding: 0.75rem;
         color: var(--text-color);
         box-shadow: none;
+        font-weight: 700;
       }
 
       .whiteboard.exporting {
@@ -263,10 +264,22 @@
       }
 
       .board-row label {
-        flex: 0 0 58px;
+        flex: 0 0 72px;
         font-size: 0.86rem;
         letter-spacing: 0.03em;
         color: var(--text-color);
+        position: relative;
+        padding-right: 0.2rem;
+      }
+
+      .board-row label::after {
+        content: "：";
+        position: absolute;
+        right: 0;
+      }
+
+      .board-block label::after {
+        content: "：";
       }
 
       .board-company {

@@ -13,6 +13,8 @@
         --text-color: #0f172a;
         --line-color: #000000;
         --board-rotation: 0deg;
+        --board-scale-x: 0.45;
+        --board-scale-y: 0.45;
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
           BlinkMacSystemFont, sans-serif;
         line-height: 1.45;
@@ -225,24 +227,71 @@
       }
 
       .whiteboard-wrapper {
-        --board-scale: clamp(0.35, calc(25vw / 100), 0.45);
-        --board-width: min(400px, 80%);
+        --board-scale-x: clamp(0.35, calc(25vw / 100), 0.45);
+        --board-scale-y: clamp(0.35, calc(25vw / 100), 0.45);
+        --board-width: min(480px, 90%);
         position: absolute;
         left: 50%;
         top: 70%;
-        transform: translate(-50%, -50%) scale(var(--board-scale)) rotate(var(--board-rotation));
+        transform: translate(-50%, -50%) rotate(var(--board-rotation))
+          scale(var(--board-scale-x), var(--board-scale-y));
         transform-origin: center;
         width: var(--board-width);
         touch-action: none;
+        transition: box-shadow 0.15s ease;
       }
 
+      .whiteboard-wrapper.is-resizing {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+      }
+
+      .resize-handle {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #38bdf8;
+        border: 2px solid #fff;
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
+        display: none;
+        z-index: 10;
+        touch-action: none;
+      }
+
+      .whiteboard-wrapper.show-handles .resize-handle {
+        display: block;
+      }
+
+      .resize-handle[data-handle="top-left"] {
+        top: -8px;
+        left: -8px;
+        cursor: nwse-resize;
+      }
+
+      .resize-handle[data-handle="top-right"] {
+        top: -8px;
+        right: -8px;
+        cursor: nesw-resize;
+      }
+
+      .resize-handle[data-handle="bottom-right"] {
+        bottom: -8px;
+        right: -8px;
+        cursor: nwse-resize;
+      }
+
+      .resize-handle[data-handle="bottom-left"] {
+        bottom: -8px;
+        left: -8px;
+        cursor: nesw-resize;
+      }
       .whiteboard {
         width: 100%;
-        background: #065f46;
+        background: var(--board-fill);
         border-radius: 0;
-        border: 4px solid rgba(248, 250, 252, 0.95);
-        padding: 0.85rem;
-        color: #f8fafc;
+        border: 4px solid var(--line-color);
+        padding: 0.75rem;
+        color: var(--text-color);
         box-shadow: none;
         font-weight: 700;
       }
@@ -254,21 +303,20 @@
       .whiteboard-content {
         display: flex;
         flex-direction: column;
-        gap: 0;
+        gap: 0.35rem;
       }
 
       .board-row {
         display: flex;
         align-items: center;
-        gap: 0;
+        gap: 0.2rem;
       }
 
       .board-row label {
         flex: 0 0 72px;
         font-size: 0.86rem;
         letter-spacing: 0.03em;
-        color: rgba(248, 250, 252, 0.9);
-        margin: 0;
+        color: var(--text-color);
         position: relative;
         padding-right: 0.2rem;
       }
@@ -285,38 +333,38 @@
 
       .board-value {
         flex: 1;
-        min-height: 22px;
-        border: none;
-        border-radius: 0;
-        padding: 0 0.1rem;
-        background: transparent;
+        min-height: 34px;
+        border: 1px solid var(--line-color);
+        border-radius: 10px;
+        padding: 0.35rem 0.55rem;
+        background: var(--board-fill);
         font-size: 0.96rem;
         font-weight: 600;
-        color: #fdfce5;
+        color: var(--text-color);
         white-space: pre-wrap;
       }
 
       .board-block {
         display: flex;
         flex-direction: column;
-        gap: 0;
+        gap: 0.25rem;
       }
 
       .board-block label {
         font-size: 0.88rem;
         letter-spacing: 0.04em;
-        color: rgba(248, 250, 252, 0.9);
+        color: var(--text-color);
       }
 
       .board-notes {
-        min-height: 1.6rem;
-        border: none;
-        border-radius: 0;
-        padding: 0.1rem 0.2rem;
-        background: transparent;
+        min-height: 3.2rem;
+        border: 1px solid var(--line-color);
+        border-radius: 14px;
+        padding: 0.65rem 0.75rem;
+        background: var(--board-fill);
         font-size: 1rem;
-        line-height: 1.2;
-        color: #fdfce5;
+        line-height: 1.4;
+        color: var(--text-color);
         white-space: pre-wrap;
       }
 
@@ -480,6 +528,10 @@
           </div>
         </div>
         <div class="whiteboard-wrapper" id="whiteboardWrapper">
+          <button class="resize-handle" data-handle="top-left" type="button" aria-label="調整白板 左上"></button>
+          <button class="resize-handle" data-handle="top-right" type="button" aria-label="調整白板 右上"></button>
+          <button class="resize-handle" data-handle="bottom-right" type="button" aria-label="調整白板 右下"></button>
+          <button class="resize-handle" data-handle="bottom-left" type="button" aria-label="調整白板 左下"></button>
           <div class="whiteboard" id="whiteboard">
             <div class="whiteboard-content">
               <div class="board-row">
@@ -533,6 +585,7 @@
       const captureArea = document.getElementById("captureArea");
       const boardScaleInput = document.getElementById("boardScale");
       const boardScaleValue = document.getElementById("boardScaleValue");
+      const resizeHandles = document.querySelectorAll(".resize-handle");
       const boardWidthInput = document.getElementById("boardWidth");
       const boardWidthValue = document.getElementById("boardWidthValue");
       const boardRotationInput = document.getElementById("boardRotation");
@@ -548,6 +601,9 @@
       const toastMessage = document.getElementById("toastMessage");
       const photoWatermark = document.getElementById("photoWatermark");
       whiteboardWrapper.dataset.userPositioned = "false";
+      let boardScaleBase = Number(boardScaleInput.value) / 100;
+      let boardStretchX = 1;
+      let boardStretchY = 1;
 
       const isMobileDevice = /android|iphone|ipad|ipod|mobile/i.test(
         (navigator.userAgent || "").toLowerCase()
@@ -775,6 +831,14 @@
 
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
+      const applyBoardScale = () => {
+        const scaleX = boardScaleBase * boardStretchX;
+        const scaleY = boardScaleBase * boardStretchY;
+        whiteboardWrapper.style.setProperty("--board-scale-x", scaleX.toString());
+        whiteboardWrapper.style.setProperty("--board-scale-y", scaleY.toString());
+        boardScaleValue.textContent = `${Math.round(boardScaleBase * 100)}%`;
+      };
+
       const startDrag = (event) => {
         if (event.target.closest("input, textarea, button, select")) return;
         whiteboardWrapper.dataset.dragging = "true";
@@ -846,14 +910,72 @@
 
       const updateBoardScale = (value) => {
         const percent = Math.max(10, Math.min(120, Number(value)));
-        whiteboardWrapper.style.setProperty(
-          "--board-scale",
-          (percent / 100).toString()
-        );
-        boardScaleValue.textContent = `${percent}%`;
+        boardScaleBase = percent / 100;
+        applyBoardScale();
         if (whiteboardWrapper.dataset.userPositioned !== "true") {
           requestAnimationFrame(positionBoardAtBottomLeft);
         }
+      };
+
+      const RESIZE_DIRECTIONS = {
+        "top-left": { x: -1, y: -1 },
+        "top-right": { x: 1, y: -1 },
+        "bottom-right": { x: 1, y: 1 },
+        "bottom-left": { x: -1, y: 1 },
+      };
+
+      let handleHideTimer = null;
+      const showHandles = () => {
+        whiteboardWrapper.classList.add("show-handles");
+        clearTimeout(handleHideTimer);
+      };
+      const hideHandles = () => {
+        if (whiteboardWrapper.dataset.resizingHandle) return;
+        clearTimeout(handleHideTimer);
+        handleHideTimer = setTimeout(
+          () => whiteboardWrapper.classList.remove("show-handles"),
+          800
+        );
+      };
+
+      const startHandleResize = (handle, event) => {
+        const dir = RESIZE_DIRECTIONS[handle];
+        if (!dir) return;
+        event.preventDefault();
+        event.stopPropagation();
+        whiteboardWrapper.dataset.userPositioned = "true";
+        whiteboardWrapper.classList.add("is-resizing");
+        whiteboardWrapper.dataset.resizingHandle = handle;
+        whiteboardWrapper.dataset.startPointerX =
+          event.clientX ?? event.touches?.[0]?.clientX ?? 0;
+        whiteboardWrapper.dataset.startPointerY =
+          event.clientY ?? event.touches?.[0]?.clientY ?? 0;
+        whiteboardWrapper.dataset.stretchX = boardStretchX.toString();
+        whiteboardWrapper.dataset.stretchY = boardStretchY.toString();
+      };
+
+      const handleResizeMove = (event) => {
+        const handle = whiteboardWrapper.dataset.resizingHandle;
+        if (!handle) return;
+        const dir = RESIZE_DIRECTIONS[handle];
+        if (!dir) return;
+        event.preventDefault();
+        const startX = parseFloat(whiteboardWrapper.dataset.startPointerX);
+        const startY = parseFloat(whiteboardWrapper.dataset.startPointerY);
+        const pointerX = event.clientX ?? event.touches?.[0]?.clientX ?? 0;
+        const pointerY = event.clientY ?? event.touches?.[0]?.clientY ?? 0;
+        const deltaX = ((pointerX - startX) / captureArea.offsetWidth) * dir.x;
+        const deltaY = ((pointerY - startY) / captureArea.offsetHeight) * dir.y;
+        const baseStretchX = parseFloat(whiteboardWrapper.dataset.stretchX) || 1;
+        const baseStretchY = parseFloat(whiteboardWrapper.dataset.stretchY) || 1;
+        boardStretchX = clamp(baseStretchX * (1 + deltaX), 0.4, 2.5);
+        boardStretchY = clamp(baseStretchY * (1 + deltaY), 0.4, 2.5);
+        applyBoardScale();
+      };
+
+      const endHandleResize = () => {
+        whiteboardWrapper.classList.remove("is-resizing");
+        delete whiteboardWrapper.dataset.resizingHandle;
       };
 
       const updateBoardWidth = (value) => {
@@ -1001,6 +1123,24 @@
       boardScaleInput.addEventListener("input", (event) =>
         updateBoardScale(event.target.value)
       );
+      resizeHandles.forEach((handle) => {
+        ["pointerdown", "touchstart"].forEach((type) =>
+          handle.addEventListener(type, (event) =>
+            startHandleResize(handle.dataset.handle, event)
+          )
+        );
+      });
+      ["pointerenter", "touchstart"].forEach((type) =>
+        whiteboardWrapper.addEventListener(type, showHandles, { passive: true })
+      );
+      ["pointerleave"].forEach((type) =>
+        whiteboardWrapper.addEventListener(type, hideHandles)
+      );
+      window.addEventListener("pointermove", handleResizeMove, { passive: false });
+      window.addEventListener("touchmove", handleResizeMove, { passive: false });
+      window.addEventListener("pointerup", endHandleResize);
+      window.addEventListener("pointercancel", endHandleResize);
+      window.addEventListener("touchend", endHandleResize);
       boardWidthInput.addEventListener("input", (event) =>
         updateBoardWidth(event.target.value)
       );
@@ -1026,7 +1166,9 @@
 
       if (isMobileDevice) {
         boardScaleInput.value = "35";
+        boardScaleBase = 0.35;
         boardScaleValue.textContent = "35%";
+        applyBoardScale();
       }
       if (!formInputs.testDate.value) {
         formInputs.testDate.valueAsDate = new Date();
