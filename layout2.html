@@ -9,9 +9,9 @@
     <title>工程白板拍照工具</title>
     <style>
       :root {
-        --board-fill: #f8fafc;
-        --text-color: #0f172a;
-        --line-color: #000000;
+        --board-fill: #065f46;
+        --text-color: #f8fafc;
+        --line-color: #f8fafc;
         --board-rotation: 0deg;
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
           BlinkMacSystemFont, sans-serif;
@@ -117,6 +117,24 @@
         align-items: center;
       }
 
+      .toggle-advanced {
+        margin-top: 0.6rem;
+        width: 100%;
+      }
+
+      .advanced-controls {
+        margin-top: 0.5rem;
+        border-top: 1px dashed rgba(148, 163, 184, 0.4);
+        padding-top: 0.6rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.75rem;
+      }
+
+      .advanced-controls[hidden] {
+        display: none !important;
+      }
+
       .panel-control {
         display: flex;
         align-items: center;
@@ -135,6 +153,14 @@
         font-weight: 600;
         padding: 0.6rem 1.25rem;
         cursor: pointer;
+      }
+
+      #applyDataBtn {
+        background: linear-gradient(120deg, #38bdf8, #6366f1);
+        color: #0f172a;
+        border: none;
+        font-weight: 700;
+        box-shadow: 0 12px 24px rgba(56, 189, 248, 0.35);
       }
 
       .controls {
@@ -226,7 +252,7 @@
 
       .whiteboard-wrapper {
         --board-scale: clamp(0.35, calc(25vw / 100), 0.45);
-        --board-width: min(400px, 60%);
+        --board-width: min(400px, 75%);
         position: absolute;
         left: 50%;
         top: 70%;
@@ -238,13 +264,14 @@
 
       .whiteboard {
         width: 100%;
-        background: #065f46;
+        background: var(--board-fill);
         border-radius: 0;
-        border: 4px solid rgba(248, 250, 252, 0.95);
-        padding: 0.85rem;
-        color: #f8fafc;
+        border: 4px solid var(--line-color);
+        padding: 0.25rem;
+        color: var(--text-color);
         box-shadow: none;
         font-weight: 700;
+        font-size: calc(1rem * var(--whiteboard-font-scale, 1));
       }
 
       .whiteboard.exporting {
@@ -267,7 +294,7 @@
         flex: 0 0 72px;
         font-size: 0.86rem;
         letter-spacing: 0.03em;
-        color: rgba(248, 250, 252, 0.9);
+        color: var(--text-color);
         margin: 0;
         position: relative;
         padding-right: 0.2rem;
@@ -292,31 +319,40 @@
         background: transparent;
         font-size: 0.96rem;
         font-weight: 600;
-        color: #fdfce5;
+        color: var(--text-color);
         white-space: pre-wrap;
       }
 
       .board-block {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        gap: 0.1rem;
+        align-items: flex-start;
       }
 
       .board-block label {
         font-size: 0.88rem;
         letter-spacing: 0.04em;
-        color: rgba(248, 250, 252, 0.9);
+        color: var(--text-color);
+        position: relative;
+        padding-right: 0.2rem;
+      }
+
+      .board-block label::after {
+        content: "：";
+        position: absolute;
+        right: 0;
       }
 
       .board-notes {
-        min-height: 1.6rem;
+        min-height: calc(1.2rem * 3);
         border: none;
         border-radius: 0;
-        padding: 0.1rem 0.2rem;
+        padding: 0.05rem 0.15rem;
         background: transparent;
         font-size: 1rem;
         line-height: 1.2;
-        color: #fdfce5;
+        color: var(--text-color);
         white-space: pre-wrap;
       }
 
@@ -431,14 +467,23 @@
         <div class="panel-hint">輸入完畢後按下「套用到白板」。</div>
         <div class="panel-actions">
           <label class="panel-control">
-            <span>白板尺寸</span>
-            <input type="range" id="boardScale" min="10" max="120" value="45" />
-            <span id="boardScaleValue">45%</span>
+            <span>文字大小</span>
+            <input type="range" id="fontScale" min="80" max="150" value="130" />
+            <span id="fontScaleValue">130%</span>
           </label>
           <label class="panel-control">
             <span>白板寬度</span>
             <input type="range" id="boardWidth" min="240" max="640" value="400" />
             <span id="boardWidthValue">400px</span>
+          </label>
+          <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
+        </div>
+        <button type="button" class="ghost-btn toggle-advanced" id="toggleAdvanced">顯示更多調整</button>
+        <div class="panel-actions advanced-controls" id="advancedControls" hidden>
+          <label class="panel-control">
+            <span>白板尺寸</span>
+            <input type="range" id="boardScale" min="10" max="120" value="45" />
+            <span id="boardScaleValue">45%</span>
           </label>
           <label class="panel-control">
             <span>白板傾斜</span>
@@ -447,7 +492,7 @@
           </label>
           <label class="panel-control">
             <span>白板顏色</span>
-            <input type="color" id="boardColor" value="#f8fafc" />
+            <input type="color" id="boardColor" value="#065f46" />
           </label>
           <label class="panel-control">
             <span>透明度</span>
@@ -456,13 +501,12 @@
           </label>
           <label class="panel-control">
             <span>文字顏色</span>
-            <input type="color" id="textColor" value="#0f172a" />
+            <input type="color" id="textColor" value="#f8fafc" />
           </label>
           <label class="panel-control">
             <span>格線顏色</span>
-            <input type="color" id="lineColor" value="#000000" />
+            <input type="color" id="lineColor" value="#f8fafc" />
           </label>
-          <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
         </div>
       </section>
 
@@ -535,6 +579,8 @@
       const boardScaleValue = document.getElementById("boardScaleValue");
       const boardWidthInput = document.getElementById("boardWidth");
       const boardWidthValue = document.getElementById("boardWidthValue");
+      const fontScaleInput = document.getElementById("fontScale");
+      const fontScaleValue = document.getElementById("fontScaleValue");
       const boardRotationInput = document.getElementById("boardRotation");
       const boardRotationValue = document.getElementById("boardRotationValue");
       const boardColorInput = document.getElementById("boardColor");
@@ -548,6 +594,8 @@
       const toastMessage = document.getElementById("toastMessage");
       const photoWatermark = document.getElementById("photoWatermark");
       whiteboardWrapper.dataset.userPositioned = "false";
+      const advancedControls = document.getElementById("advancedControls");
+      const toggleAdvanced = document.getElementById("toggleAdvanced");
 
       const isMobileDevice = /android|iphone|ipad|ipod|mobile/i.test(
         (navigator.userAgent || "").toLowerCase()
@@ -844,13 +892,30 @@
         whiteboardWrapper.style.top = `${(centerY / stageRect.height) * 100}%`;
       };
 
+      let baseBoardScale = Number(boardScaleInput.value) / 100;
+      let fontScaleFactor = Number(fontScaleInput.value) / 100;
+
+      const applyScale = () => {
+        const combinedScale = baseBoardScale * fontScaleFactor;
+        whiteboardWrapper.style.setProperty("--board-scale", combinedScale.toString());
+        document.documentElement.style.setProperty("--whiteboard-font-scale", fontScaleFactor.toString());
+      };
+
       const updateBoardScale = (value) => {
         const percent = Math.max(10, Math.min(120, Number(value)));
-        whiteboardWrapper.style.setProperty(
-          "--board-scale",
-          (percent / 100).toString()
-        );
+        baseBoardScale = percent / 100;
         boardScaleValue.textContent = `${percent}%`;
+        applyScale();
+        if (whiteboardWrapper.dataset.userPositioned !== "true") {
+          requestAnimationFrame(positionBoardAtBottomLeft);
+        }
+      };
+
+      const updateFontScale = (value) => {
+        const percent = Math.max(50, Math.min(180, Number(value)));
+        fontScaleFactor = percent / 100;
+        fontScaleValue.textContent = `${percent}%`;
+        applyScale();
         if (whiteboardWrapper.dataset.userPositioned !== "true") {
           requestAnimationFrame(positionBoardAtBottomLeft);
         }
@@ -928,10 +993,8 @@
 
       const buildShareText = () => {
         const sections = [
-          { label: "工程名稱", value: displayTargets.projectName.textContent },
           { label: "檢查位置", value: displayTargets.inspectionLocation.textContent },
           { label: "檢查日期", value: displayTargets.testDate.textContent },
-          { label: "檢查人員", value: displayTargets.inspector.textContent },
         ];
         return sections.map((item) => `${item.label}：${item.value || "—"}`).join("\n");
       };
@@ -1018,6 +1081,9 @@
       boardRotationInput.addEventListener("input", (event) =>
         updateBoardRotation(event.target.value)
       );
+      fontScaleInput.addEventListener("input", (event) =>
+        updateFontScale(event.target.value)
+      );
       boardColorInput.addEventListener("input", (event) =>
         updateBoardColor(event.target.value)
       );
@@ -1040,12 +1106,15 @@
         boardScaleValue.textContent = "35%";
         boardWidthInput.value = "320";
         boardWidthValue.textContent = "320px";
+        fontScaleInput.value = "110";
+        fontScaleValue.textContent = "110%";
       }
       if (!formInputs.testDate.value) {
         formInputs.testDate.valueAsDate = new Date();
       }
       syncAllFields();
       updateBoardScale(boardScaleInput.value);
+      updateFontScale(fontScaleInput.value);
       updateBoardWidth(boardWidthInput.value);
       updateBoardRotation(boardRotationInput.value);
       updateBoardColor(boardColorInput.value);
@@ -1054,6 +1123,17 @@
       updateLineColor(lineColorInput.value);
       updateWatermarkDate();
       requestAnimationFrame(positionBoardAtBottomLeft);
+
+      toggleAdvanced.addEventListener("click", () => {
+        const isHidden = advancedControls.hasAttribute("hidden");
+        if (isHidden) {
+          advancedControls.removeAttribute("hidden");
+          toggleAdvanced.textContent = "隱藏更多調整";
+        } else {
+          advancedControls.setAttribute("hidden", "true");
+          toggleAdvanced.textContent = "顯示更多調整";
+        }
+      });
       autoResizeTextarea(formInputs.testResult);
       formInputs.testResult.addEventListener("input", () =>
         autoResizeTextarea(formInputs.testResult)
