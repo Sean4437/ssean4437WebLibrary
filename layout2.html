@@ -226,7 +226,7 @@
 
       .whiteboard-wrapper {
         --board-scale: clamp(0.35, calc(25vw / 100), 0.45);
-        --board-width: min(400px, 80%);
+        --board-width: min(400px, 60%);
         position: absolute;
         left: 50%;
         top: 70%;
@@ -437,8 +437,8 @@
           </label>
           <label class="panel-control">
             <span>白板寬度</span>
-            <input type="range" id="boardWidth" min="240" max="640" value="480" />
-            <span id="boardWidthValue">480px</span>
+            <input type="range" id="boardWidth" min="240" max="640" value="400" />
+            <span id="boardWidthValue">400px</span>
           </label>
           <label class="panel-control">
             <span>白板傾斜</span>
@@ -926,8 +926,19 @@
         setTimeout(() => URL.revokeObjectURL(url), 2000);
       };
 
+      const buildShareText = () => {
+        const sections = [
+          { label: "工程名稱", value: displayTargets.projectName.textContent },
+          { label: "檢查位置", value: displayTargets.inspectionLocation.textContent },
+          { label: "檢查日期", value: displayTargets.testDate.textContent },
+          { label: "檢查人員", value: displayTargets.inspector.textContent },
+        ];
+        return sections.map((item) => `${item.label}：${item.value || "—"}`).join("\n");
+      };
+
       const handleShareOrDownload = async (blob, filename) => {
-        const file = new File([blob], filename, { type: "image/png" });
+        const file = new File([blob], filename, { type: "image/jpeg" });
+        const shareText = buildShareText();
         if (
           isMobileDevice &&
           navigator.canShare &&
@@ -938,7 +949,7 @@
             await navigator.share({
               files: [file],
               title: "工程白板照片",
-              text: "在分享面板中選擇儲存影像即可。",
+              text: shareText,
             });
             showToast("已開啟分享面板，請選擇儲存影像。", "success");
             return;
@@ -1027,6 +1038,8 @@
       if (isMobileDevice) {
         boardScaleInput.value = "35";
         boardScaleValue.textContent = "35%";
+        boardWidthInput.value = "320";
+        boardWidthValue.textContent = "320px";
       }
       if (!formInputs.testDate.value) {
         formInputs.testDate.valueAsDate = new Date();

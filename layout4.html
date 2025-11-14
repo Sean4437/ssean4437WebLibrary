@@ -1048,8 +1048,19 @@
         setTimeout(() => URL.revokeObjectURL(url), 2000);
       };
 
+      const buildShareText = () => {
+        const sections = [
+          { label: "工程名稱", value: displayTargets.projectName.textContent },
+          { label: "檢查位置", value: displayTargets.inspectionLocation.textContent },
+          { label: "檢查日期", value: displayTargets.testDate.textContent },
+          { label: "檢查人員", value: displayTargets.inspector.textContent },
+        ];
+        return sections.map((item) => `${item.label}：${item.value || "—"}`).join("\n");
+      };
+
       const handleShareOrDownload = async (blob, filename) => {
-        const file = new File([blob], filename, { type: "image/png" });
+        const file = new File([blob], filename, { type: "image/jpeg" });
+        const shareText = buildShareText();
         if (
           isMobileDevice &&
           navigator.canShare &&
@@ -1060,7 +1071,7 @@
             await navigator.share({
               files: [file],
               title: "工程白板照片",
-              text: "在分享面板中選擇儲存影像即可。",
+              text: shareText,
             });
             showToast("已開啟分享面板，請選擇儲存影像。", "success");
             return;
