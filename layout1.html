@@ -226,7 +226,7 @@
 
       .whiteboard-wrapper {
         --board-scale: clamp(0.35, calc(25vw / 100), 0.45);
-        --board-width: min(400px, 60%);
+        --board-width: min(400px, 75%);
         position: absolute;
         left: 50%;
         top: 70%;
@@ -441,11 +441,11 @@
             <input type="range" id="boardWidth" min="240" max="640" value="400" />
             <span id="boardWidthValue">400px</span>
           </label>
-          <label class="panel-control">
+         <label class="panel-control">
             <span>文字大小</span>
-            <input type="range" id="fontScale" min="80" max="150" value="100" />
-            <span id="fontScaleValue">100%</span>
-          </label>
+            <input type="range" id="fontScale" min="80" max="150" value="130" />
+            <span id="fontScaleValue">130%</span>
+         </label>
           <label class="panel-control">
             <span>白板傾斜</span>
             <input type="range" id="boardRotation" min="-20" max="20" value="0" />
@@ -1068,6 +1068,8 @@
         boardScaleValue.textContent = "35%";
         boardWidthInput.value = "320";
         boardWidthValue.textContent = "320px";
+        fontScaleInput.value = "110";
+        fontScaleValue.textContent = "110%";
       }
       if (!formInputs.testDate.value) {
         formInputs.testDate.valueAsDate = new Date();
