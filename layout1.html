@@ -252,7 +252,7 @@
 
       .whiteboard-wrapper {
         --board-scale: clamp(0.35, calc(25vw / 100), 0.45);
-        --board-width: min(400px, 75%);
+        --board-width: min(350px, 75%);
         position: absolute;
         left: 50%;
         top: 70%;
@@ -468,13 +468,13 @@
         <div class="panel-actions">
           <label class="panel-control">
             <span>文字大小</span>
-            <input type="range" id="fontScale" min="80" max="150" value="130" />
-            <span id="fontScaleValue">130%</span>
+            <input type="range" id="fontScale" min="80" max="300" value="150" />
+            <span id="fontScaleValue">150%</span>
           </label>
           <label class="panel-control">
             <span>白板寬度</span>
-            <input type="range" id="boardWidth" min="240" max="640" value="400" />
-            <span id="boardWidthValue">400px</span>
+            <input type="range" id="boardWidth" min="240" max="640" value="350" />
+            <span id="boardWidthValue">350px</span>
           </label>
           <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
         </div>
@@ -912,7 +912,7 @@
       };
 
       const updateFontScale = (value) => {
-        const percent = Math.max(50, Math.min(180, Number(value)));
+        const percent = Math.max(50, Math.min(300, Number(value)));
         fontScaleFactor = percent / 100;
         fontScaleValue.textContent = `${percent}%`;
         applyScale();
@@ -1106,8 +1106,8 @@
         boardScaleValue.textContent = "35%";
         boardWidthInput.value = "320";
         boardWidthValue.textContent = "320px";
-        fontScaleInput.value = "110";
-        fontScaleValue.textContent = "110%";
+        fontScaleInput.value = "130";
+        fontScaleValue.textContent = "130%";
       }
       if (!formInputs.testDate.value) {
         formInputs.testDate.valueAsDate = new Date();
