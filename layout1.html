@@ -245,6 +245,7 @@
         color: var(--text-color);
         box-shadow: none;
         font-weight: 700;
+        font-size: calc(1rem * var(--whiteboard-font-scale, 1));
       }
 
       .whiteboard.exporting {
@@ -441,6 +442,11 @@
             <span id="boardWidthValue">400px</span>
           </label>
           <label class="panel-control">
+            <span>文字大小</span>
+            <input type="range" id="fontScale" min="80" max="150" value="100" />
+            <span id="fontScaleValue">100%</span>
+          </label>
+          <label class="panel-control">
             <span>白板傾斜</span>
             <input type="range" id="boardRotation" min="-20" max="20" value="0" />
             <span id="boardRotationValue">0°</span>
@@ -535,6 +541,8 @@
       const boardScaleValue = document.getElementById("boardScaleValue");
       const boardWidthInput = document.getElementById("boardWidth");
       const boardWidthValue = document.getElementById("boardWidthValue");
+      const fontScaleInput = document.getElementById("fontScale");
+      const fontScaleValue = document.getElementById("fontScaleValue");
       const boardRotationInput = document.getElementById("boardRotation");
       const boardRotationValue = document.getElementById("boardRotationValue");
       const boardColorInput = document.getElementById("boardColor");
@@ -844,13 +852,30 @@
         whiteboardWrapper.style.top = `${(centerY / stageRect.height) * 100}%`;
       };
 
+      let baseBoardScale = Number(boardScaleInput.value) / 100;
+      let fontScaleFactor = Number(fontScaleInput.value) / 100;
+
+      const applyScale = () => {
+        const combinedScale = baseBoardScale * (fontScaleFactor / 1);
+        whiteboardWrapper.style.setProperty("--board-scale", combinedScale.toString());
+        document.documentElement.style.setProperty("--whiteboard-font-scale", fontScaleFactor.toString());
+      };
+
       const updateBoardScale = (value) => {
         const percent = Math.max(10, Math.min(120, Number(value)));
-        whiteboardWrapper.style.setProperty(
-          "--board-scale",
-          (percent / 100).toString()
-        );
+        baseBoardScale = percent / 100;
         boardScaleValue.textContent = `${percent}%`;
+        applyScale();
+        if (whiteboardWrapper.dataset.userPositioned !== "true") {
+          requestAnimationFrame(positionBoardAtBottomLeft);
+        }
+      };
+
+      const updateFontScale = (value) => {
+        const percent = Math.max(50, Math.min(180, Number(value)));
+        fontScaleFactor = percent / 100;
+        fontScaleValue.textContent = `${percent}%`;
+        applyScale();
         if (whiteboardWrapper.dataset.userPositioned !== "true") {
           requestAnimationFrame(positionBoardAtBottomLeft);
         }
@@ -1018,6 +1043,9 @@
       boardRotationInput.addEventListener("input", (event) =>
         updateBoardRotation(event.target.value)
       );
+      fontScaleInput.addEventListener("input", (event) =>
+        updateFontScale(event.target.value)
+      );
       boardColorInput.addEventListener("input", (event) =>
         updateBoardColor(event.target.value)
       );
@@ -1046,6 +1074,7 @@
       }
       syncAllFields();
       updateBoardScale(boardScaleInput.value);
+      updateFontScale(fontScaleInput.value);
       updateBoardWidth(boardWidthInput.value);
       updateBoardRotation(boardRotationInput.value);
       updateBoardColor(boardColorInput.value);
