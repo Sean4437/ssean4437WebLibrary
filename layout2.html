@@ -9,9 +9,9 @@
     <title>工程白板拍照工具</title>
     <style>
       :root {
-        --board-fill: #065f46;
-        --text-color: #f8fafc;
-        --line-color: #f8fafc;
+        --board-fill: #f8fafc;
+        --text-color: #0f172a;
+        --line-color: #000000;
         --board-rotation: 0deg;
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
           BlinkMacSystemFont, sans-serif;
@@ -117,6 +117,90 @@
         align-items: center;
       }
 
+      .color-preset-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        grid-column: 1 / -1;
+      }
+
+      .color-swatch {
+        width: 46px;
+        height: 28px;
+        border-radius: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        background: transparent;
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.15s ease, border-color 0.2s ease;
+        padding: 0;
+      }
+
+      .color-swatch::before {
+        content: "";
+        position: absolute;
+        inset: 5px 8px 5px 8px;
+        border-radius: 10px;
+        background: var(--swatch-color, #fff);
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.25);
+      }
+
+      .color-swatch:hover,
+      .color-swatch:focus-visible {
+        border-color: #38bdf8;
+        outline: none;
+        transform: translateY(-1px);
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .history-dropdown {
+        margin-top: 0.4rem;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.9);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.4);
+        max-height: 200px;
+        overflow-y: auto;
+        display: none;
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 0.4rem;
+      }
+
+      .history-dropdown.is-visible {
+        display: flex;
+      }
+
+      .history-dropdown button {
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 8px;
+        padding: 0.4rem 0.55rem;
+        background: rgba(15, 23, 42, 0.65);
+        color: #e2e8f0;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+
+      .history-dropdown button:hover,
+      .history-dropdown button:focus-visible {
+        border-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.2);
+        outline: none;
+      }
+
       .toggle-advanced {
         margin-top: 0.6rem;
         width: 100%;
@@ -172,7 +256,7 @@
       .btn {
         border: none;
         border-radius: 999px;
-        padding: 0.75rem 1.1rem;
+        padding: 0.6rem 1.25rem;
         font-weight: 700;
         font-size: 1rem;
         cursor: pointer;
@@ -356,6 +440,62 @@
         white-space: pre-wrap;
       }
 
+      .coordinate-field {
+        border: 1px solid rgba(226, 232, 240, 0.35);
+        border-radius: 12px;
+        padding: 0.6rem 0.75rem;
+        background: rgba(15, 23, 42, 0.6);
+        color: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .coordinate-meta {
+        font-size: 0.9rem;
+        color: #cbd5f5;
+      }
+
+      .coordinate-actions {
+        margin-top: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+      }
+
+      .coordinate-actions .ghost-btn {
+        padding: 0.45rem 1.2rem;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(120deg, #38bdf8, #6366f1);
+        color: #0f172a;
+        font-weight: 700;
+        box-shadow: 0 10px 18px rgba(56, 189, 248, 0.35);
+      }
+
+      .coordinate-status {
+        font-size: 0.85rem;
+        color: #cbd5f5;
+      }
+
+      .board-coordinate {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        width: 100%;
+      }
+
+      .board-coordinate span:first-child {
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      .board-coordinate-meta {
+        font-size: 0.9rem;
+        letter-spacing: 0.03em;
+      }
+
       .signature-placeholder-box {
         flex: 1;
         min-height: 80px;
@@ -388,7 +528,7 @@
       .action-btn {
         border: none;
         border-radius: 999px;
-        padding: 0.85rem 1.25rem;
+        padding: 0.6rem 1.25rem;
         font-weight: 700;
         font-size: 1rem;
         cursor: pointer;
@@ -445,11 +585,23 @@
         <div class="data-grid">
           <div class="form-field">
             <label for="inputProjectName">工程名稱</label>
-            <input id="inputProjectName" type="text" placeholder="請輸入工程名稱" />
+            <input
+              id="inputProjectName"
+              type="text"
+              placeholder="請輸入工程名稱"
+              autocomplete="off"
+            />
+            <div class="history-dropdown" id="projectNameHistoryDropdown"></div>
           </div>
           <div class="form-field">
             <label for="inputInspectionLocation">檢查位置</label>
-            <input id="inputInspectionLocation" type="text" placeholder="請輸入檢查位置" />
+            <input
+              id="inputInspectionLocation"
+              type="text"
+              placeholder="請輸入檢查位置"
+              autocomplete="off"
+            />
+            <div class="history-dropdown" id="inspectionLocationHistoryDropdown"></div>
           </div>
           <div class="form-field">
             <label for="inputTestDate">檢查日期</label>
@@ -457,11 +609,33 @@
           </div>
           <div class="form-field">
             <label for="inputInspector">檢查人員</label>
-            <input id="inputInspector" type="text" placeholder="請輸入檢查人員" />
+            <input
+              id="inputInspector"
+              type="text"
+              placeholder="請輸入檢查人員"
+              autocomplete="off"
+            />
+            <div class="history-dropdown" id="inspectorHistoryDropdown"></div>
           </div>
           <div class="form-field" style="grid-column: 1 / -1">
             <label for="inputTestResult">檢查紀錄</label>
-            <textarea id="inputTestResult" placeholder="寫下檢查內容、測量結果等"></textarea>
+            <textarea
+              id="inputTestResult"
+              placeholder="寫下檢查內容、測量結果等"
+              autocomplete="off"
+            ></textarea>
+            <div class="history-dropdown" id="testResultHistoryDropdown"></div>
+          </div>
+          <div class="form-field" style="grid-column: 1 / -1">
+            <label>現場座標</label>
+            <div class="coordinate-field">
+              <div id="coordinateDmsField">尚未取得</div>
+              <div class="coordinate-meta" id="coordinateTwdField">X：— Y：—</div>
+            </div>
+            <div class="coordinate-actions">
+              <button type="button" class="ghost-btn" id="detectCoordinateBtn">取得座標</button>
+              <span class="coordinate-status" id="coordinateStatus">請允許定位以自動帶入</span>
+            </div>
           </div>
         </div>
         <div class="panel-hint">輸入完畢後按下「套用到白板」。</div>
@@ -476,6 +650,60 @@
             <input type="range" id="boardWidth" min="240" max="640" value="350" />
             <span id="boardWidthValue">350px</span>
           </label>
+          <div class="color-preset-group" role="group" aria-label="白板配色快捷">
+            <button
+              type="button"
+              class="color-swatch"
+              style="--swatch-color: #f8fafc"
+              data-color-preset
+              data-board-color="#f8fafc"
+              data-text-color="#0f172a"
+              data-line-color="#000000"
+              data-board-opacity="100"
+              aria-label="白色主題"
+            >
+              <span class="sr-only">白色主題</span>
+            </button>
+            <button
+              type="button"
+              class="color-swatch"
+              style="--swatch-color: #065f46"
+              data-color-preset
+              data-board-color="#065f46"
+              data-text-color="#f8fafc"
+              data-line-color="#f8fafc"
+              data-board-opacity="100"
+              aria-label="綠色主題"
+            >
+              <span class="sr-only">綠色主題</span>
+            </button>
+            <button
+              type="button"
+              class="color-swatch"
+              style="--swatch-color: rgba(15, 23, 42, 0.5)"
+              data-color-preset
+              data-board-color="#1f293b"
+              data-text-color="#f8fafc"
+              data-line-color="#f8fafc"
+              data-board-opacity="85"
+              aria-label="半透明灰主題"
+            >
+              <span class="sr-only">半透明灰主題</span>
+            </button>
+            <button
+              type="button"
+              class="color-swatch"
+              style="--swatch-color: rgba(255, 255, 255, 0.8)"
+              data-color-preset
+              data-board-color="#f8fafc"
+              data-text-color="#0f172a"
+              data-line-color="#000000"
+              data-board-opacity="82"
+              aria-label="半透明白主題"
+            >
+              <span class="sr-only">半透明白主題</span>
+            </button>
+          </div>
           <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
         </div>
         <button type="button" class="ghost-btn toggle-advanced" id="toggleAdvanced">顯示更多調整</button>
@@ -492,7 +720,7 @@
           </label>
           <label class="panel-control">
             <span>白板顏色</span>
-            <input type="color" id="boardColor" value="#065f46" />
+            <input type="color" id="boardColor" value="#f8fafc" />
           </label>
           <label class="panel-control">
             <span>透明度</span>
@@ -501,11 +729,11 @@
           </label>
           <label class="panel-control">
             <span>文字顏色</span>
-            <input type="color" id="textColor" value="#f8fafc" />
+            <input type="color" id="textColor" value="#0f172a" />
           </label>
           <label class="panel-control">
             <span>格線顏色</span>
-            <input type="color" id="lineColor" value="#f8fafc" />
+            <input type="color" id="lineColor" value="#000000" />
           </label>
         </div>
       </section>
@@ -538,6 +766,13 @@
                 <label>檢查紀錄</label>
                 <div class="board-notes" id="displayTestResult">—</div>
               </div>
+              <div class="board-block">
+                <label>定位座標</label>
+                <div class="board-coordinate">
+                  <span id="displayCoordinateDms">—</span>
+                  <span class="board-coordinate-meta" id="displayCoordinateTwd">X：— Y：—</span>
+                </div>
+              </div>
               <div class="board-row">
                 <label>檢查日期</label>
                 <div class="board-value" id="displayTestDate">—</div>
@@ -563,6 +798,8 @@
       <input type="file" accept="image/*" class="hidden-input" id="uploadInput" />
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/proj4@2.9.1/dist/proj4.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
       const takePhotoBtn = document.getElementById("takePhotoBtn");
@@ -588,6 +825,15 @@
       const boardOpacityValue = document.getElementById("boardOpacityValue");
       const textColorInput = document.getElementById("textColor");
       const lineColorInput = document.getElementById("lineColor");
+      const colorPresetButtons = document.querySelectorAll("[data-color-preset]");
+      const detectCoordinateBtn = document.getElementById("detectCoordinateBtn");
+      const coordinateStatus = document.getElementById("coordinateStatus");
+      const defaultCoordinateStatusText =
+        coordinateStatus?.textContent || "請允許定位以自動帶入";
+      const coordinateDmsField = document.getElementById("coordinateDmsField");
+      const coordinateTwdField = document.getElementById("coordinateTwdField");
+      const displayCoordinateDms = document.getElementById("displayCoordinateDms");
+      const displayCoordinateTwd = document.getElementById("displayCoordinateTwd");
       const applyDataBtn = document.getElementById("applyDataBtn");
       const clearBoardBtn = document.getElementById("clearBoardBtn");
       const exportBtn = document.getElementById("exportBtn");
@@ -600,6 +846,13 @@
       const isMobileDevice = /android|iphone|ipad|ipod|mobile/i.test(
         (navigator.userAgent || "").toLowerCase()
       );
+      const TWD97_PROJECTION =
+        "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +units=m +no_defs";
+      let lastPhotoMetadata = null;
+
+      const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
+      const FIELD_HISTORY_LIMIT = 20;
+      let lastPhotoExifBytes = null;
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -616,6 +869,12 @@
         testDate: document.getElementById("displayTestDate"),
         inspector: document.getElementById("displayInspector"),
       };
+      const historyDropdowns = {
+        projectName: document.getElementById("projectNameHistoryDropdown"),
+        inspectionLocation: document.getElementById("inspectionLocationHistoryDropdown"),
+        inspector: document.getElementById("inspectorHistoryDropdown"),
+        testResult: document.getElementById("testResultHistoryDropdown"),
+      };
 
       const formatWatermarkDate = (value) => {
         if (!value) return "日期未設定";
@@ -627,6 +886,268 @@
       const updateWatermarkDate = () => {
         if (!photoWatermark) return;
         photoWatermark.textContent = formatWatermarkDate(formInputs.testDate.value);
+      };
+
+      const formatDmsComponent = (value, positiveSuffix, negativeSuffix) => {
+        const direction = value >= 0 ? positiveSuffix : negativeSuffix;
+        const absolute = Math.abs(value);
+        const degrees = Math.floor(absolute);
+        const minutesFloat = (absolute - degrees) * 60;
+        const minutes = Math.floor(minutesFloat);
+        const seconds = Math.round((minutesFloat - minutes) * 60);
+        return `${degrees}°${String(minutes).padStart(2, "0")}'${String(seconds).padStart(2, "0")}"${direction}`;
+      };
+
+      const formatDmsPair = (lat, lon) => {
+        const latText = formatDmsComponent(lat, "N", "S");
+        const lonText = formatDmsComponent(lon, "E", "W");
+        return `${latText} ${lonText}`;
+      };
+
+      const formatTwdText = (x, y) => {
+        const roundedX = Math.round(x);
+        const roundedY = Math.round(y);
+        return `X:${roundedX}　Y:${roundedY}`;
+      };
+
+      const decimalToDmsRational = (value) => {
+        const abs = Math.abs(value);
+        const degrees = Math.floor(abs);
+        const minutesFloat = (abs - degrees) * 60;
+        const minutes = Math.floor(minutesFloat);
+        const seconds = (minutesFloat - minutes) * 60;
+        const toRational = (num) => [Math.round(num * 100), 100];
+        return [
+          [degrees, 1],
+          [minutes, 1],
+          toRational(seconds),
+        ];
+      };
+
+      const toExifDateTime = (dateStr) =>
+        `${dateStr.replace(/-/g, ":")} 00:00:00`;
+
+      const applyExifToDataUrl = (dataUrl) => {
+        if (!window.piexif) return dataUrl;
+        try {
+          if (lastPhotoExifBytes) {
+            return piexif.insert(lastPhotoExifBytes, dataUrl);
+          }
+          if (!lastPhotoMetadata) return dataUrl;
+          const zeroth = {};
+          const exif = {};
+          const gps = {};
+          if (lastPhotoMetadata.date) {
+            const dateTime = toExifDateTime(lastPhotoMetadata.date);
+            zeroth[piexif.ImageIFD.DateTime] = dateTime;
+            exif[piexif.ExifIFD.DateTimeOriginal] = dateTime;
+            exif[piexif.ExifIFD.CreateDate] = dateTime;
+          }
+          if (lastPhotoMetadata.gps) {
+            const { latitude, longitude } = lastPhotoMetadata.gps;
+            gps[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
+            gps[piexif.GPSIFD.GPSLatitude] = decimalToDmsRational(latitude);
+            gps[piexif.GPSIFD.GPSLongitudeRef] = longitude >= 0 ? "E" : "W";
+            gps[piexif.GPSIFD.GPSLongitude] = decimalToDmsRational(longitude);
+          }
+          if (
+            !Object.keys(zeroth).length &&
+            !Object.keys(exif).length &&
+            !Object.keys(gps).length
+          ) {
+            return dataUrl;
+          }
+          const exifBytes = piexif.dump({
+            "0th": zeroth,
+            Exif: exif,
+            GPS: gps,
+          });
+          return piexif.insert(exifBytes, dataUrl);
+        } catch (error) {
+          console.warn("EXIF 寫入失敗", error);
+          return dataUrl;
+        }
+      };
+
+      const dataUrlToBlob = (dataUrl) => {
+        const [header, data] = dataUrl.split(",");
+        const mimeMatch = header.match(/:(.*?);/);
+        const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+        const binary = atob(data);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+          array[i] = binary.charCodeAt(i);
+        }
+        return new Blob([array], { type: mime });
+      };
+
+      const convertToTwd97 = (lat, lon) => {
+        if (typeof proj4 !== "function") {
+          return null;
+        }
+        try {
+          return proj4("EPSG:4326", TWD97_PROJECTION, [lon, lat]);
+        } catch (error) {
+          console.warn("TWD97 轉換失敗", error);
+          return null;
+        }
+      };
+
+      const updateCoordinateDisplay = (dmsText, twdText) => {
+        coordinateDmsField.textContent = dmsText || "尚未取得";
+        coordinateTwdField.textContent = twdText || "X：— Y：—";
+        displayCoordinateDms.textContent = dmsText || "—";
+        displayCoordinateTwd.textContent = twdText || "X：— Y：—";
+      };
+
+      const resolveGeoErrorMessage = (error) => {
+        if (!error) return "定位失敗，請稍後再試。";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            return "定位權限被拒絕，請開啟定位權限。";
+          case error.POSITION_UNAVAILABLE:
+            return "目前無法取得位置資訊。";
+          case error.TIMEOUT:
+            return "定位逾時，請移動到訊號較佳的位置。";
+          default:
+            return "定位失敗，請稍後再試。";
+        }
+      };
+
+      const detectCoordinates = () => {
+        if (!navigator.geolocation) {
+          const message = "此裝置不支援定位功能。";
+          coordinateStatus.textContent = message;
+          showToast(message);
+          return;
+        }
+        coordinateStatus.textContent = "定位中…";
+        detectCoordinateBtn.disabled = true;
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            const dmsText = formatDmsPair(latitude, longitude);
+            const twd = convertToTwd97(latitude, longitude);
+            const twdText = twd ? formatTwdText(twd[0], twd[1]) : "X：— Y：—";
+            updateCoordinateDisplay(dmsText, twdText);
+            coordinateStatus.textContent = "定位成功";
+            showToast("已更新座標資訊。", "success");
+            detectCoordinateBtn.disabled = false;
+          },
+          (error) => {
+            const message = resolveGeoErrorMessage(error);
+            coordinateStatus.textContent = message;
+            showToast(message);
+            detectCoordinateBtn.disabled = false;
+          },
+          { enableHighAccuracy: true, timeout: 15000 }
+        );
+      };
+
+      const readFieldHistoryStore = () => {
+        try {
+          const raw = localStorage.getItem(FIELD_HISTORY_STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return typeof parsed === "object" && parsed ? parsed : {};
+        } catch (error) {
+          console.warn("讀取歷史資料失敗", error);
+          return {};
+        }
+      };
+
+      let fieldHistory = readFieldHistoryStore();
+
+      const writeFieldHistoryStore = () => {
+        try {
+          localStorage.setItem(FIELD_HISTORY_STORAGE_KEY, JSON.stringify(fieldHistory));
+        } catch (error) {
+          console.warn("儲存歷史資料失敗", error);
+        }
+      };
+
+      const getFieldHistory = (field) => {
+        const list = fieldHistory[field];
+        return Array.isArray(list) ? list : [];
+      };
+
+      const saveFieldHistory = (field, value) => {
+        const trimmed = (value || "").trim();
+        if (!trimmed) return;
+        const current = getFieldHistory(field).filter((item) => item !== trimmed);
+        current.unshift(trimmed);
+        fieldHistory[field] = current.slice(0, FIELD_HISTORY_LIMIT);
+        writeFieldHistoryStore();
+        updateDropdownContent(field);
+      };
+      const renderHistoryDropdown = (field) => {
+        const dropdown = historyDropdowns[field];
+        if (!dropdown) return false;
+        dropdown.innerHTML = "";
+        const history = getFieldHistory(field);
+        if (!history.length) return false;
+        history.forEach((item) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = item;
+          button.addEventListener("mousedown", (event) => {
+            event.preventDefault();
+            const targetInput = formInputs[field];
+            if (!targetInput) return;
+            targetInput.value = item;
+            if (field === "testResult") {
+              autoResizeTextarea(targetInput);
+            }
+            syncField(field);
+            hideFieldHistory(field);
+          });
+          dropdown.appendChild(button);
+        });
+        return true;
+      };
+
+      const updateDropdownContent = (field) => {
+        const dropdown = historyDropdowns[field];
+        if (!dropdown) return;
+        const wasVisible = dropdown.classList.contains("is-visible");
+        const hasItems = renderHistoryDropdown(field);
+        if (wasVisible && hasItems) {
+          dropdown.classList.add("is-visible");
+        } else if (!hasItems) {
+          dropdown.classList.remove("is-visible");
+        }
+      };
+
+      const refreshAllFieldHistoryUI = () => {
+        Object.keys(historyDropdowns).forEach((field) => {
+          renderHistoryDropdown(field);
+          hideFieldHistory(field);
+        });
+      };
+
+      const historyDropdownHideTimers = {};
+
+      const showFieldHistory = (field) => {
+        const dropdown = historyDropdowns[field];
+        if (!dropdown) return;
+        clearTimeout(historyDropdownHideTimers[field]);
+        const hasItems = renderHistoryDropdown(field);
+        if (hasItems) {
+          dropdown.classList.add("is-visible");
+        }
+      };
+
+      const hideFieldHistory = (field) => {
+        const dropdown = historyDropdowns[field];
+        if (!dropdown) return;
+        dropdown.classList.remove("is-visible");
+      };
+
+      const scheduleHideFieldHistory = (field) => {
+        clearTimeout(historyDropdownHideTimers[field]);
+        historyDropdownHideTimers[field] = setTimeout(
+          () => hideFieldHistory(field),
+          120
+        );
       };
 
       const formatDateInputValue = (date) => {
@@ -651,7 +1172,7 @@
           if (!code) break;
           chars += String.fromCharCode(code);
         }
-        return chars;
+        return chars.trim();
       };
 
       const normalizeExifDate = (value) => {
@@ -673,11 +1194,81 @@
 
       const EXIF_DATE_TAGS = new Set([0x0132, 0x9003, 0x9004]);
 
-      const parseIfdForDate = (view, offset, base, little) => {
+      const GPS_TAGS = {
+        LAT_REF: 0x0001,
+        LAT: 0x0002,
+        LON_REF: 0x0003,
+        LON: 0x0004,
+      };
+
+      const readRationalArray = (view, offset, little, count) => {
+        const result = [];
+        for (let i = 0; i < count; i += 1) {
+          const numerator = view.getUint32(offset + i * 8, little);
+          const denominator = view.getUint32(offset + i * 8 + 4, little) || 1;
+          result.push(numerator / denominator);
+        }
+        return result;
+      };
+
+      const convertGpsValuesToDecimal = (values, ref) => {
+        if (!values || values.length < 3) return null;
+        const decimal =
+          values[0] + values[1] / 60 + values[2] / 3600;
+        if (!ref) return decimal;
+        const normalizedRef = ref.trim().toUpperCase();
+        if (normalizedRef === "S" || normalizedRef === "W") {
+          return -decimal;
+        }
+        return decimal;
+      };
+
+      const parseGpsIfd = (view, offset, base, little) => {
         if (offset <= 0 || offset + 2 > view.byteLength) return null;
         const entryCount = view.getUint16(offset, little);
-        let exifPointer = null;
-        let fallbackDate = null;
+        let latRef = null;
+        let lonRef = null;
+        let latValues = null;
+        let lonValues = null;
+        for (let i = 0; i < entryCount; i += 1) {
+          const entryOffset = offset + 2 + i * 12;
+          if (entryOffset + 12 > view.byteLength) break;
+          const tag = view.getUint16(entryOffset, little);
+          const type = view.getUint16(entryOffset + 2, little);
+          const count = view.getUint32(entryOffset + 4, little);
+          const valueSize = (TYPE_SIZES[type] || 0) * count;
+          const rawValueOffset = entryOffset + 8;
+          let valueOffset = rawValueOffset;
+          if (valueSize > 4) {
+            valueOffset = base + view.getUint32(rawValueOffset, little);
+          }
+          if (tag === GPS_TAGS.LAT_REF && type === 2) {
+            latRef = asciiFromView(view, valueOffset, Math.min(count, 2));
+          } else if (tag === GPS_TAGS.LON_REF && type === 2) {
+            lonRef = asciiFromView(view, valueOffset, Math.min(count, 2));
+          } else if (tag === GPS_TAGS.LAT && type === 5 && count >= 3) {
+            latValues = readRationalArray(view, valueOffset, little, 3);
+          } else if (tag === GPS_TAGS.LON && type === 5 && count >= 3) {
+            lonValues = readRationalArray(view, valueOffset, little, 3);
+          }
+        }
+        if (!latValues || !lonValues) return null;
+        const latitude = convertGpsValuesToDecimal(latValues, latRef);
+        const longitude = convertGpsValuesToDecimal(lonValues, lonRef);
+        if (
+          typeof latitude !== "number" ||
+          Number.isNaN(latitude) ||
+          typeof longitude !== "number" ||
+          Number.isNaN(longitude)
+        ) {
+          return null;
+        }
+        return { latitude, longitude };
+      };
+
+      const parseIfdForMetadata = (view, offset, base, little, metadata = {}) => {
+        if (offset <= 0 || offset + 2 > view.byteLength) return metadata;
+        const entryCount = view.getUint16(offset, little);
         for (let i = 0; i < entryCount; i += 1) {
           const entryOffset = offset + 2 + i * 12;
           if (entryOffset + 12 > view.byteLength) break;
@@ -691,28 +1282,36 @@
             valueOffset = base + view.getUint32(rawValueOffset, little);
           }
           if (tag === 0x8769) {
-            exifPointer = base + view.getUint32(rawValueOffset, little);
+            const pointer = base + view.getUint32(rawValueOffset, little);
+            parseIfdForMetadata(view, pointer, base, little, metadata);
+            continue;
+          }
+          if (tag === 0x8825) {
+            const pointer = base + view.getUint32(rawValueOffset, little);
+            const gps = parseGpsIfd(view, pointer, base, little);
+            if (gps) {
+              metadata.gps = gps;
+            }
             continue;
           }
           if (EXIF_DATE_TAGS.has(tag) && type === 2 && count > 0) {
             const raw = asciiFromView(view, valueOffset, count);
             const normalized = normalizeExifDate(raw);
             if (normalized) {
-              if (tag === 0x9003) return normalized;
-              fallbackDate = fallbackDate || normalized;
+              if (tag === 0x9003) {
+                metadata.primaryDate = normalized;
+              } else if (!metadata.fallbackDate) {
+                metadata.fallbackDate = normalized;
+              }
             }
           }
         }
-        if (exifPointer) {
-          const nestedDate = parseIfdForDate(view, exifPointer, base, little);
-          if (nestedDate) return nestedDate;
-        }
-        return fallbackDate;
+        return metadata;
       };
 
-      const readExifDateFromBuffer = (buffer) => {
+      const readExifMetadataFromBuffer = (buffer) => {
         const view = new DataView(buffer);
-        if (view.byteLength < 12 || view.getUint16(0, false) !== 0xffd8) return null;
+        if (view.byteLength < 12 || view.getUint16(0, false) !== 0xffd8) return {};
         let offset = 2;
         while (offset + 4 < view.byteLength) {
           if (view.getUint8(offset) !== 0xff) break;
@@ -729,50 +1328,120 @@
             if (tiffStart + 8 > view.byteLength) break;
             const little = view.getUint16(tiffStart, false) === 0x4949;
             const firstIfdOffset = view.getUint32(tiffStart + 4, little);
-            return parseIfdForDate(view, tiffStart + firstIfdOffset, tiffStart, little);
+            const metadata = parseIfdForMetadata(
+              view,
+              tiffStart + firstIfdOffset,
+              tiffStart,
+              little,
+              {}
+            );
+            return {
+              date: metadata.primaryDate || metadata.fallbackDate || null,
+              gps: metadata.gps || null,
+            };
           }
           offset += 2 + length;
         }
-        return null;
+        return {};
       };
 
-      const extractExifDate = async (file) => {
-        if (!file || !/image\/jpe?g/i.test(file.type || "")) return null;
+      const extractExifMetadata = async (file, dataUrl) => {
+        if (!file) return {};
+        if (window.piexif && dataUrl) {
+          try {
+            const exifObj = piexif.load(dataUrl);
+            const metadata = {};
+            const dateTimeOriginal =
+              exifObj.Exif?.[piexif.ExifIFD.DateTimeOriginal] ||
+              exifObj.Exif?.[piexif.ExifIFD.CreateDate] ||
+              exifObj["0th"]?.[piexif.ImageIFD.DateTime] ||
+              null;
+            if (dateTimeOriginal) {
+              metadata.date = dateTimeOriginal.split(" ")[0].replace(/:/g, "-");
+            }
+            const toDecimal = (value) => {
+              if (!value || value.length < 3) return null;
+              const [deg, min, sec] = value.map(
+                ([numerator, denominator]) => numerator / (denominator || 1)
+              );
+              return deg + min / 60 + sec / 3600;
+            };
+            const lat = exifObj.GPS?.[piexif.GPSIFD.GPSLatitude];
+            const latRef = exifObj.GPS?.[piexif.GPSIFD.GPSLatitudeRef];
+            const lon = exifObj.GPS?.[piexif.GPSIFD.GPSLongitude];
+            const lonRef = exifObj.GPS?.[piexif.GPSIFD.GPSLongitudeRef];
+            const latitude = toDecimal(lat);
+            const longitude = toDecimal(lon);
+            if (
+              typeof latitude === "number" &&
+              typeof longitude === "number" &&
+              latRef &&
+              lonRef
+            ) {
+              metadata.gps = {
+                latitude:
+                  latRef.trim().toUpperCase() === "S" ? -latitude : latitude,
+                longitude:
+                  lonRef.trim().toUpperCase() === "W" ? -longitude : longitude,
+              };
+            }
+            metadata.exifBytes = piexif.dump(exifObj);
+            return metadata;
+          } catch (error) {
+            console.warn("EXIF 解析失敗", error);
+          }
+        }
+        if (!/image\/jpe?g/i.test(file.type || "")) return {};
         try {
           const buffer = await file.arrayBuffer();
-          return readExifDateFromBuffer(buffer);
-        } catch {
-          return null;
+          return readExifMetadataFromBuffer(buffer) || {};
+        } catch (error) {
+          console.warn("EXIF 解析失敗", error);
+          return {};
         }
       };
 
-      const applyPhotoDateMetadata = async (file) => {
+      const applyPhotoMetadata = async (file, dataUrl) => {
         if (!file) return;
-        let resolvedDate = null;
-        let usedExif = false;
+        let metadata = {};
         try {
-          const exifDate = await extractExifDate(file);
-          if (exifDate) {
-            resolvedDate = exifDate;
-            usedExif = true;
-          }
+          metadata = await extractExifMetadata(file, dataUrl);
         } catch (error) {
-          console.warn("EXIF 解析失敗", error);
+          console.warn("讀取 EXIF 資料失敗", error);
         }
-
+        lastPhotoMetadata =
+          metadata && (metadata.date || metadata.gps)
+            ? { date: metadata.date || null, gps: metadata.gps || null }
+            : null;
+        lastPhotoExifBytes = metadata?.exifBytes || null;
+        const exifDate = metadata.date;
+        const usedExif = Boolean(exifDate);
+        let resolvedDate = exifDate;
         if (!resolvedDate) {
           resolvedDate =
             file.lastModified && Number.isFinite(file.lastModified)
               ? formatDateInputValue(new Date(file.lastModified))
               : formatDateInputValue(new Date());
         }
-
         formInputs.testDate.value = resolvedDate;
         syncField("testDate");
-        showToast(
-          usedExif ? "已套用照片拍攝日期，如需修改可手動調整。" : "已套用拍攝日期，如需修改可手動調整。",
-          "success"
-        );
+
+        let toastMessageContent = usedExif
+          ? "已套用照片拍攝日期，如需修改可手動調整"
+          : "已套用拍攝日期，如需修改可手動調整";
+
+        if (metadata.gps) {
+          const { latitude, longitude } = metadata.gps;
+          const dmsText = formatDmsPair(latitude, longitude);
+          const twd = convertToTwd97(latitude, longitude);
+          const twdText = twd ? formatTwdText(twd[0], twd[1]) : "X:—　Y:—";
+          updateCoordinateDisplay(dmsText, twdText);
+          coordinateStatus.textContent = "已套用照片座標";
+          toastMessageContent += "；已套用照片座標";
+        } else {
+          coordinateStatus.textContent = defaultCoordinateStatusText;
+        }
+        showToast(`${toastMessageContent}。`, "success");
       };
 
       const autoResizeTextarea = (textarea) => {
@@ -806,19 +1475,42 @@
       const handlePhotoFiles = async (files) => {
         const [file] = files || [];
         if (!file) return;
+        let dataUrl = null;
         try {
-        const dataUrl = await readFileAsDataURL(file);
-        photoImage.src = dataUrl;
-        photoImage.hidden = false;
-        placeholder.style.display = "none";
-        updateStageAspect();
-        whiteboardWrapper.dataset.userPositioned = "false";
-        requestAnimationFrame(positionBoardAtBottomLeft);
+          dataUrl = await readFileAsDataURL(file);
+          photoImage.src = dataUrl;
+          photoImage.hidden = false;
+          placeholder.style.display = "none";
+          updateStageAspect();
+          whiteboardWrapper.dataset.userPositioned = "false";
+          requestAnimationFrame(positionBoardAtBottomLeft);
         } catch (error) {
           showToast("照片載入失敗，請重新選擇。");
           return;
         }
-        await applyPhotoDateMetadata(file);
+        await applyPhotoMetadata(file, dataUrl);
+      };
+
+      const applyColorPreset = (button) => {
+        if (!button?.dataset) return;
+        const { boardColor, textColor, lineColor, boardOpacity } = button.dataset;
+        if (boardColor) {
+          boardColorInput.value = boardColor;
+          updateBoardColor(boardColor);
+        }
+        if (textColor) {
+          textColorInput.value = textColor;
+          updateTextColor(textColor);
+        }
+        if (lineColor) {
+          lineColorInput.value = lineColor;
+          updateLineColor(lineColor);
+        }
+        if (boardOpacity) {
+          boardOpacityInput.value = boardOpacity;
+          updateBoardOpacity(boardOpacity);
+        }
+        showToast("已套用預設配色。", "success");
       };
 
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -952,6 +1644,10 @@
         Object.values(formInputs).forEach((input) => (input.value = ""));
         formInputs.testDate.valueAsDate = new Date();
         syncAllFields();
+        lastPhotoMetadata = null;
+        lastPhotoExifBytes = null;
+        updateCoordinateDisplay();
+        coordinateStatus.textContent = defaultCoordinateStatusText;
       };
 
       const updateBoardColor = (color) => {
@@ -1036,9 +1732,9 @@
             backgroundColor: null,
             scale: window.devicePixelRatio || 2,
           });
-          const blob = await new Promise((resolve, reject) =>
-            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("failed"))), "image/jpeg", 0.92)
-          );
+          let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+          dataUrl = applyExifToDataUrl(dataUrl);
+          const blob = dataUrlToBlob(dataUrl);
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
           await handleShareOrDownload(blob, `whiteboard_${timestamp}.jpg`);
         } catch (error) {
@@ -1062,8 +1758,12 @@
       window.addEventListener("pointerup", endDrag);
       window.addEventListener("pointercancel", endDrag);
 
+      const historyFields = ["projectName", "inspectionLocation", "inspector", "testResult"];
+      const historyTextFields = ["projectName", "inspectionLocation", "inspector"];
+
       applyDataBtn.addEventListener("click", () => {
         syncAllFields();
+        historyFields.forEach((field) => saveFieldHistory(field, formInputs[field].value));
         showToast("白板內容已更新。", "success");
       });
 
@@ -1096,6 +1796,26 @@
       lineColorInput.addEventListener("input", (event) =>
         updateLineColor(event.target.value)
       );
+      detectCoordinateBtn.addEventListener("click", detectCoordinates);
+      colorPresetButtons.forEach((button) =>
+        button.addEventListener("click", () => applyColorPreset(button))
+      );
+      refreshAllFieldHistoryUI();
+
+      historyTextFields.forEach((field) => {
+        const input = formInputs[field];
+        if (!input) return;
+        input.addEventListener("focus", () => showFieldHistory(field));
+        input.addEventListener("input", () => showFieldHistory(field));
+        input.addEventListener("blur", () => scheduleHideFieldHistory(field));
+      });
+
+      formInputs.testResult.addEventListener("focus", () =>
+        showFieldHistory("testResult")
+      );
+      formInputs.testResult.addEventListener("blur", () =>
+        scheduleHideFieldHistory("testResult")
+      );
 
       exportBtn.addEventListener("click", exportBoardImage);
       window.addEventListener("resize", updateStageAspect);
@@ -1121,6 +1841,7 @@
       updateBoardOpacity(boardOpacityInput.value);
       updateTextColor(textColorInput.value);
       updateLineColor(lineColorInput.value);
+      updateCoordinateDisplay();
       updateWatermarkDate();
       requestAnimationFrame(positionBoardAtBottomLeft);
 
@@ -1135,9 +1856,10 @@
         }
       });
       autoResizeTextarea(formInputs.testResult);
-      formInputs.testResult.addEventListener("input", () =>
-        autoResizeTextarea(formInputs.testResult)
-      );
+      formInputs.testResult.addEventListener("input", () => {
+        autoResizeTextarea(formInputs.testResult);
+        showFieldHistory("testResult");
+      });
       formInputs.testDate.addEventListener("change", () =>
         syncField("testDate")
       );

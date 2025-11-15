@@ -380,6 +380,16 @@
         align-items: center;
       }
 
+      .coordinate-actions .ghost-btn {
+        padding: 0.45rem 1.2rem;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(120deg, #38bdf8, #6366f1);
+        color: #0f172a;
+        font-weight: 700;
+        box-shadow: 0 10px 18px rgba(56, 189, 248, 0.35);
+      }
+
       .coordinate-status {
         font-size: 0.85rem;
         color: #cbd5f5;
@@ -628,6 +638,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/proj4@2.9.1/dist/proj4.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
       const takePhotoBtn = document.getElementById("takePhotoBtn");
@@ -655,6 +666,8 @@
       const lineColorInput = document.getElementById("lineColor");
       const detectCoordinateBtn = document.getElementById("detectCoordinateBtn");
       const coordinateStatus = document.getElementById("coordinateStatus");
+      const defaultCoordinateStatusText =
+        coordinateStatus?.textContent || "請允許定位以自動帶入";
       const coordinateDmsField = document.getElementById("coordinateDmsField");
       const coordinateTwdField = document.getElementById("coordinateTwdField");
       const displayCoordinateDms = document.getElementById("displayCoordinateDms");
@@ -673,6 +686,8 @@
       );
       const TWD97_PROJECTION =
         "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +units=m +no_defs";
+      let lastPhotoMetadata = null;
+      let lastPhotoExifBytes = null;
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -718,7 +733,82 @@
         return `${latText} ${lonText}`;
       };
 
-      const formatTwdText = (x, y) => `X：${x.toFixed(2)}　Y：${y.toFixed(2)}`;
+      const formatTwdText = (x, y) => {
+        const roundedX = Math.round(x);
+        const roundedY = Math.round(y);
+        return `X:${roundedX}　Y:${roundedY}`;
+      };
+
+      const decimalToDmsRational = (value) => {
+        const abs = Math.abs(value);
+        const degrees = Math.floor(abs);
+        const minutesFloat = (abs - degrees) * 60;
+        const minutes = Math.floor(minutesFloat);
+        const seconds = (minutesFloat - minutes) * 60;
+        const toRational = (num) => [Math.round(num * 100), 100];
+        return [
+          [degrees, 1],
+          [minutes, 1],
+          toRational(seconds),
+        ];
+      };
+
+      const toExifDateTime = (dateStr) =>
+        `${dateStr.replace(/-/g, ":")} 00:00:00`;
+
+      const applyExifToDataUrl = (dataUrl) => {
+        if (!window.piexif) return dataUrl;
+        try {
+          if (lastPhotoExifBytes) {
+            return piexif.insert(lastPhotoExifBytes, dataUrl);
+          }
+          if (!lastPhotoMetadata) return dataUrl;
+          const zeroth = {};
+          const exif = {};
+          const gps = {};
+          if (lastPhotoMetadata.date) {
+            const dateTime = toExifDateTime(lastPhotoMetadata.date);
+            zeroth[piexif.ImageIFD.DateTime] = dateTime;
+            exif[piexif.ExifIFD.DateTimeOriginal] = dateTime;
+            exif[piexif.ExifIFD.CreateDate] = dateTime;
+          }
+          if (lastPhotoMetadata.gps) {
+            const { latitude, longitude } = lastPhotoMetadata.gps;
+            gps[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
+            gps[piexif.GPSIFD.GPSLatitude] = decimalToDmsRational(latitude);
+            gps[piexif.GPSIFD.GPSLongitudeRef] = longitude >= 0 ? "E" : "W";
+            gps[piexif.GPSIFD.GPSLongitude] = decimalToDmsRational(longitude);
+          }
+          if (
+            !Object.keys(zeroth).length &&
+            !Object.keys(exif).length &&
+            !Object.keys(gps).length
+          ) {
+            return dataUrl;
+          }
+          const exifBytes = piexif.dump({
+            "0th": zeroth,
+            Exif: exif,
+            GPS: gps,
+          });
+          return piexif.insert(exifBytes, dataUrl);
+        } catch (error) {
+          console.warn("EXIF 寫入失敗", error);
+          return dataUrl;
+        }
+      };
+
+      const dataUrlToBlob = (dataUrl) => {
+        const [header, data] = dataUrl.split(",");
+        const mimeMatch = header.match(/:(.*?);/);
+        const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+        const binary = atob(data);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+          array[i] = binary.charCodeAt(i);
+        }
+        return new Blob([array], { type: mime });
+      };
 
       const convertToTwd97 = (lat, lon) => {
         if (typeof proj4 !== "function") {
@@ -805,7 +895,7 @@
           if (!code) break;
           chars += String.fromCharCode(code);
         }
-        return chars;
+        return chars.trim();
       };
 
       const normalizeExifDate = (value) => {
@@ -827,11 +917,80 @@
 
       const EXIF_DATE_TAGS = new Set([0x0132, 0x9003, 0x9004]);
 
-      const parseIfdForDate = (view, offset, base, little) => {
+      const GPS_TAGS = {
+        LAT_REF: 0x0001,
+        LAT: 0x0002,
+        LON_REF: 0x0003,
+        LON: 0x0004,
+      };
+
+      const readRationalArray = (view, offset, little, count) => {
+        const result = [];
+        for (let i = 0; i < count; i += 1) {
+          const numerator = view.getUint32(offset + i * 8, little);
+          const denominator = view.getUint32(offset + i * 8 + 4, little) || 1;
+          result.push(numerator / denominator);
+        }
+        return result;
+      };
+
+      const convertGpsValuesToDecimal = (values, ref) => {
+        if (!values || values.length < 3) return null;
+        const decimal = values[0] + values[1] / 60 + values[2] / 3600;
+        if (!ref) return decimal;
+        const normalizedRef = ref.trim().toUpperCase();
+        if (normalizedRef === "S" || normalizedRef === "W") {
+          return -decimal;
+        }
+        return decimal;
+      };
+
+      const parseGpsIfd = (view, offset, base, little) => {
         if (offset <= 0 || offset + 2 > view.byteLength) return null;
         const entryCount = view.getUint16(offset, little);
-        let exifPointer = null;
-        let fallbackDate = null;
+        let latRef = null;
+        let lonRef = null;
+        let latValues = null;
+        let lonValues = null;
+        for (let i = 0; i < entryCount; i += 1) {
+          const entryOffset = offset + 2 + i * 12;
+          if (entryOffset + 12 > view.byteLength) break;
+          const tag = view.getUint16(entryOffset, little);
+          const type = view.getUint16(entryOffset + 2, little);
+          const count = view.getUint32(entryOffset + 4, little);
+          const valueSize = (TYPE_SIZES[type] || 0) * count;
+          const rawValueOffset = entryOffset + 8;
+          let valueOffset = rawValueOffset;
+          if (valueSize > 4) {
+            valueOffset = base + view.getUint32(rawValueOffset, little);
+          }
+          if (tag === GPS_TAGS.LAT_REF && type === 2) {
+            latRef = asciiFromView(view, valueOffset, Math.min(count, 2));
+          } else if (tag === GPS_TAGS.LON_REF && type === 2) {
+            lonRef = asciiFromView(view, valueOffset, Math.min(count, 2));
+          } else if (tag === GPS_TAGS.LAT && type === 5 && count >= 3) {
+            latValues = readRationalArray(view, valueOffset, little, 3);
+          } else if (tag === GPS_TAGS.LON && type === 5 && count >= 3) {
+            lonValues = readRationalArray(view, valueOffset, little, 3);
+          }
+        }
+        if (!latValues || !lonValues) return null;
+        const latitude = convertGpsValuesToDecimal(latValues, latRef);
+        const longitude = convertGpsValuesToDecimal(lonValues, lonRef);
+        if (
+          typeof latitude !== "number" ||
+          Number.isNaN(latitude) ||
+          typeof longitude !== "number" ||
+          Number.isNaN(longitude)
+        ) {
+          return null;
+        }
+        return { latitude, longitude };
+      };
+
+      const parseIfdForMetadata = (view, offset, base, little, metadata = {}) => {
+        if (offset <= 0 || offset + 2 > view.byteLength) return metadata;
+        const entryCount = view.getUint16(offset, little);
         for (let i = 0; i < entryCount; i += 1) {
           const entryOffset = offset + 2 + i * 12;
           if (entryOffset + 12 > view.byteLength) break;
@@ -845,28 +1004,36 @@
             valueOffset = base + view.getUint32(rawValueOffset, little);
           }
           if (tag === 0x8769) {
-            exifPointer = base + view.getUint32(rawValueOffset, little);
+            const pointer = base + view.getUint32(rawValueOffset, little);
+            parseIfdForMetadata(view, pointer, base, little, metadata);
+            continue;
+          }
+          if (tag === 0x8825) {
+            const pointer = base + view.getUint32(rawValueOffset, little);
+            const gps = parseGpsIfd(view, pointer, base, little);
+            if (gps) {
+              metadata.gps = gps;
+            }
             continue;
           }
           if (EXIF_DATE_TAGS.has(tag) && type === 2 && count > 0) {
             const raw = asciiFromView(view, valueOffset, count);
             const normalized = normalizeExifDate(raw);
             if (normalized) {
-              if (tag === 0x9003) return normalized;
-              fallbackDate = fallbackDate || normalized;
+              if (tag === 0x9003) {
+                metadata.primaryDate = normalized;
+              } else if (!metadata.fallbackDate) {
+                metadata.fallbackDate = normalized;
+              }
             }
           }
         }
-        if (exifPointer) {
-          const nestedDate = parseIfdForDate(view, exifPointer, base, little);
-          if (nestedDate) return nestedDate;
-        }
-        return fallbackDate;
+        return metadata;
       };
 
-      const readExifDateFromBuffer = (buffer) => {
+      const readExifMetadataFromBuffer = (buffer) => {
         const view = new DataView(buffer);
-        if (view.byteLength < 12 || view.getUint16(0, false) !== 0xffd8) return null;
+        if (view.byteLength < 12 || view.getUint16(0, false) !== 0xffd8) return {};
         let offset = 2;
         while (offset + 4 < view.byteLength) {
           if (view.getUint8(offset) !== 0xff) break;
@@ -883,37 +1050,58 @@
             if (tiffStart + 8 > view.byteLength) break;
             const little = view.getUint16(tiffStart, false) === 0x4949;
             const firstIfdOffset = view.getUint32(tiffStart + 4, little);
-            return parseIfdForDate(view, tiffStart + firstIfdOffset, tiffStart, little);
+            const metadata = parseIfdForMetadata(
+              view,
+              tiffStart + firstIfdOffset,
+              tiffStart,
+              little,
+              {}
+            );
+            return {
+              date: metadata.primaryDate || metadata.fallbackDate || null,
+              gps: metadata.gps || null,
+            };
           }
           offset += 2 + length;
         }
-        return null;
+        return {};
       };
 
-      const extractExifDate = async (file) => {
-        if (!file || !/image\/jpe?g/i.test(file.type || "")) return null;
+      const extractExifMetadata = async (file) => {
+        if (!file || !/image\/jpe?g/i.test(file.type || "")) return {};
         try {
           const buffer = await file.arrayBuffer();
-          return readExifDateFromBuffer(buffer);
-        } catch {
-          return null;
+          return readExifMetadataFromBuffer(buffer) || {};
+        } catch (error) {
+          console.warn("EXIF 解析失敗", error);
+          return {};
         }
       };
 
-      const applyPhotoDateMetadata = async (file) => {
+      const applyPhotoMetadata = async (file, dataUrl) => {
         if (!file) return;
-        let resolvedDate = null;
-        let usedExif = false;
+        let metadata = {};
         try {
-          const exifDate = await extractExifDate(file);
-          if (exifDate) {
-            resolvedDate = exifDate;
-            usedExif = true;
-          }
+          metadata = await extractExifMetadata(file);
         } catch (error) {
-          console.warn("EXIF 解析失敗", error);
+          console.warn("讀取 EXIF 資料失敗", error);
         }
-
+        lastPhotoMetadata =
+          metadata && (metadata.date || metadata.gps) ? metadata : null;
+        if (window.piexif && dataUrl) {
+          try {
+            const exifObj = piexif.load(dataUrl);
+            lastPhotoExifBytes = piexif.dump(exifObj);
+          } catch (error) {
+            console.warn("EXIF 載入失敗", error);
+            lastPhotoExifBytes = null;
+          }
+        } else {
+          lastPhotoExifBytes = null;
+        }
+        const exifDate = metadata.date;
+        const usedExif = Boolean(exifDate);
+        let resolvedDate = exifDate;
         if (!resolvedDate) {
           resolvedDate =
             file.lastModified && Number.isFinite(file.lastModified)
@@ -923,10 +1111,24 @@
 
         formInputs.testDate.value = resolvedDate;
         syncField("testDate");
-        showToast(
-          usedExif ? "已套用照片拍攝日期，如需修改可手動調整。" : "已套用拍攝日期，如需修改可手動調整。",
-          "success"
-        );
+
+        let toastMessageContent = usedExif
+          ? "已套用照片拍攝日期，如需修改可手動調整"
+          : "已套用拍攝日期，如需修改可手動調整";
+
+        if (metadata.gps) {
+          const { latitude, longitude } = metadata.gps;
+          const dmsText = formatDmsPair(latitude, longitude);
+          const twd = convertToTwd97(latitude, longitude);
+          const twdText = twd ? formatTwdText(twd[0], twd[1]) : "X:—　Y:—";
+          updateCoordinateDisplay(dmsText, twdText);
+          coordinateStatus.textContent = "已套用照片座標";
+          toastMessageContent += "；已套用照片座標";
+        } else {
+          coordinateStatus.textContent = defaultCoordinateStatusText;
+        }
+
+        showToast(`${toastMessageContent}。`, "success");
       };
 
       const autoResizeTextarea = (textarea) => {
@@ -960,19 +1162,20 @@
       const handlePhotoFiles = async (files) => {
         const [file] = files || [];
         if (!file) return;
+        let dataUrl = null;
         try {
-        const dataUrl = await readFileAsDataURL(file);
-        photoImage.src = dataUrl;
-        photoImage.hidden = false;
-        placeholder.style.display = "none";
-        updateStageAspect();
-        whiteboardWrapper.dataset.userPositioned = "false";
-        requestAnimationFrame(positionBoardAtBottomLeft);
+          dataUrl = await readFileAsDataURL(file);
+          photoImage.src = dataUrl;
+          photoImage.hidden = false;
+          placeholder.style.display = "none";
+          updateStageAspect();
+          whiteboardWrapper.dataset.userPositioned = "false";
+          requestAnimationFrame(positionBoardAtBottomLeft);
         } catch (error) {
           showToast("照片載入失敗，請重新選擇。");
           return;
         }
-        await applyPhotoDateMetadata(file);
+        await applyPhotoMetadata(file, dataUrl);
       };
 
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -1106,6 +1309,10 @@
         Object.values(formInputs).forEach((input) => (input.value = ""));
         formInputs.testDate.valueAsDate = new Date();
         syncAllFields();
+        lastPhotoMetadata = null;
+        lastPhotoExifBytes = null;
+        updateCoordinateDisplay();
+        coordinateStatus.textContent = defaultCoordinateStatusText;
       };
 
       const updateBoardColor = (color) => {
@@ -1190,9 +1397,9 @@
             backgroundColor: null,
             scale: window.devicePixelRatio || 2,
           });
-          const blob = await new Promise((resolve, reject) =>
-            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("failed"))), "image/jpeg", 0.92)
-          );
+          let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+          dataUrl = applyExifToDataUrl(dataUrl);
+          const blob = dataUrlToBlob(dataUrl);
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
           await handleShareOrDownload(blob, `whiteboard_${timestamp}.jpg`);
         } catch (error) {
