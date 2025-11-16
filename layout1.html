@@ -1123,6 +1123,16 @@
             }
             continue;
           }
+          if (tag === 0x0112 && type === 3 && count >= 1) {
+            const orientation =
+              valueSize > 2
+                ? view.getUint16(valueOffset, little)
+                : view.getUint16(rawValueOffset, little);
+            if (orientation) {
+              metadata.orientation = orientation;
+            }
+            continue;
+          }
           if (EXIF_DATE_TAGS.has(tag) && type === 2 && count > 0) {
             const raw = asciiFromView(view, valueOffset, count);
             const normalized = normalizeExifDate(raw);
@@ -1167,6 +1177,7 @@
             return {
               date: metadata.primaryDate || metadata.fallbackDate || null,
               gps: metadata.gps || null,
+              orientation: metadata.orientation || null,
             };
           }
           offset += 2 + length;
@@ -1185,13 +1196,15 @@
         }
       };
 
-      const applyPhotoMetadata = async (file, dataUrl) => {
+      const applyPhotoMetadata = async (file, dataUrl, providedMetadata) => {
         if (!file) return;
-        let metadata = {};
-        try {
-          metadata = await extractExifMetadata(file);
-        } catch (error) {
-          console.warn("讀取 EXIF 資料失敗", error);
+        let metadata = providedMetadata || {};
+        if (!providedMetadata) {
+          try {
+            metadata = await extractExifMetadata(file);
+          } catch (error) {
+            console.warn("讀取 EXIF 資料失敗", error);
+          }
         }
         lastPhotoMetadata =
           metadata && (metadata.date || metadata.gps) ? metadata : null;
@@ -1260,17 +1273,43 @@
         let dataUrl = null;
         try {
           dataUrl = await readFileAsDataURL(file);
-          photoImage.src = dataUrl;
-          photoImage.hidden = false;
-          placeholder.style.display = "none";
-          updateStageAspect();
-          whiteboardWrapper.dataset.userPositioned = "false";
-          requestAnimationFrame(positionBoardAtBottomLeft);
         } catch (error) {
           showToast("照片載入失敗，請重新選擇。");
           return;
         }
-        await applyPhotoMetadata(file, dataUrl);
+        let metadata = {};
+        try {
+          metadata = await extractExifMetadata(file);
+        } catch (error) {
+          console.warn("無法解析 EXIF，將仍使用原始照片。", error);
+        }
+        if (
+          (!metadata || !metadata.orientation) &&
+          window.piexif &&
+          /image\/jpe?g/i.test(file.type || "")
+        ) {
+          try {
+            const exifObj = piexif.load(dataUrl);
+            const orientationValue = exifObj["0th"]?.[piexif.ImageIFD.Orientation];
+            if (orientationValue) {
+              metadata = { ...metadata, orientation: orientationValue };
+            }
+          } catch (error) {
+            console.warn("piexif 無法讀取 Orientation。", error);
+          }
+        }
+        let processedDataUrl = dataUrl;
+        processedDataUrl = await normalizeImageOrientation(file, dataUrl, metadata?.orientation);
+        if (metadata?.orientation && metadata.orientation !== 1) {
+          metadata = { ...metadata, orientation: 1 };
+        }
+        photoImage.src = processedDataUrl;
+        photoImage.hidden = false;
+        placeholder.style.display = "none";
+        updateStageAspect();
+        whiteboardWrapper.dataset.userPositioned = "false";
+        requestAnimationFrame(positionBoardAtBottomLeft);
+        await applyPhotoMetadata(file, processedDataUrl, metadata);
       };
 
       const applyColorPreset = (button) => {
@@ -1382,6 +1421,87 @@
         applyScale();
         if (whiteboardWrapper.dataset.userPositioned !== "true") {
           requestAnimationFrame(positionBoardAtBottomLeft);
+        }
+      };
+
+      const normalizeImageOrientation = async (file, dataUrl, orientation) => {
+        if (!orientation || orientation === 1) {
+          return dataUrl;
+        }
+        if (!window.createImageBitmap) {
+          return dataUrl;
+        }
+        try {
+          const bitmap = await createImageBitmap(file, {
+            imageOrientation: "none",
+          });
+          const width = bitmap.width;
+          const height = bitmap.height;
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          const draw = () => {
+            ctx.drawImage(bitmap, 0, 0);
+            bitmap.close?.();
+          };
+          switch (orientation) {
+            case 2:
+              canvas.width = width;
+              canvas.height = height;
+              ctx.translate(width, 0);
+              ctx.scale(-1, 1);
+              draw();
+              break;
+            case 3:
+              canvas.width = width;
+              canvas.height = height;
+              ctx.translate(width, height);
+              ctx.rotate(Math.PI);
+              draw();
+              break;
+            case 4:
+              canvas.width = width;
+              canvas.height = height;
+              ctx.translate(0, height);
+              ctx.scale(1, -1);
+              draw();
+              break;
+            case 5:
+              canvas.width = height;
+              canvas.height = width;
+              ctx.rotate(0.5 * Math.PI);
+              ctx.scale(1, -1);
+              draw();
+              break;
+            case 6:
+              canvas.width = height;
+              canvas.height = width;
+              ctx.translate(canvas.width, 0);
+              ctx.rotate(0.5 * Math.PI);
+              draw();
+              break;
+            case 7:
+              canvas.width = height;
+              canvas.height = width;
+              ctx.translate(canvas.width, 0);
+              ctx.rotate(0.5 * Math.PI);
+              ctx.scale(-1, 1);
+              draw();
+              break;
+            case 8:
+              canvas.width = height;
+              canvas.height = width;
+              ctx.translate(0, canvas.height);
+              ctx.rotate(-0.5 * Math.PI);
+              draw();
+              break;
+            default:
+              bitmap.close?.();
+              return dataUrl;
+          }
+          return canvas.toDataURL("image/jpeg", 0.92);
+        } catch (error) {
+          console.warn("normalizeImageOrientation 失敗，使用原始照片。", error);
+          return dataUrl;
         }
       };
 
@@ -1644,4 +1764,3 @@
     </script>
   </body>
 </html>
-
