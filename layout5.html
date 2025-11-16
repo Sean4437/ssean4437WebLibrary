@@ -1287,6 +1287,16 @@
             parseIfdForMetadata(view, pointer, base, little, metadata);
             continue;
           }
+          if (tag === 0x0112 && type === 3 && count >= 1) {
+            const orientation =
+              valueSize > 2
+                ? view.getUint16(valueOffset, little)
+                : view.getUint16(rawValueOffset, little);
+            if (orientation) {
+              metadata.orientation = orientation;
+            }
+            continue;
+          }
           if (tag === 0x8825) {
             const pointer = base + view.getUint32(rawValueOffset, little);
             const gps = parseGpsIfd(view, pointer, base, little);
@@ -1366,10 +1376,15 @@
           console.warn("讀取 EXIF 資料失敗", error);
         }
         lastPhotoMetadata =
-          metadata && (metadata.date || metadata.gps) ? metadata : null;
+          metadata && (metadata.date || metadata.gps || metadata.orientation)
+            ? { ...metadata }
+            : null;
         if (window.piexif && dataUrl) {
           try {
             const exifObj = piexif.load(dataUrl);
+            if (exifObj["0th"]) {
+              delete exifObj["0th"][piexif.ImageIFD.Orientation];
+            }
             lastPhotoExifBytes = piexif.dump(exifObj);
           } catch (error) {
             console.warn("EXIF 載入失敗", error);
@@ -1377,6 +1392,9 @@
           }
         } else {
           lastPhotoExifBytes = null;
+        }
+        if (lastPhotoMetadata?.orientation) {
+          delete lastPhotoMetadata.orientation;
         }
         const exifDate = metadata.date;
         const usedExif = Boolean(exifDate);

@@ -1090,6 +1090,16 @@
             parseIfdForMetadata(view, pointer, base, little, metadata);
             continue;
           }
+          if (tag === 0x0112 && type === 3 && count >= 1) {
+            const orientation =
+              valueSize > 2
+                ? view.getUint16(valueOffset, little)
+                : view.getUint16(rawValueOffset, little);
+            if (orientation) {
+              metadata.orientation = orientation;
+            }
+            continue;
+          }
           if (tag === 0x8825) {
             const pointer = base + view.getUint32(rawValueOffset, little);
             const gps = parseGpsIfd(view, pointer, base, little);
@@ -1163,6 +1173,9 @@
             if (dateTimeOriginal) {
               metadata.date = dateTimeOriginal.split(" ")[0].replace(/:/g, "-");
             }
+            if (exifObj["0th"]) {
+              delete exifObj["0th"][piexif.ImageIFD.Orientation];
+            }
             metadata.exifBytes = piexif.dump(exifObj);
             return metadata;
           } catch (error) {
@@ -1188,10 +1201,29 @@
           console.warn("讀取 EXIF 資料失敗", error);
         }
         lastPhotoMetadata =
-          metadata && (metadata.date || metadata.gps)
-            ? { date: metadata.date || null, gps: metadata.gps || null }
+          metadata && (metadata.date || metadata.gps || metadata.orientation)
+            ? {
+                date: metadata.date || null,
+                gps: metadata.gps || null,
+                orientation: metadata.orientation || null,
+              }
             : null;
-        lastPhotoExifBytes = metadata?.exifBytes || null;
+        let exifBytes = metadata?.exifBytes || null;
+        if (exifBytes && window.piexif) {
+          try {
+            const exifObj = piexif.load(exifBytes);
+            if (exifObj["0th"]) {
+              delete exifObj["0th"][piexif.ImageIFD.Orientation];
+            }
+            exifBytes = piexif.dump(exifObj);
+          } catch (error) {
+            console.warn("移除 Orientation 失敗", error);
+          }
+        }
+        lastPhotoExifBytes = exifBytes;
+        if (lastPhotoMetadata?.orientation) {
+          delete lastPhotoMetadata.orientation;
+        }
         if (metadata?.gps) {
           const { latitude, longitude } = metadata.gps;
           const dmsText = formatDmsPair(latitude, longitude);
