@@ -335,10 +335,21 @@
         overflow: hidden;
       }
 
+      body.camera-mode {
+        padding: 0;
+        background: #000;
+      }
+
       body.camera-mode .app-shell {
         width: 100%;
         max-width: 100%;
         padding: 0;
+        margin: 0;
+      }
+
+      body.camera-mode h1,
+      body.camera-mode .version-note {
+        visibility: hidden;
       }
 
       body.camera-mode .panel,
@@ -350,16 +361,17 @@
 
       body.camera-mode .stage {
         position: fixed;
-        inset: 0;
-        width: 100vw;
-        height: 100vh;
+        top: 50%;
+        left: 50%;
+        width: min(100vw, calc(100vh / (var(--stage-aspect) / 100)));
+        transform: translate(-50%, -50%);
         border-radius: 0;
         background: #000;
         z-index: 1000;
       }
 
       body.camera-mode .stage::before {
-        display: none;
+        display: block;
       }
 
       body.camera-mode .stage-content {
@@ -843,6 +855,7 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
       const takePhotoBtn = document.getElementById("takePhotoBtn");
+      const takePhotoDefaultText = takePhotoBtn.textContent;
       const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
       const uploadInput = document.getElementById("uploadInput");
       const photoLayer = document.getElementById("photoLayer");
@@ -1390,8 +1403,9 @@
       cameraPreview.srcObject = null;
         cameraPreview.hidden = true;
         cameraToolbar.hidden = true;
-        takePhotoBtn.textContent = "拍照";
         stopCameraBtn.disabled = false;
+        takePhotoBtn.disabled = false;
+        takePhotoBtn.textContent = takePhotoDefaultText;
         setCameraMode(false);
         takePhotoBtn.disabled = false;
         captureFrameBtn.hidden = true;
@@ -1412,6 +1426,7 @@
         cameraStatus.textContent = "相機啟動中…";
         stopCameraBtn.disabled = true;
         takePhotoBtn.disabled = true;
+        takePhotoBtn.textContent = takePhotoDefaultText;
         setCameraMode(true);
         try {
           cameraStream = await navigator.mediaDevices.getUserMedia({
@@ -1427,7 +1442,6 @@
           placeholder.style.display = "none";
           whiteboardWrapper.dataset.userPositioned = "false";
           requestAnimationFrame(positionBoardAtBottomLeft);
-          takePhotoBtn.textContent = "擷取畫面";
           takePhotoBtn.disabled = false;
           stopCameraBtn.disabled = false;
           captureFrameBtn.hidden = false;
@@ -1755,8 +1769,6 @@
       takePhotoBtn.addEventListener("click", () => {
         if (!cameraStream) {
           startCameraPreview();
-        } else {
-          captureCameraFrame();
         }
       });
       captureFrameBtn.addEventListener("click", () => captureCameraFrame());
