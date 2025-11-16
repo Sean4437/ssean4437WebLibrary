@@ -1628,10 +1628,25 @@
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
-          const canvas = await html2canvas(captureArea, {
+          let canvas = await html2canvas(captureArea, {
             backgroundColor: null,
             scale: window.devicePixelRatio || 2,
           });
+          if (
+            lastPhotoMetadata?.orientation &&
+            lastPhotoMetadata.orientation !== 1 &&
+            canvas.width > canvas.height
+          ) {
+            const rotated = document.createElement("canvas");
+            rotated.width = canvas.height;
+            rotated.height = canvas.width;
+            const rctx = rotated.getContext("2d");
+            rctx.translate(rotated.width / 2, rotated.height / 2);
+            rctx.rotate(-0.5 * Math.PI);
+            rctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+            lastPhotoMetadata.orientation = 1;
+            canvas = rotated;
+          }
           let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
           dataUrl = applyExifToDataUrl(dataUrl);
           const blob = dataUrlToBlob(dataUrl);
