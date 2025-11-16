@@ -1526,11 +1526,13 @@
             backgroundColor: null,
             scale: window.devicePixelRatio || 2,
           });
+          const isPortrait = canvas.height >= canvas.width;
           let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
           dataUrl = applyExifToDataUrl(dataUrl);
           const blob = dataUrlToBlob(dataUrl);
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
-          await handleShareOrDownload(blob, `whiteboard_${timestamp}.jpg`);
+          const filename = `whiteboard_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
+          await handleShareOrDownload(blob, filename);
         } catch (error) {
           console.error(error);
           showToast("匯出失敗，請再試一次。");
