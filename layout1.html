@@ -836,6 +836,9 @@
             exif[piexif.ExifIFD.DateTimeOriginal] = dateTime;
             exif[piexif.ExifIFD.CreateDate] = dateTime;
           }
+          if (lastPhotoMetadata.orientation) {
+            zeroth[piexif.ImageIFD.Orientation] = lastPhotoMetadata.orientation;
+          }
           if (lastPhotoMetadata.gps) {
             const { latitude, longitude } = lastPhotoMetadata.gps;
             gps[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
@@ -1196,18 +1199,18 @@
         }
       };
 
-      const applyPhotoMetadata = async (file, dataUrl, providedMetadata) => {
+      const applyPhotoMetadata = async (file, dataUrl) => {
         if (!file) return;
-        let metadata = providedMetadata || {};
-        if (!providedMetadata) {
-          try {
-            metadata = await extractExifMetadata(file);
-          } catch (error) {
-            console.warn("讀取 EXIF 資料失敗", error);
-          }
+        let metadata = {};
+        try {
+          metadata = await extractExifMetadata(file);
+        } catch (error) {
+          console.warn("讀取 EXIF 資料失敗", error);
         }
         lastPhotoMetadata =
-          metadata && (metadata.date || metadata.gps) ? metadata : null;
+          metadata && (metadata.date || metadata.gps || metadata.orientation)
+            ? metadata
+            : null;
         if (window.piexif && dataUrl) {
           try {
             const exifObj = piexif.load(dataUrl);
@@ -1273,43 +1276,17 @@
         let dataUrl = null;
         try {
           dataUrl = await readFileAsDataURL(file);
+          photoImage.src = dataUrl;
+          photoImage.hidden = false;
+          placeholder.style.display = "none";
+          updateStageAspect();
+          whiteboardWrapper.dataset.userPositioned = "false";
+          requestAnimationFrame(positionBoardAtBottomLeft);
         } catch (error) {
           showToast("照片載入失敗，請重新選擇。");
           return;
         }
-        let metadata = {};
-        try {
-          metadata = await extractExifMetadata(file);
-        } catch (error) {
-          console.warn("無法解析 EXIF，將仍使用原始照片。", error);
-        }
-        if (
-          (!metadata || !metadata.orientation) &&
-          window.piexif &&
-          /image\/jpe?g/i.test(file.type || "")
-        ) {
-          try {
-            const exifObj = piexif.load(dataUrl);
-            const orientationValue = exifObj["0th"]?.[piexif.ImageIFD.Orientation];
-            if (orientationValue) {
-              metadata = { ...metadata, orientation: orientationValue };
-            }
-          } catch (error) {
-            console.warn("piexif 無法讀取 Orientation。", error);
-          }
-        }
-        let processedDataUrl = dataUrl;
-        processedDataUrl = await normalizeImageOrientation(file, dataUrl, metadata?.orientation);
-        if (metadata?.orientation && metadata.orientation !== 1) {
-          metadata = { ...metadata, orientation: 1 };
-        }
-        photoImage.src = processedDataUrl;
-        photoImage.hidden = false;
-        placeholder.style.display = "none";
-        updateStageAspect();
-        whiteboardWrapper.dataset.userPositioned = "false";
-        requestAnimationFrame(positionBoardAtBottomLeft);
-        await applyPhotoMetadata(file, processedDataUrl, metadata);
+        await applyPhotoMetadata(file, dataUrl);
       };
 
       const applyColorPreset = (button) => {
@@ -1424,86 +1401,6 @@
         }
       };
 
-      const normalizeImageOrientation = async (file, dataUrl, orientation) => {
-        if (!orientation || orientation === 1) {
-          return dataUrl;
-        }
-        if (!window.createImageBitmap) {
-          return dataUrl;
-        }
-        try {
-          const bitmap = await createImageBitmap(file, {
-            imageOrientation: "none",
-          });
-          const width = bitmap.width;
-          const height = bitmap.height;
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-          const draw = () => {
-            ctx.drawImage(bitmap, 0, 0);
-            bitmap.close?.();
-          };
-          switch (orientation) {
-            case 2:
-              canvas.width = width;
-              canvas.height = height;
-              ctx.translate(width, 0);
-              ctx.scale(-1, 1);
-              draw();
-              break;
-            case 3:
-              canvas.width = width;
-              canvas.height = height;
-              ctx.translate(width, height);
-              ctx.rotate(Math.PI);
-              draw();
-              break;
-            case 4:
-              canvas.width = width;
-              canvas.height = height;
-              ctx.translate(0, height);
-              ctx.scale(1, -1);
-              draw();
-              break;
-            case 5:
-              canvas.width = height;
-              canvas.height = width;
-              ctx.rotate(0.5 * Math.PI);
-              ctx.scale(1, -1);
-              draw();
-              break;
-            case 6:
-              canvas.width = height;
-              canvas.height = width;
-              ctx.translate(canvas.width, 0);
-              ctx.rotate(0.5 * Math.PI);
-              draw();
-              break;
-            case 7:
-              canvas.width = height;
-              canvas.height = width;
-              ctx.translate(canvas.width, 0);
-              ctx.rotate(0.5 * Math.PI);
-              ctx.scale(-1, 1);
-              draw();
-              break;
-            case 8:
-              canvas.width = height;
-              canvas.height = width;
-              ctx.translate(0, canvas.height);
-              ctx.rotate(-0.5 * Math.PI);
-              draw();
-              break;
-            default:
-              bitmap.close?.();
-              return dataUrl;
-          }
-          return canvas.toDataURL("image/jpeg", 0.92);
-        } catch (error) {
-          console.warn("normalizeImageOrientation 失敗，使用原始照片。", error);
-          return dataUrl;
-        }
-      };
 
       const updateFontScale = (value) => {
         const percent = Math.max(50, Math.min(300, Number(value)));
@@ -1628,25 +1525,10 @@
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
-          let canvas = await html2canvas(captureArea, {
+          const canvas = await html2canvas(captureArea, {
             backgroundColor: null,
             scale: window.devicePixelRatio || 2,
           });
-          if (
-            lastPhotoMetadata?.orientation &&
-            lastPhotoMetadata.orientation !== 1 &&
-            canvas.width > canvas.height
-          ) {
-            const rotated = document.createElement("canvas");
-            rotated.width = canvas.height;
-            rotated.height = canvas.width;
-            const rctx = rotated.getContext("2d");
-            rctx.translate(rotated.width / 2, rotated.height / 2);
-            rctx.rotate(-0.5 * Math.PI);
-            rctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
-            lastPhotoMetadata.orientation = 1;
-            canvas = rotated;
-          }
           let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
           dataUrl = applyExifToDataUrl(dataUrl);
           const blob = dataUrlToBlob(dataUrl);
