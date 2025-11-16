@@ -399,6 +399,18 @@
         flex: 1;
       }
 
+      .camera-font-control {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        min-width: 160px;
+        font-size: 0.85rem;
+      }
+
+      .camera-font-control input[type="range"] {
+        width: 160px;
+      }
+
       .stage-placeholder {
         position: absolute;
         inset: 0;
@@ -806,6 +818,11 @@
       </div>
       <div class="camera-toolbar" id="cameraToolbar" hidden>
         <span class="camera-status" id="cameraStatus">相機已關閉</span>
+        <label class="camera-font-control">
+          <span>文字大小</span>
+          <input type="range" id="cameraFontScale" min="80" max="300" value="150" />
+          <span id="cameraFontScaleValue">150%</span>
+        </label>
         <div class="camera-actions">
           <button type="button" class="btn primary" id="captureFrameBtn" hidden>擷取畫面</button>
           <button type="button" class="btn btn-secondary" id="stopCameraBtn">關閉相機</button>
@@ -832,6 +849,8 @@
       const cameraPreview = document.getElementById("cameraPreview");
       const cameraToolbar = document.getElementById("cameraToolbar");
       const cameraStatus = document.getElementById("cameraStatus");
+      const cameraFontScaleInput = document.getElementById("cameraFontScale");
+      const cameraFontScaleValue = document.getElementById("cameraFontScaleValue");
       const captureFrameBtn = document.getElementById("captureFrameBtn");
       const stopCameraBtn = document.getElementById("stopCameraBtn");
       const photoImage = document.getElementById("photoImage");
@@ -1369,14 +1388,14 @@
           cameraStream = null;
         }
       cameraPreview.srcObject = null;
-      cameraPreview.hidden = true;
-      cameraToolbar.hidden = true;
-      takePhotoBtn.textContent = "拍照";
-      stopCameraBtn.disabled = false;
-      setCameraMode(false);
-      takePhotoBtn.disabled = false;
-      captureFrameBtn.hidden = true;
-      captureFrameBtn.disabled = true;
+        cameraPreview.hidden = true;
+        cameraToolbar.hidden = true;
+        takePhotoBtn.textContent = "拍照";
+        stopCameraBtn.disabled = false;
+        setCameraMode(false);
+        takePhotoBtn.disabled = false;
+        captureFrameBtn.hidden = true;
+        captureFrameBtn.disabled = true;
       if (restorePlaceholder && photoImage.hidden) {
         placeholder.style.display = "flex";
       }
@@ -1413,6 +1432,8 @@
           stopCameraBtn.disabled = false;
           captureFrameBtn.hidden = false;
           captureFrameBtn.disabled = false;
+          cameraFontScaleInput.value = fontScaleInput.value;
+          cameraFontScaleValue.textContent = `${fontScaleInput.value}%`;
           cameraStatus.textContent = "請調整白板位置後按「擷取畫面」。";
           updateStageAspect();
         } catch (error) {
@@ -1774,9 +1795,18 @@
       boardRotationInput.addEventListener("input", (event) =>
         updateBoardRotation(event.target.value)
       );
-      fontScaleInput.addEventListener("input", (event) =>
-        updateFontScale(event.target.value)
-      );
+      fontScaleInput.addEventListener("input", (event) => {
+        updateFontScale(event.target.value);
+        cameraFontScaleInput.value = event.target.value;
+        cameraFontScaleValue.textContent = `${event.target.value}%`;
+      });
+      cameraFontScaleInput.addEventListener("input", (event) => {
+        const value = event.target.value;
+        fontScaleInput.value = value;
+        fontScaleValue.textContent = `${value}%`;
+        cameraFontScaleValue.textContent = `${value}%`;
+        updateFontScale(value);
+      });
       boardColorInput.addEventListener("input", (event) =>
         updateBoardColor(event.target.value)
       );
