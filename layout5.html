@@ -384,6 +384,12 @@
         z-index: 1100;
       }
 
+      .camera-toolbar .camera-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
+
       .camera-toolbar[hidden] {
         display: none !important;
       }
@@ -800,7 +806,10 @@
       </div>
       <div class="camera-toolbar" id="cameraToolbar" hidden>
         <span class="camera-status" id="cameraStatus">相機已關閉</span>
-        <button type="button" class="btn btn-secondary" id="stopCameraBtn">關閉相機</button>
+        <div class="camera-actions">
+          <button type="button" class="btn primary" id="captureFrameBtn" hidden>擷取畫面</button>
+          <button type="button" class="btn btn-secondary" id="stopCameraBtn">關閉相機</button>
+        </div>
       </div>
 
       <div class="action-bar">
@@ -823,6 +832,7 @@
       const cameraPreview = document.getElementById("cameraPreview");
       const cameraToolbar = document.getElementById("cameraToolbar");
       const cameraStatus = document.getElementById("cameraStatus");
+      const captureFrameBtn = document.getElementById("captureFrameBtn");
       const stopCameraBtn = document.getElementById("stopCameraBtn");
       const photoImage = document.getElementById("photoImage");
       const placeholder = document.getElementById("placeholder");
@@ -1358,17 +1368,19 @@
           cameraStream.getTracks().forEach((track) => track.stop());
           cameraStream = null;
         }
-        cameraPreview.srcObject = null;
-        cameraPreview.hidden = true;
-        cameraToolbar.hidden = true;
-        takePhotoBtn.textContent = "拍照";
-        stopCameraBtn.disabled = false;
-        setCameraMode(false);
-        takePhotoBtn.disabled = false;
-        if (restorePlaceholder && photoImage.hidden) {
-          placeholder.style.display = "flex";
-        }
-        updateStageAspect();
+      cameraPreview.srcObject = null;
+      cameraPreview.hidden = true;
+      cameraToolbar.hidden = true;
+      takePhotoBtn.textContent = "拍照";
+      stopCameraBtn.disabled = false;
+      setCameraMode(false);
+      takePhotoBtn.disabled = false;
+      captureFrameBtn.hidden = true;
+      captureFrameBtn.disabled = true;
+      if (restorePlaceholder && photoImage.hidden) {
+        placeholder.style.display = "flex";
+      }
+      updateStageAspect();
       };
 
       const startCameraPreview = async () => {
@@ -1399,6 +1411,8 @@
           takePhotoBtn.textContent = "擷取畫面";
           takePhotoBtn.disabled = false;
           stopCameraBtn.disabled = false;
+          captureFrameBtn.hidden = false;
+          captureFrameBtn.disabled = false;
           cameraStatus.textContent = "請調整白板位置後按「擷取畫面」。";
           updateStageAspect();
         } catch (error) {
@@ -1407,6 +1421,8 @@
           takePhotoBtn.disabled = false;
           cameraToolbar.hidden = true;
           setCameraMode(false);
+          captureFrameBtn.hidden = true;
+          captureFrameBtn.disabled = true;
           showToast("啟動相機失敗，請檢查權限設定。");
         }
       };
@@ -1722,6 +1738,7 @@
           captureCameraFrame();
         }
       });
+      captureFrameBtn.addEventListener("click", () => captureCameraFrame());
       stopCameraBtn.addEventListener("click", () => stopCameraPreview(true));
       uploadPhotoBtn.addEventListener("click", () => {
         stopCameraPreview(true);
