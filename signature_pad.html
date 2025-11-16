@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-Hant">
   <head>
     <meta charset="UTF-8" />
@@ -25,6 +25,7 @@
       h1 {
         margin: 0;
         text-align: center;
+        letter-spacing: 0.15em;
       }
 
       .canvas-box {
@@ -104,9 +105,9 @@
       </div>
       <div class="controls">
         <button class="secondary" id="clearPad">清除</button>
-        <button class="primary" id="savePad">儲存並回到白板</button>
+        <button class="primary" id="savePad">儲存並回傳簽名</button>
       </div>
-      <p class="toast" id="padToast">簽好後按儲存即可自動回傳到白板頁面</p>
+      <p class="toast" id="padToast">簽名儲存在瀏覽器中，匯出白板時會自動套用。</p>
     </div>
 
     <script>
@@ -188,10 +189,10 @@
         try {
           const rotated = await rotateSignature(dataUrl);
           localStorage.setItem(SIGNATURE_STORAGE_KEY, rotated);
-          toast.textContent = "簽名已儲存，可回到白板頁查看。";
+          toast.textContent = "簽名已儲存，可關閉視窗回到白板。";
           setTimeout(() => window.close(), 600);
         } catch (error) {
-          toast.textContent = "儲存簽名失敗，請再試一次。";
+          toast.textContent = "儲存失敗，請再試一次。";
         }
       };
 

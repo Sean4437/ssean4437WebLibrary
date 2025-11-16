@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
-    <title>麗鄴電子白板-布局1</title>
+    <title>麗鄴電子白板-布局5</title>
     <style>
       :root {
         --board-fill: #f8fafc;
@@ -306,6 +306,38 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
+      }
+
+      .stage-content video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 0;
+        background: #000;
+      }
+
+      .camera-toolbar {
+        margin: 0.6rem 0 0.2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.35);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        color: #e2e8f0;
+      }
+
+      .camera-toolbar[hidden] {
+        display: none !important;
+      }
+
+      .camera-status {
+        font-size: 0.9rem;
+        flex: 1;
       }
 
       .stage-placeholder {
@@ -678,6 +710,7 @@
 
       <div class="stage" id="captureArea">
         <div class="stage-content" id="photoLayer">
+          <video id="cameraPreview" playsinline muted autoplay hidden></video>
           <img id="photoImage" alt="拍攝預覽" hidden />
           <div class="stage-placeholder" id="placeholder">
             <strong>請拍照或上傳照片</strong>
@@ -712,6 +745,10 @@
         </div>
         <div class="photo-watermark" id="photoWatermark">日期未設定</div>
       </div>
+      <div class="camera-toolbar" id="cameraToolbar" hidden>
+        <span class="camera-status" id="cameraStatus">相機已關閉</span>
+        <button type="button" class="btn btn-secondary" id="stopCameraBtn">關閉相機</button>
+      </div>
 
       <div class="action-bar">
         <button class="action-btn secondary" id="clearBoardBtn">清除白板</button>
@@ -720,7 +757,6 @@
 
       <p id="toastMessage" class="toast-message" role="status" aria-live="polite"></p>
 
-      <input type="file" accept="image/*" capture="environment" class="hidden-input" id="takePhotoInput" />
       <input type="file" accept="image/*" class="hidden-input" id="uploadInput" />
     </div>
 
@@ -729,9 +765,12 @@
     <script>
       const takePhotoBtn = document.getElementById("takePhotoBtn");
       const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
-      const takePhotoInput = document.getElementById("takePhotoInput");
       const uploadInput = document.getElementById("uploadInput");
       const photoLayer = document.getElementById("photoLayer");
+      const cameraPreview = document.getElementById("cameraPreview");
+      const cameraToolbar = document.getElementById("cameraToolbar");
+      const cameraStatus = document.getElementById("cameraStatus");
+      const stopCameraBtn = document.getElementById("stopCameraBtn");
       const photoImage = document.getElementById("photoImage");
       const placeholder = document.getElementById("placeholder");
       const whiteboardWrapper = document.getElementById("whiteboardWrapper");
@@ -765,6 +804,8 @@
       );
       let lastPhotoMetadata = null;
       let lastPhotoExifBytes = null;
+      let cameraStream = null;
+      const cameraCaptureCanvas = document.createElement("canvas");
 
       const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
       const FIELD_HISTORY_LIMIT = 20;
@@ -1244,14 +1285,100 @@
       };
 
       const updateStageAspect = () => {
-        if (photoImage.hidden || !photoImage.naturalWidth) {
+        if (!photoImage.hidden && photoImage.naturalWidth) {
+          const ratio = (photoImage.naturalHeight / photoImage.naturalWidth) * 100;
+          captureArea.style.setProperty("--stage-aspect", `${ratio}%`);
+        } else if (!cameraPreview.hidden && cameraPreview.videoWidth) {
+          const ratio = (cameraPreview.videoHeight / cameraPreview.videoWidth) * 100;
+          captureArea.style.setProperty("--stage-aspect", `${ratio}%`);
+        } else {
           captureArea.style.setProperty("--stage-aspect", "56.25%");
-          requestAnimationFrame(positionBoardAtBottomLeft);
+        }
+        requestAnimationFrame(positionBoardAtBottomLeft);
+      };
+
+      const stopCameraPreview = (restorePlaceholder = false) => {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach((track) => track.stop());
+          cameraStream = null;
+        }
+        cameraPreview.srcObject = null;
+        cameraPreview.hidden = true;
+        cameraToolbar.hidden = true;
+        takePhotoBtn.textContent = "拍照";
+        stopCameraBtn.disabled = false;
+        if (restorePlaceholder && photoImage.hidden) {
+          placeholder.style.display = "flex";
+        }
+        updateStageAspect();
+      };
+
+      const startCameraPreview = async () => {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          showToast("此裝置不支援即時相機預覽，請改用上傳照片。");
           return;
         }
-        const ratio = (photoImage.naturalHeight / photoImage.naturalWidth) * 100;
-        captureArea.style.setProperty("--stage-aspect", `${ratio}%`);
+        if (cameraStream) return;
+        cameraToolbar.hidden = false;
+        cameraStatus.textContent = "相機啟動中…";
+        stopCameraBtn.disabled = true;
+        takePhotoBtn.disabled = true;
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+            },
+            audio: false,
+          });
+          cameraPreview.srcObject = cameraStream;
+          cameraPreview.hidden = false;
+          placeholder.style.display = "none";
+          whiteboardWrapper.dataset.userPositioned = "false";
+          requestAnimationFrame(positionBoardAtBottomLeft);
+          takePhotoBtn.textContent = "擷取畫面";
+          takePhotoBtn.disabled = false;
+          stopCameraBtn.disabled = false;
+          cameraStatus.textContent = "請調整白板位置後按「擷取畫面」。";
+          updateStageAspect();
+        } catch (error) {
+          console.error("startCameraPreview error:", error);
+          cameraStatus.textContent = "無法啟動相機，請檢查權限設定。";
+          takePhotoBtn.disabled = false;
+          cameraToolbar.hidden = true;
+          showToast("啟動相機失敗，請檢查權限設定。");
+        }
+      };
+
+      const captureCameraFrame = async () => {
+        if (!cameraStream || cameraPreview.hidden) {
+          await startCameraPreview();
+          return;
+        }
+        const width = cameraPreview.videoWidth || 1280;
+        const height = cameraPreview.videoHeight || 720;
+        if (!width || !height) {
+          showToast("相機尚未就緒，請稍後再試。");
+          return;
+        }
+        cameraCaptureCanvas.width = width;
+        cameraCaptureCanvas.height = height;
+        const ctx = cameraCaptureCanvas.getContext("2d");
+        ctx.drawImage(cameraPreview, 0, 0, width, height);
+        const dataUrl = cameraCaptureCanvas.toDataURL("image/jpeg", 0.92);
+        photoImage.src = dataUrl;
+        photoImage.hidden = false;
+        placeholder.style.display = "none";
+        whiteboardWrapper.dataset.userPositioned = "false";
+        updateStageAspect();
         requestAnimationFrame(positionBoardAtBottomLeft);
+        lastPhotoMetadata = null;
+        lastPhotoExifBytes = null;
+        formInputs.testDate.value = formatDateInputValue(new Date());
+        syncField("testDate");
+        stopCameraPreview(false);
+        showToast("已擷取畫面，白板可繼續調整。", "success");
       };
 
       const handlePhotoFiles = async (files) => {
@@ -1528,9 +1655,15 @@
         }
       };
 
-      takePhotoBtn.addEventListener("click", () => takePhotoInput.click());
+      takePhotoBtn.addEventListener("click", () => {
+        if (!cameraStream) {
+          startCameraPreview();
+        } else {
+          captureCameraFrame();
+        }
+      });
+      stopCameraBtn.addEventListener("click", () => stopCameraPreview(true));
       uploadPhotoBtn.addEventListener("click", () => uploadInput.click());
-      takePhotoInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
       uploadInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
 
       whiteboardWrapper.addEventListener("pointerdown", startDrag);
@@ -1599,6 +1732,7 @@
       exportBtn.addEventListener("click", exportBoardImage);
       window.addEventListener("resize", updateStageAspect);
       photoImage.addEventListener("load", updateStageAspect);
+      cameraPreview.addEventListener("loadedmetadata", updateStageAspect);
 
       if (isMobileDevice) {
         boardScaleInput.value = "35";
@@ -1644,4 +1778,3 @@
     </script>
   </body>
 </html>
-

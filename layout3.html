@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
-    <title>工程白板拍照工具</title>
+    <title>麗鄴電子白板-布局3</title>
     <style>
       :root {
         --board-fill: #f8fafc;
@@ -101,6 +101,43 @@
         min-height: 90px;
         resize: none;
         overflow: hidden;
+      }
+
+      .history-dropdown {
+        margin-top: 0.4rem;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.9);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.4);
+        max-height: 200px;
+        overflow-y: auto;
+        display: none;
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 0.4rem;
+      }
+
+      .history-dropdown.is-visible {
+        display: flex;
+      }
+
+      .history-dropdown button {
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 8px;
+        padding: 0.4rem 0.55rem;
+        background: rgba(15, 23, 42, 0.65);
+        color: #e2e8f0;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+
+      .history-dropdown button:hover,
+      .history-dropdown button:focus-visible {
+        border-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.2);
+        outline: none;
       }
 
       .panel-hint {
@@ -501,11 +538,13 @@
         <div class="data-grid">
           <div class="form-field">
             <label for="inputProjectName">工程名稱</label>
-            <input id="inputProjectName" type="text" placeholder="請輸入工程名稱" />
+            <input id="inputProjectName" type="text" placeholder="請輸入工程名稱" autocomplete="off" />
+            <div class="history-dropdown" id="projectNameHistoryDropdown"></div>
           </div>
           <div class="form-field">
             <label for="inputInspectionLocation">檢查位置</label>
-            <input id="inputInspectionLocation" type="text" placeholder="請輸入檢查位置" />
+            <input id="inputInspectionLocation" type="text" placeholder="請輸入檢查位置" autocomplete="off" />
+            <div class="history-dropdown" id="inspectionLocationHistoryDropdown"></div>
           </div>
           <div class="form-field">
             <label for="inputTestDate">檢查日期</label>
@@ -513,11 +552,13 @@
           </div>
           <div class="form-field">
             <label for="inputInspector">檢查人員</label>
-            <input id="inputInspector" type="text" placeholder="請輸入檢查人員" />
+            <input id="inputInspector" type="text" placeholder="請輸入檢查人員" autocomplete="off" />
+            <div class="history-dropdown" id="inspectorHistoryDropdown"></div>
           </div>
           <div class="form-field" style="grid-column: 1 / -1">
             <label for="inputTestResult">檢查紀錄</label>
-            <textarea id="inputTestResult" placeholder="寫下檢查內容、測量結果等"></textarea>
+            <textarea id="inputTestResult" placeholder="寫下檢查內容、測量結果等" autocomplete="off"></textarea>
+            <div class="history-dropdown" id="testResultHistoryDropdown"></div>
           </div>
           <div class="form-field" style="grid-column: 1 / -1">
             <label>現場座標</label>
@@ -688,6 +729,8 @@
         "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +units=m +no_defs";
       let lastPhotoMetadata = null;
       let lastPhotoExifBytes = null;
+      const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_layout34";
+      const FIELD_HISTORY_LIMIT = 20;
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -703,6 +746,12 @@
         testResult: document.getElementById("displayTestResult"),
         testDate: document.getElementById("displayTestDate"),
         inspector: document.getElementById("displayInspector"),
+      };
+      const historyDropdowns = {
+        projectName: document.getElementById("projectNameHistoryDropdown"),
+        inspectionLocation: document.getElementById("inspectionLocationHistoryDropdown"),
+        inspector: document.getElementById("inspectorHistoryDropdown"),
+        testResult: document.getElementById("testResultHistoryDropdown"),
       };
 
       const formatWatermarkDate = (value) => {
@@ -871,6 +920,117 @@
           },
           { enableHighAccuracy: true, timeout: 15000 }
         );
+      };
+
+      const readFieldHistoryStore = () => {
+        try {
+          let raw = localStorage.getItem(FIELD_HISTORY_STORAGE_KEY);
+          if (!raw) {
+            const legacyRaw = localStorage.getItem("whiteboard_field_history_v1");
+            if (legacyRaw) {
+              localStorage.setItem(FIELD_HISTORY_STORAGE_KEY, legacyRaw);
+              raw = legacyRaw;
+            }
+          }
+          const parsed = raw ? JSON.parse(raw) : {};
+          return typeof parsed === "object" && parsed ? parsed : {};
+        } catch (error) {
+          console.warn("讀取歷史資料失敗", error);
+          return {};
+        }
+      };
+
+      let fieldHistory = readFieldHistoryStore();
+
+      const writeFieldHistoryStore = () => {
+        try {
+          localStorage.setItem(FIELD_HISTORY_STORAGE_KEY, JSON.stringify(fieldHistory));
+        } catch (error) {
+          console.warn("儲存歷史資料失敗", error);
+        }
+      };
+
+      const getFieldHistory = (field) => {
+        const list = fieldHistory[field];
+        return Array.isArray(list) ? list : [];
+      };
+
+      const renderHistoryDropdown = (field) => {
+        const dropdown = historyDropdowns[field];
+        if (!dropdown) return false;
+        dropdown.innerHTML = "";
+        const history = getFieldHistory(field);
+        if (!history.length) return false;
+        history.forEach((item) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = item;
+          button.addEventListener("mousedown", (event) => {
+            event.preventDefault();
+            const targetInput = formInputs[field];
+            if (!targetInput) return;
+            targetInput.value = item;
+            if (field === "testResult") {
+              autoResizeTextarea(targetInput);
+            }
+            syncField(field);
+            hideFieldHistory(field);
+          });
+          dropdown.appendChild(button);
+        });
+        return true;
+      };
+
+      const updateDropdownContent = (field) => {
+        const dropdown = historyDropdowns[field];
+        if (!dropdown) return;
+        const wasVisible = dropdown.classList.contains("is-visible");
+        const hasItems = renderHistoryDropdown(field);
+        if (wasVisible && hasItems) {
+          dropdown.classList.add("is-visible");
+        } else if (!hasItems) {
+          dropdown.classList.remove("is-visible");
+        }
+      };
+
+      const saveFieldHistory = (field, value) => {
+        const trimmed = (value || "").trim();
+        if (!trimmed) return;
+        const current = getFieldHistory(field).filter((item) => item !== trimmed);
+        current.unshift(trimmed);
+        fieldHistory[field] = current.slice(0, FIELD_HISTORY_LIMIT);
+        writeFieldHistoryStore();
+        updateDropdownContent(field);
+      };
+
+      const refreshAllFieldHistoryUI = () => {
+        Object.keys(historyDropdowns).forEach((field) => {
+          renderHistoryDropdown(field);
+          hideFieldHistory(field);
+        });
+      };
+
+      const historyDropdownHideTimers = {};
+
+      const showFieldHistory = (field) => {
+        const dropdown = historyDropdowns[field];
+        if (!dropdown) return;
+        clearTimeout(historyDropdownHideTimers[field]);
+        const hasItems = renderHistoryDropdown(field);
+        if (hasItems) {
+          dropdown.classList.add("is-visible");
+        }
+      };
+
+      const hideFieldHistory = (field) => {
+        const dropdown = historyDropdowns[field];
+        if (!dropdown) return;
+        dropdown.classList.remove("is-visible");
+      };
+
+      const scheduleHideFieldHistory = (field) => {
+        clearTimeout(historyDropdownHideTimers[field]);
+        historyDropdownHideTimers[field] = setTimeout(() => hideFieldHistory(field), 120);
       };
 
       const formatDateInputValue = (date) => {
@@ -1423,8 +1583,12 @@
       window.addEventListener("pointerup", endDrag);
       window.addEventListener("pointercancel", endDrag);
 
+      const historyFields = ["projectName", "inspectionLocation", "inspector", "testResult"];
+      const historyTextFields = ["projectName", "inspectionLocation", "inspector"];
+
       applyDataBtn.addEventListener("click", () => {
         syncAllFields();
+        historyFields.forEach((field) => saveFieldHistory(field, formInputs[field].value));
         showToast("白板內容已更新。", "success");
       });
 
@@ -1457,6 +1621,18 @@
       lineColorInput.addEventListener("input", (event) =>
         updateLineColor(event.target.value)
       );
+      refreshAllFieldHistoryUI();
+
+      historyTextFields.forEach((field) => {
+        const input = formInputs[field];
+        if (!input) return;
+        input.addEventListener("focus", () => showFieldHistory(field));
+        input.addEventListener("input", () => showFieldHistory(field));
+        input.addEventListener("blur", () => scheduleHideFieldHistory(field));
+      });
+
+      formInputs.testResult.addEventListener("focus", () => showFieldHistory("testResult"));
+      formInputs.testResult.addEventListener("blur", () => scheduleHideFieldHistory("testResult"));
       detectCoordinateBtn.addEventListener("click", detectCoordinates);
 
       exportBtn.addEventListener("click", exportBoardImage);
@@ -1498,13 +1674,13 @@
         }
       });
       autoResizeTextarea(formInputs.testResult);
-      formInputs.testResult.addEventListener("input", () =>
-        autoResizeTextarea(formInputs.testResult)
-      );
+      formInputs.testResult.addEventListener("input", () => {
+        autoResizeTextarea(formInputs.testResult);
+        showFieldHistory("testResult");
+      });
       formInputs.testDate.addEventListener("change", () =>
         syncField("testDate")
       );
     </script>
   </body>
 </html>
-
