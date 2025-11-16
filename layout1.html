@@ -1206,11 +1206,14 @@
         }
         lastPhotoMetadata =
           metadata && (metadata.date || metadata.gps || metadata.orientation)
-            ? metadata
+            ? { ...metadata }
             : null;
         if (window.piexif && dataUrl) {
           try {
             const exifObj = piexif.load(dataUrl);
+            if (exifObj["0th"]) {
+              delete exifObj["0th"][piexif.ImageIFD.Orientation];
+            }
             lastPhotoExifBytes = piexif.dump(exifObj);
           } catch (error) {
             console.warn("EXIF 載入失敗", error);
@@ -1218,6 +1221,9 @@
           }
         } else {
           lastPhotoExifBytes = null;
+        }
+        if (lastPhotoMetadata?.orientation) {
+          delete lastPhotoMetadata.orientation;
         }
         const exifDate = metadata.date;
         const usedExif = Boolean(exifDate);
