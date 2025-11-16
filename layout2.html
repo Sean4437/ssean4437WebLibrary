@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
-    <title>麗鄴電子白板-布局2</title>
+    <title>麗鄴電子白板-布局3</title>
     <style>
       :root {
         --board-fill: #f8fafc;
@@ -103,6 +103,43 @@
         overflow: hidden;
       }
 
+      .history-dropdown {
+        margin-top: 0.4rem;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.9);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.4);
+        max-height: 200px;
+        overflow-y: auto;
+        display: none;
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 0.4rem;
+      }
+
+      .history-dropdown.is-visible {
+        display: flex;
+      }
+
+      .history-dropdown button {
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 8px;
+        padding: 0.4rem 0.55rem;
+        background: rgba(15, 23, 42, 0.65);
+        color: #e2e8f0;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+
+      .history-dropdown button:hover,
+      .history-dropdown button:focus-visible {
+        border-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.2);
+        outline: none;
+      }
+
       .panel-hint {
         margin-top: 0.4rem;
         font-size: 0.83rem;
@@ -164,43 +201,6 @@
         border: 0;
       }
 
-      .history-dropdown {
-        margin-top: 0.4rem;
-        border: 1px solid rgba(148, 163, 184, 0.4);
-        border-radius: 12px;
-        background: rgba(15, 23, 42, 0.9);
-        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.4);
-        max-height: 200px;
-        overflow-y: auto;
-        display: none;
-        flex-direction: column;
-        gap: 0.25rem;
-        padding: 0.4rem;
-      }
-
-      .history-dropdown.is-visible {
-        display: flex;
-      }
-
-      .history-dropdown button {
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        border-radius: 8px;
-        padding: 0.4rem 0.55rem;
-        background: rgba(15, 23, 42, 0.65);
-        color: #e2e8f0;
-        font: inherit;
-        text-align: left;
-        cursor: pointer;
-        transition: border-color 0.2s ease, background 0.2s ease;
-      }
-
-      .history-dropdown button:hover,
-      .history-dropdown button:focus-visible {
-        border-color: #38bdf8;
-        background: rgba(56, 189, 248, 0.2);
-        outline: none;
-      }
-
       .toggle-advanced {
         margin-top: 0.6rem;
         width: 100%;
@@ -256,7 +256,7 @@
       .btn {
         border: none;
         border-radius: 999px;
-        padding: 0.6rem 1.25rem;
+        padding: 0.75rem 1.1rem;
         font-weight: 700;
         font-size: 1rem;
         cursor: pointer;
@@ -528,7 +528,7 @@
       .action-btn {
         border: none;
         border-radius: 999px;
-        padding: 0.6rem 1.25rem;
+        padding: 0.85rem 1.25rem;
         font-weight: 700;
         font-size: 1rem;
         cursor: pointer;
@@ -584,53 +584,34 @@
         <h3>資料輸入面板</h3>
         <div class="data-grid">
           <div class="form-field">
-            <label for="inputProjectName">工程名稱</label>
-            <input
-              id="inputProjectName"
-              type="text"
-              placeholder="請輸入工程名稱"
-              autocomplete="off"
-            />
+            <label for="inputProjectName">構造物 A</label>
+            <input id="inputProjectName" type="text" placeholder="請輸入構造物 A 名稱" autocomplete="off" />
             <div class="history-dropdown" id="projectNameHistoryDropdown"></div>
           </div>
           <div class="form-field">
-            <label for="inputInspectionLocation">檢查位置</label>
-            <input
-              id="inputInspectionLocation"
-              type="text"
-              placeholder="請輸入檢查位置"
-              autocomplete="off"
-            />
+            <label for="inputInspectionLocation">構造物 B</label>
+            <input id="inputInspectionLocation" type="text" placeholder="請輸入構造物 B 名稱" autocomplete="off" />
             <div class="history-dropdown" id="inspectionLocationHistoryDropdown"></div>
+          </div>
+          <div class="form-field">
+            <label for="inputInspector">構造物 C</label>
+            <input id="inputInspector" type="text" placeholder="請輸入構造物 C 名稱" autocomplete="off" />
+            <div class="history-dropdown" id="inspectorHistoryDropdown"></div>
+          </div>
+          <div class="form-field" style="grid-column: 1 / -1">
+            <label for="inputTestResult">其它紀錄</label>
+            <textarea id="inputTestResult" placeholder="寫下其它紀錄、測量結果等" autocomplete="off"></textarea>
+            <div class="history-dropdown" id="testResultHistoryDropdown"></div>
           </div>
           <div class="form-field">
             <label for="inputTestDate">檢查日期</label>
             <input id="inputTestDate" type="date" />
           </div>
-          <div class="form-field">
-            <label for="inputInspector">檢查人員</label>
-            <input
-              id="inputInspector"
-              type="text"
-              placeholder="請輸入檢查人員"
-              autocomplete="off"
-            />
-            <div class="history-dropdown" id="inspectorHistoryDropdown"></div>
-          </div>
-          <div class="form-field" style="grid-column: 1 / -1">
-            <label for="inputTestResult">檢查紀錄</label>
-            <textarea
-              id="inputTestResult"
-              placeholder="寫下檢查內容、測量結果等"
-              autocomplete="off"
-            ></textarea>
-            <div class="history-dropdown" id="testResultHistoryDropdown"></div>
-          </div>
           <div class="form-field" style="grid-column: 1 / -1">
             <label>現場座標</label>
             <div class="coordinate-field">
               <div id="coordinateDmsField">尚未取得</div>
-              <div class="coordinate-meta" id="coordinateTwdField">X：— Y：—</div>
+              <div class="coordinate-meta" id="coordinateTwdField">X:—　Y:—</div>
             </div>
             <div class="coordinate-actions">
               <button type="button" class="ghost-btn" id="detectCoordinateBtn">取得座標</button>
@@ -753,33 +734,33 @@
         </div>
         <div class="whiteboard-wrapper" id="whiteboardWrapper">
           <div class="whiteboard" id="whiteboard">
-            <div class="whiteboard-content">
+              <div class="whiteboard-content">
               <div class="board-row">
-                <label>工程名稱</label>
+                <label>構造物 A</label>
                 <div class="board-value" id="displayProjectName">—</div>
               </div>
               <div class="board-row">
-                <label>檢查位置</label>
+                <label>構造物 B</label>
                 <div class="board-value" id="displayInspectionLocation">—</div>
               </div>
+              <div class="board-row">
+                <label>構造物 C</label>
+                <div class="board-value" id="displayInspector">—</div>
+              </div>
               <div class="board-block">
-                <label>檢查紀錄</label>
+                <label>其它紀錄</label>
                 <div class="board-notes" id="displayTestResult">—</div>
               </div>
               <div class="board-block">
                 <label>定位座標</label>
                 <div class="board-coordinate">
                   <span id="displayCoordinateDms">—</span>
-                  <span class="board-coordinate-meta" id="displayCoordinateTwd">X：— Y：—</span>
+                  <span class="board-coordinate-meta" id="displayCoordinateTwd">X:—　Y:—</span>
                 </div>
               </div>
               <div class="board-row">
                 <label>檢查日期</label>
                 <div class="board-value" id="displayTestDate">—</div>
-              </div>
-              <div class="board-row">
-                <label>檢查人員</label>
-                <div class="board-value" id="displayInspector">—</div>
               </div>
             </div>
           </div>
@@ -834,6 +815,8 @@
       const coordinateTwdField = document.getElementById("coordinateTwdField");
       const displayCoordinateDms = document.getElementById("displayCoordinateDms");
       const displayCoordinateTwd = document.getElementById("displayCoordinateTwd");
+      const defaultCoordinateText = coordinateDmsField?.textContent || "尚未取得";
+      const defaultTwdText = coordinateTwdField?.textContent || "X:—　Y:—";
       const applyDataBtn = document.getElementById("applyDataBtn");
       const clearBoardBtn = document.getElementById("clearBoardBtn");
       const exportBtn = document.getElementById("exportBtn");
@@ -849,10 +832,9 @@
       const TWD97_PROJECTION =
         "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +units=m +no_defs";
       let lastPhotoMetadata = null;
-
-      const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
-      const FIELD_HISTORY_LIMIT = 20;
       let lastPhotoExifBytes = null;
+      const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_layout34";
+      const FIELD_HISTORY_LIMIT = 20;
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -888,20 +870,10 @@
         photoWatermark.textContent = formatWatermarkDate(formInputs.testDate.value);
       };
 
-      const formatDmsComponent = (value, positiveSuffix, negativeSuffix) => {
-        const direction = value >= 0 ? positiveSuffix : negativeSuffix;
-        const absolute = Math.abs(value);
-        const degrees = Math.floor(absolute);
-        const minutesFloat = (absolute - degrees) * 60;
-        const minutes = Math.floor(minutesFloat);
-        const seconds = Math.round((minutesFloat - minutes) * 60);
-        return `${degrees}°${String(minutes).padStart(2, "0")}'${String(seconds).padStart(2, "0")}"${direction}`;
-      };
-
-      const formatDmsPair = (lat, lon) => {
-        const latText = formatDmsComponent(lat, "N", "S");
-        const lonText = formatDmsComponent(lon, "E", "W");
-        return `${latText} ${lonText}`;
+      const formatDecimalPair = (lat, lon) => {
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+        const formatValue = (value) => Number(value).toFixed(6);
+        return `${formatValue(lat)}, ${formatValue(lon)}`;
       };
 
       const formatTwdText = (x, y) => {
@@ -993,11 +965,13 @@
         }
       };
 
-      const updateCoordinateDisplay = (dmsText, twdText) => {
-        coordinateDmsField.textContent = dmsText || "尚未取得";
-        coordinateTwdField.textContent = twdText || "X：— Y：—";
-        displayCoordinateDms.textContent = dmsText || "—";
-        displayCoordinateTwd.textContent = twdText || "X：— Y：—";
+      const updateCoordinateDisplay = (decimalText, twdText) => {
+        const latLonText = decimalText || defaultCoordinateText;
+        const twdDisplayText = twdText || defaultTwdText;
+        coordinateDmsField.textContent = latLonText;
+        coordinateTwdField.textContent = twdDisplayText;
+        displayCoordinateDms.textContent = decimalText || "—";
+        displayCoordinateTwd.textContent = twdDisplayText;
       };
 
       const resolveGeoErrorMessage = (error) => {
@@ -1026,10 +1000,10 @@
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
-            const dmsText = formatDmsPair(latitude, longitude);
+            const decimalText = formatDecimalPair(latitude, longitude);
             const twd = convertToTwd97(latitude, longitude);
-            const twdText = twd ? formatTwdText(twd[0], twd[1]) : "X：— Y：—";
-            updateCoordinateDisplay(dmsText, twdText);
+            const twdText = twd ? formatTwdText(twd[0], twd[1]) : defaultTwdText;
+            updateCoordinateDisplay(decimalText, twdText);
             coordinateStatus.textContent = "定位成功";
             showToast("已更新座標資訊。", "success");
             detectCoordinateBtn.disabled = false;
@@ -1046,7 +1020,14 @@
 
       const readFieldHistoryStore = () => {
         try {
-          const raw = localStorage.getItem(FIELD_HISTORY_STORAGE_KEY);
+          let raw = localStorage.getItem(FIELD_HISTORY_STORAGE_KEY);
+          if (!raw) {
+            const legacyRaw = localStorage.getItem("whiteboard_field_history_v1");
+            if (legacyRaw) {
+              localStorage.setItem(FIELD_HISTORY_STORAGE_KEY, legacyRaw);
+              raw = legacyRaw;
+            }
+          }
           const parsed = raw ? JSON.parse(raw) : {};
           return typeof parsed === "object" && parsed ? parsed : {};
         } catch (error) {
@@ -1070,15 +1051,6 @@
         return Array.isArray(list) ? list : [];
       };
 
-      const saveFieldHistory = (field, value) => {
-        const trimmed = (value || "").trim();
-        if (!trimmed) return;
-        const current = getFieldHistory(field).filter((item) => item !== trimmed);
-        current.unshift(trimmed);
-        fieldHistory[field] = current.slice(0, FIELD_HISTORY_LIMIT);
-        writeFieldHistoryStore();
-        updateDropdownContent(field);
-      };
       const renderHistoryDropdown = (field) => {
         const dropdown = historyDropdowns[field];
         if (!dropdown) return false;
@@ -1117,6 +1089,16 @@
         }
       };
 
+      const saveFieldHistory = (field, value) => {
+        const trimmed = (value || "").trim();
+        if (!trimmed) return;
+        const current = getFieldHistory(field).filter((item) => item !== trimmed);
+        current.unshift(trimmed);
+        fieldHistory[field] = current.slice(0, FIELD_HISTORY_LIMIT);
+        writeFieldHistoryStore();
+        updateDropdownContent(field);
+      };
+
       const refreshAllFieldHistoryUI = () => {
         Object.keys(historyDropdowns).forEach((field) => {
           renderHistoryDropdown(field);
@@ -1144,10 +1126,7 @@
 
       const scheduleHideFieldHistory = (field) => {
         clearTimeout(historyDropdownHideTimers[field]);
-        historyDropdownHideTimers[field] = setTimeout(
-          () => hideFieldHistory(field),
-          120
-        );
+        historyDropdownHideTimers[field] = setTimeout(() => hideFieldHistory(field), 120);
       };
 
       const formatDateInputValue = (date) => {
@@ -1213,8 +1192,7 @@
 
       const convertGpsValuesToDecimal = (values, ref) => {
         if (!values || values.length < 3) return null;
-        const decimal =
-          values[0] + values[1] / 60 + values[2] / 3600;
+        const decimal = values[0] + values[1] / 60 + values[2] / 3600;
         if (!ref) return decimal;
         const normalizedRef = ref.trim().toUpperCase();
         if (normalizedRef === "S" || normalizedRef === "W") {
@@ -1281,21 +1259,21 @@
           if (valueSize > 4) {
             valueOffset = base + view.getUint32(rawValueOffset, little);
           }
-      if (tag === 0x8769) {
-        const pointer = base + view.getUint32(rawValueOffset, little);
-        parseIfdForMetadata(view, pointer, base, little, metadata);
-        continue;
-      }
-      if (tag === 0x0112 && type === 3 && count >= 1) {
-        const orientation =
-          valueSize > 2
-            ? view.getUint16(valueOffset, little)
-            : view.getUint16(rawValueOffset, little);
-        if (orientation) {
-          metadata.orientation = orientation;
-        }
-        continue;
-      }
+          if (tag === 0x8769) {
+            const pointer = base + view.getUint32(rawValueOffset, little);
+            parseIfdForMetadata(view, pointer, base, little, metadata);
+            continue;
+          }
+          if (tag === 0x0112 && type === 3 && count >= 1) {
+            const orientation =
+              valueSize > 2
+                ? view.getUint16(valueOffset, little)
+                : view.getUint16(rawValueOffset, little);
+            if (orientation) {
+              metadata.orientation = orientation;
+            }
+            continue;
+          }
           if (tag === 0x8825) {
             const pointer = base + view.getUint32(rawValueOffset, little);
             const gps = parseGpsIfd(view, pointer, base, little);
@@ -1355,56 +1333,8 @@
         return {};
       };
 
-      const extractExifMetadata = async (file, dataUrl) => {
-        if (!file) return {};
-        if (window.piexif && dataUrl) {
-          try {
-            const exifObj = piexif.load(dataUrl);
-            const metadata = {};
-            const dateTimeOriginal =
-              exifObj.Exif?.[piexif.ExifIFD.DateTimeOriginal] ||
-              exifObj.Exif?.[piexif.ExifIFD.CreateDate] ||
-              exifObj["0th"]?.[piexif.ImageIFD.DateTime] ||
-              null;
-            if (dateTimeOriginal) {
-              metadata.date = dateTimeOriginal.split(" ")[0].replace(/:/g, "-");
-            }
-            const toDecimal = (value) => {
-              if (!value || value.length < 3) return null;
-              const [deg, min, sec] = value.map(
-                ([numerator, denominator]) => numerator / (denominator || 1)
-              );
-              return deg + min / 60 + sec / 3600;
-            };
-            const lat = exifObj.GPS?.[piexif.GPSIFD.GPSLatitude];
-            const latRef = exifObj.GPS?.[piexif.GPSIFD.GPSLatitudeRef];
-            const lon = exifObj.GPS?.[piexif.GPSIFD.GPSLongitude];
-            const lonRef = exifObj.GPS?.[piexif.GPSIFD.GPSLongitudeRef];
-            const latitude = toDecimal(lat);
-            const longitude = toDecimal(lon);
-            if (
-              typeof latitude === "number" &&
-              typeof longitude === "number" &&
-              latRef &&
-              lonRef
-            ) {
-              metadata.gps = {
-                latitude:
-                  latRef.trim().toUpperCase() === "S" ? -latitude : latitude,
-                longitude:
-                  lonRef.trim().toUpperCase() === "W" ? -longitude : longitude,
-              };
-            }
-            if (exifObj["0th"]) {
-              delete exifObj["0th"][piexif.ImageIFD.Orientation];
-            }
-            metadata.exifBytes = piexif.dump(exifObj);
-            return metadata;
-          } catch (error) {
-            console.warn("EXIF 解析失敗", error);
-          }
-        }
-        if (!/image\/jpe?g/i.test(file.type || "")) return {};
+      const extractExifMetadata = async (file) => {
+        if (!file || !/image\/jpe?g/i.test(file.type || "")) return {};
         try {
           const buffer = await file.arrayBuffer();
           return readExifMetadataFromBuffer(buffer) || {};
@@ -1418,31 +1348,28 @@
         if (!file) return;
         let metadata = {};
         try {
-          metadata = await extractExifMetadata(file, dataUrl);
+          metadata = await extractExifMetadata(file);
         } catch (error) {
           console.warn("讀取 EXIF 資料失敗", error);
         }
         lastPhotoMetadata =
           metadata && (metadata.date || metadata.gps || metadata.orientation)
-            ? {
-                date: metadata.date || null,
-                gps: metadata.gps || null,
-                orientation: metadata.orientation || null,
-              }
+            ? { ...metadata }
             : null;
-        let exifBytes = metadata?.exifBytes || null;
-        if (exifBytes && window.piexif) {
+        if (window.piexif && dataUrl) {
           try {
-            const exifObj = piexif.load(exifBytes);
+            const exifObj = piexif.load(dataUrl);
             if (exifObj["0th"]) {
               delete exifObj["0th"][piexif.ImageIFD.Orientation];
             }
-            exifBytes = piexif.dump(exifObj);
+            lastPhotoExifBytes = piexif.dump(exifObj);
           } catch (error) {
-            console.warn("移除 Orientation 失敗", error);
+            console.warn("EXIF 載入失敗", error);
+            lastPhotoExifBytes = null;
           }
+        } else {
+          lastPhotoExifBytes = null;
         }
-        lastPhotoExifBytes = exifBytes;
         if (lastPhotoMetadata?.orientation) {
           delete lastPhotoMetadata.orientation;
         }
@@ -1455,6 +1382,7 @@
               ? formatDateInputValue(new Date(file.lastModified))
               : formatDateInputValue(new Date());
         }
+
         formInputs.testDate.value = resolvedDate;
         syncField("testDate");
 
@@ -1464,15 +1392,16 @@
 
         if (metadata.gps) {
           const { latitude, longitude } = metadata.gps;
-          const dmsText = formatDmsPair(latitude, longitude);
+          const decimalText = formatDecimalPair(latitude, longitude);
           const twd = convertToTwd97(latitude, longitude);
-          const twdText = twd ? formatTwdText(twd[0], twd[1]) : "X:—　Y:—";
-          updateCoordinateDisplay(dmsText, twdText);
+          const twdText = twd ? formatTwdText(twd[0], twd[1]) : defaultTwdText;
+          updateCoordinateDisplay(decimalText, twdText);
           coordinateStatus.textContent = "已套用照片座標";
           toastMessageContent += "；已套用照片座標";
         } else {
           coordinateStatus.textContent = defaultCoordinateStatusText;
         }
+
         showToast(`${toastMessageContent}。`, "success");
       };
 
@@ -1521,28 +1450,6 @@
           return;
         }
         await applyPhotoMetadata(file, dataUrl);
-      };
-
-      const applyColorPreset = (button) => {
-        if (!button?.dataset) return;
-        const { boardColor, textColor, lineColor, boardOpacity } = button.dataset;
-        if (boardColor) {
-          boardColorInput.value = boardColor;
-          updateBoardColor(boardColor);
-        }
-        if (textColor) {
-          textColorInput.value = textColor;
-          updateTextColor(textColor);
-        }
-        if (lineColor) {
-          lineColorInput.value = lineColor;
-          updateLineColor(lineColor);
-        }
-        if (boardOpacity) {
-          boardOpacityInput.value = boardOpacity;
-          updateBoardOpacity(boardOpacity);
-        }
-        showToast("已套用預設配色。", "success");
       };
 
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -1706,6 +1613,28 @@
         document.documentElement.style.setProperty("--line-color", color);
       };
 
+      const applyColorPreset = (button) => {
+        if (!button?.dataset) return;
+        const { boardColor, textColor, lineColor, boardOpacity } = button.dataset;
+        if (boardColor) {
+          boardColorInput.value = boardColor;
+          updateBoardColor(boardColor);
+        }
+        if (textColor) {
+          textColorInput.value = textColor;
+          updateTextColor(textColor);
+        }
+        if (lineColor) {
+          lineColorInput.value = lineColor;
+          updateLineColor(lineColor);
+        }
+        if (boardOpacity) {
+          boardOpacityInput.value = boardOpacity;
+          updateBoardOpacity(boardOpacity);
+        }
+        showToast("已套用預設配色。", "success");
+      };
+
       const toggleWhiteboardSolid = (enable) => {
         whiteboard.classList.toggle("solid-mode", Boolean(enable));
       };
@@ -1721,7 +1650,10 @@
 
       const buildShareText = () => {
         const sections = [
-          { label: "檢查位置", value: displayTargets.inspectionLocation.textContent },
+          { label: "構造物 A", value: displayTargets.projectName.textContent },
+          { label: "構造物 B", value: displayTargets.inspectionLocation.textContent },
+          { label: "構造物 C", value: displayTargets.inspector.textContent },
+          { label: "其它紀錄", value: displayTargets.testResult.textContent },
           { label: "檢查日期", value: displayTargets.testDate.textContent },
         ];
         return sections.map((item) => `${item.label}：${item.value || "—"}`).join("\n");
@@ -1739,7 +1671,7 @@
           try {
             await navigator.share({
               files: [file],
-              title: "工程白板照片",
+              title: "構造物白板照片",
               text: shareText,
             });
             showToast("已開啟分享面板，請選擇儲存影像。", "success");
@@ -1828,7 +1760,6 @@
       lineColorInput.addEventListener("input", (event) =>
         updateLineColor(event.target.value)
       );
-      detectCoordinateBtn.addEventListener("click", detectCoordinates);
       colorPresetButtons.forEach((button) =>
         button.addEventListener("click", () => applyColorPreset(button))
       );
@@ -1842,12 +1773,9 @@
         input.addEventListener("blur", () => scheduleHideFieldHistory(field));
       });
 
-      formInputs.testResult.addEventListener("focus", () =>
-        showFieldHistory("testResult")
-      );
-      formInputs.testResult.addEventListener("blur", () =>
-        scheduleHideFieldHistory("testResult")
-      );
+      formInputs.testResult.addEventListener("focus", () => showFieldHistory("testResult"));
+      formInputs.testResult.addEventListener("blur", () => scheduleHideFieldHistory("testResult"));
+      detectCoordinateBtn.addEventListener("click", detectCoordinates);
 
       exportBtn.addEventListener("click", exportBoardImage);
       window.addEventListener("resize", updateStageAspect);
