@@ -765,8 +765,6 @@
       );
       let lastPhotoMetadata = null;
       let lastPhotoExifBytes = null;
-      let lastPhotoOriginalFile = null;
-      let lastPhotoOriginalDataUrl = null;
 
       const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
       const FIELD_HISTORY_LIMIT = 20;
@@ -1272,8 +1270,6 @@
           showToast("照片載入失敗，請重新選擇。");
           return;
         }
-        lastPhotoOriginalFile = file;
-        lastPhotoOriginalDataUrl = dataUrl;
         await applyPhotoMetadata(file, dataUrl);
       };
 
@@ -1432,8 +1428,6 @@
         syncAllFields();
         lastPhotoMetadata = null;
         lastPhotoExifBytes = null;
-        lastPhotoOriginalFile = null;
-        lastPhotoOriginalDataUrl = null;
       };
 
       const updateBoardColor = (color) => {
@@ -1464,18 +1458,13 @@
         whiteboard.classList.toggle("solid-mode", Boolean(enable));
       };
 
-      const downloadBlobSilently = (blob, filename) => {
+      const downloadBlob = (blob, filename) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
         link.download = filename;
         link.click();
         setTimeout(() => URL.revokeObjectURL(url), 2000);
-      };
-
-      const downloadBlob = (blob, filename) => {
-        downloadBlobSilently(blob, filename);
-        showToast("已下載圖片，可直接選擇儲存位置。", "success");
       };
 
       const buildShareText = () => {
@@ -1513,30 +1502,6 @@
         showToast("已下載圖片，可直接選擇儲存位置。", "success");
       };
 
-      const exportOriginalPhoto = (timestamp) => {
-        const hasFile = Boolean(lastPhotoOriginalFile);
-        const hasDataUrl = Boolean(lastPhotoOriginalDataUrl);
-        if (!hasFile && !hasDataUrl) {
-          return false;
-        }
-        let blob = null;
-        let filenameBase = `whiteboard_${timestamp}`;
-        if (hasFile) {
-          blob = lastPhotoOriginalFile;
-          if (lastPhotoOriginalFile?.name) {
-            filenameBase = lastPhotoOriginalFile.name.replace(/\.[^.]+$/, "") || filenameBase;
-          }
-        } else if (hasDataUrl) {
-          blob = dataUrlToBlob(lastPhotoOriginalDataUrl);
-        }
-        if (!blob) {
-          return false;
-        }
-        const filename = `${filenameBase}_original.jpg`;
-        downloadBlobSilently(blob, filename);
-        return true;
-      };
-
       const exportBoardImage = async () => {
         exportBtn.disabled = true;
         exportBtn.textContent = "匯出中…";
@@ -1552,9 +1517,6 @@
           const blob = dataUrlToBlob(dataUrl);
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
           await handleShareOrDownload(blob, `whiteboard_${timestamp}.jpg`);
-          if (isMobileDevice && exportOriginalPhoto(timestamp)) {
-            showToast("原始照片已另外保存。", "success");
-          }
         } catch (error) {
           console.error(error);
           showToast("匯出失敗，請再試一次。");
@@ -1682,3 +1644,4 @@
     </script>
   </body>
 </html>
+
