@@ -13,6 +13,8 @@
         --text-color: #0f172a;
         --line-color: #000000;
         --board-rotation: 0deg;
+        --camera-frame-width: 100vw;
+        --camera-frame-height: 100vh;
         font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
           BlinkMacSystemFont, sans-serif;
         line-height: 1.45;
@@ -362,9 +364,11 @@
 
       body.camera-mode .stage {
         position: fixed;
-        inset: 0;
-        width: 100vw;
-        height: 100vh;
+        top: 50%;
+        left: 50%;
+        width: var(--camera-frame-width, 100vw);
+        height: var(--camera-frame-height, 100vh);
+        transform: translate(-50%, -50%);
         border-radius: 0;
         background: #000;
         z-index: 1000;
@@ -421,6 +425,25 @@
 
       .camera-font-control input[type="range"] {
         width: 160px;
+      }
+
+      .camera-frame {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: var(--camera-frame-width, 90vw);
+        height: var(--camera-frame-height, 60vh);
+        transform: translate(-50%, -50%);
+        border: 2px solid rgba(248, 250, 252, 0.9);
+        border-radius: 24px;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+        pointer-events: none;
+        z-index: 1015;
+        display: none;
+      }
+
+      body.camera-mode .camera-frame {
+        display: block;
       }
 
       .stage-placeholder {
@@ -828,6 +851,7 @@
         </div>
         <div class="photo-watermark" id="photoWatermark">日期未設定</div>
       </div>
+      <div class="camera-frame" id="cameraFrameGuide" hidden></div>
       <div class="camera-toolbar" id="cameraToolbar" hidden>
         <span class="camera-status" id="cameraStatus">相機已關閉</span>
         <label class="camera-font-control">
@@ -861,6 +885,7 @@
       const photoLayer = document.getElementById("photoLayer");
       const cameraPreview = document.getElementById("cameraPreview");
       const cameraToolbar = document.getElementById("cameraToolbar");
+      const cameraFrameGuide = document.getElementById("cameraFrameGuide");
       const cameraStatus = document.getElementById("cameraStatus");
       const cameraFontScaleInput = document.getElementById("cameraFontScale");
       const cameraFontScaleValue = document.getElementById("cameraFontScaleValue");
@@ -902,7 +927,15 @@
       let cameraStream = null;
       const cameraCaptureCanvas = document.createElement("canvas");
       const setCameraMode = (active) => {
-        document.body.classList.toggle("camera-mode", Boolean(active));
+        const isActive = Boolean(active);
+        document.body.classList.toggle("camera-mode", isActive);
+        cameraFrameGuide.hidden = !isActive;
+        if (isActive) {
+          updateStageAspect();
+        } else {
+          document.documentElement.style.removeProperty("--camera-frame-width");
+          document.documentElement.style.removeProperty("--camera-frame-height");
+        }
       };
 
       const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
@@ -1382,13 +1415,32 @@
         );
       };
 
+      const updateCameraFrameBounds = (ratio) => {
+        if (!document.body.classList.contains("camera-mode") || !ratio) return;
+        const toolbarHeight = cameraToolbar.offsetHeight || 0;
+        const margin = 24;
+        const maxWidth = Math.max(240, window.innerWidth - margin * 2);
+        const maxHeight = Math.max(200, window.innerHeight - toolbarHeight - margin * 2);
+        let frameWidth = maxWidth;
+        let frameHeight = frameWidth * ratio;
+        if (frameHeight > maxHeight) {
+          frameHeight = maxHeight;
+          frameWidth = frameHeight / ratio;
+        }
+        document.documentElement.style.setProperty("--camera-frame-width", `${frameWidth}px`);
+        document.documentElement.style.setProperty("--camera-frame-height", `${frameHeight}px`);
+      };
+
       const updateStageAspect = () => {
+        let ratio = null;
         if (!photoImage.hidden && photoImage.naturalWidth) {
-          const ratio = (photoImage.naturalHeight / photoImage.naturalWidth) * 100;
-          captureArea.style.setProperty("--stage-aspect", `${ratio}%`);
+          ratio = photoImage.naturalHeight / photoImage.naturalWidth;
         } else if (!cameraPreview.hidden && cameraPreview.videoWidth) {
-          const ratio = (cameraPreview.videoHeight / cameraPreview.videoWidth) * 100;
-          captureArea.style.setProperty("--stage-aspect", `${ratio}%`);
+          ratio = cameraPreview.videoHeight / cameraPreview.videoWidth;
+        }
+        if (ratio) {
+          captureArea.style.setProperty("--stage-aspect", `${ratio * 100}%`);
+          updateCameraFrameBounds(ratio);
         } else {
           captureArea.style.setProperty("--stage-aspect", "56.25%");
         }
@@ -1853,6 +1905,7 @@
 
       exportBtn.addEventListener("click", exportBoardImage);
       window.addEventListener("resize", updateStageAspect);
+      window.addEventListener("orientationchange", updateStageAspect);
       photoImage.addEventListener("load", updateStageAspect);
       cameraPreview.addEventListener("loadedmetadata", updateStageAspect);
 
