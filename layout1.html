@@ -836,9 +836,6 @@
             exif[piexif.ExifIFD.DateTimeOriginal] = dateTime;
             exif[piexif.ExifIFD.CreateDate] = dateTime;
           }
-          if (lastPhotoMetadata.orientation) {
-            zeroth[piexif.ImageIFD.Orientation] = lastPhotoMetadata.orientation;
-          }
           if (lastPhotoMetadata.gps) {
             const { latitude, longitude } = lastPhotoMetadata.gps;
             gps[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
