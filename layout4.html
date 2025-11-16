@@ -760,7 +760,7 @@
       let lastPhotoExifBytes = null;
       const TWD97_PROJECTION =
         "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +units=m +no_defs";
-      const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_layout34";
+      const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_layout_geo";
       const FIELD_HISTORY_LIMIT = 20;
 
       const formInputs = {
@@ -1265,10 +1265,17 @@
         try {
           let raw = localStorage.getItem(FIELD_HISTORY_STORAGE_KEY);
           if (!raw) {
-            const legacyRaw = localStorage.getItem("whiteboard_field_history_v1");
-            if (legacyRaw) {
-              localStorage.setItem(FIELD_HISTORY_STORAGE_KEY, legacyRaw);
-              raw = legacyRaw;
+            const legacyKeys = [
+              "whiteboard_field_history_layout34",
+              "whiteboard_field_history_v1",
+            ];
+            for (const key of legacyKeys) {
+              const legacyRaw = localStorage.getItem(key);
+              if (legacyRaw) {
+                localStorage.setItem(FIELD_HISTORY_STORAGE_KEY, legacyRaw);
+                raw = legacyRaw;
+                break;
+              }
             }
           }
           const parsed = raw ? JSON.parse(raw) : {};
