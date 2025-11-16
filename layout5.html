@@ -313,7 +313,7 @@
         inset: 0;
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
         border-radius: 0;
         background: #000;
       }
@@ -329,6 +329,59 @@
         background: rgba(15, 23, 42, 0.35);
         border: 1px solid rgba(148, 163, 184, 0.3);
         color: #e2e8f0;
+      }
+
+      body.camera-mode {
+        overflow: hidden;
+      }
+
+      body.camera-mode .app-shell {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+      }
+
+      body.camera-mode .panel,
+      body.camera-mode .controls,
+      body.camera-mode .action-bar {
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      body.camera-mode .stage {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        background: #000;
+        z-index: 1000;
+      }
+
+      body.camera-mode .stage::before {
+        display: none;
+      }
+
+      body.camera-mode .stage-content {
+        position: absolute;
+        inset: 0;
+      }
+
+      body.camera-mode .whiteboard-wrapper {
+        pointer-events: auto;
+      }
+
+      body.camera-mode #photoWatermark {
+        z-index: 1010;
+      }
+
+      body.camera-mode .camera-toolbar {
+        position: fixed;
+        bottom: clamp(1rem, 3vh, 2rem);
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(680px, calc(100vw - 2rem));
+        z-index: 1100;
       }
 
       .camera-toolbar[hidden] {
@@ -806,6 +859,9 @@
       let lastPhotoExifBytes = null;
       let cameraStream = null;
       const cameraCaptureCanvas = document.createElement("canvas");
+      const setCameraMode = (active) => {
+        document.body.classList.toggle("camera-mode", Boolean(active));
+      };
 
       const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
       const FIELD_HISTORY_LIMIT = 20;
@@ -1307,6 +1363,8 @@
         cameraToolbar.hidden = true;
         takePhotoBtn.textContent = "拍照";
         stopCameraBtn.disabled = false;
+        setCameraMode(false);
+        takePhotoBtn.disabled = false;
         if (restorePlaceholder && photoImage.hidden) {
           placeholder.style.display = "flex";
         }
@@ -1323,6 +1381,7 @@
         cameraStatus.textContent = "相機啟動中…";
         stopCameraBtn.disabled = true;
         takePhotoBtn.disabled = true;
+        setCameraMode(true);
         try {
           cameraStream = await navigator.mediaDevices.getUserMedia({
             video: {
@@ -1347,6 +1406,7 @@
           cameraStatus.textContent = "無法啟動相機，請檢查權限設定。";
           takePhotoBtn.disabled = false;
           cameraToolbar.hidden = true;
+          setCameraMode(false);
           showToast("啟動相機失敗，請檢查權限設定。");
         }
       };
@@ -1663,7 +1723,10 @@
         }
       });
       stopCameraBtn.addEventListener("click", () => stopCameraPreview(true));
-      uploadPhotoBtn.addEventListener("click", () => uploadInput.click());
+      uploadPhotoBtn.addEventListener("click", () => {
+        stopCameraPreview(true);
+        uploadInput.click();
+      });
       uploadInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
 
       whiteboardWrapper.addEventListener("pointerdown", startDrag);
