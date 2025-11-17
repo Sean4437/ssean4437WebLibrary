@@ -954,6 +954,45 @@
         return new Blob([array], { type: mime });
       };
 
+      const requestCaptureCoordinates = () => {
+        if (!navigator.geolocation) {
+          pendingCaptureCoordinatesPromise = Promise.resolve(null);
+          return pendingCaptureCoordinatesPromise;
+        }
+        pendingCaptureCoordinatesPromise = new Promise((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude } = position.coords || {};
+              if (
+                typeof latitude === "number" &&
+                !Number.isNaN(latitude) &&
+                typeof longitude === "number" &&
+                !Number.isNaN(longitude)
+              ) {
+                resolve({ latitude, longitude });
+              } else {
+                resolve(null);
+              }
+            },
+            () => resolve(null),
+            { enableHighAccuracy: true, timeout: 15000 }
+          );
+        });
+        return pendingCaptureCoordinatesPromise;
+      };
+
+      const consumePendingCaptureCoordinates = async () => {
+        if (!pendingCaptureCoordinatesPromise) return null;
+        try {
+          return await pendingCaptureCoordinatesPromise;
+        } catch (error) {
+          console.warn("讀取定位資訊失敗", error);
+          return null;
+        } finally {
+          pendingCaptureCoordinatesPromise = null;
+        }
+      };
+
 
       const convertToTwd97 = (lat, lon) => {
         if (typeof proj4 !== "function") {
@@ -1399,14 +1438,20 @@
           ? "已套用照片拍攝日期，如需修改可手動調整"
           : "已套用拍攝日期，如需修改可手動調整";
 
-        if (metadata.gps) {
-          const { latitude, longitude } = metadata.gps;
+        const gpsForDisplay = extraGps || metadata.gps;
+        if (gpsForDisplay && typeof gpsForDisplay.latitude === "number" && typeof gpsForDisplay.longitude === "number") {
+          const { latitude, longitude } = gpsForDisplay;
           const decimalText = formatDecimalPair(latitude, longitude);
           const twd = convertToTwd97(latitude, longitude);
           const twdText = twd ? formatTwdText(twd[0], twd[1]) : defaultTwdText;
           updateCoordinateDisplay(decimalText, twdText);
-          coordinateStatus.textContent = "已套用照片座標";
-          toastMessageContent += "；已套用照片座標";
+          if (extraGps) {
+            coordinateStatus.textContent = "已套用定位座標";
+            toastMessageContent += "；已套用定位座標";
+          } else {
+            coordinateStatus.textContent = "已套用照片座標";
+            toastMessageContent += "；已套用照片座標";
+          }
         } else {
           coordinateStatus.textContent = defaultCoordinateStatusText;
         }
