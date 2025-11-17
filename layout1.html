@@ -826,15 +826,7 @@
       const applyExifToDataUrl = (dataUrl) => {
         if (!window.piexif) return dataUrl;
         try {
-          let exifObj = null;
-          if (lastPhotoExifBytes) {
-            try {
-              exifObj = piexif.load(lastPhotoExifBytes);
-            } catch (error) {
-              console.warn("解析暫存 EXIF 失敗", error);
-              exifObj = null;
-            }
-          }
+          let exifObj = loadExifObjectFromBytes(lastPhotoExifBytes);
           if (!exifObj && lastPhotoMetadata && (lastPhotoMetadata.date || lastPhotoMetadata.gps)) {
             exifObj = { "0th": {}, Exif: {}, GPS: {} };
           }
@@ -1006,6 +998,17 @@
           reader.onerror = () => reject(new Error("failed to load file"));
           reader.readAsDataURL(file);
         });
+
+      const loadExifObjectFromBytes = (bytes) => {
+        if (!bytes || !window.piexif) return null;
+        try {
+          const base64 = btoa(bytes);
+          return piexif.load(`data:image/jpeg;base64,${base64}`);
+        } catch (error) {
+          console.warn("EXIF 位元資料解析失敗", error);
+          return null;
+        }
+      };
 
       const requestCaptureCoordinates = () => {
         if (!navigator.geolocation) {
