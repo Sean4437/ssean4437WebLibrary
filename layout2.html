@@ -954,6 +954,21 @@
         return new Blob([array], { type: mime });
       };
 
+
+      const captureRawPhotoBlob = () => {
+        if (photoImage.hidden || !photoImage.naturalWidth || !photoImage.naturalHeight) {
+          return null;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = photoImage.naturalWidth;
+        canvas.height = photoImage.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(photoImage, 0, 0, canvas.width, canvas.height);
+        let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+        dataUrl = applyExifToDataUrl(dataUrl);
+        return dataUrlToBlob(dataUrl);
+      };
+
       const requestCaptureCoordinates = () => {
         if (!navigator.geolocation) {
           pendingCaptureCoordinatesPromise = Promise.resolve(null);
@@ -1714,31 +1729,38 @@
         return sections.map((item) => `${item.label}：${item.value || "—"}`).join("\n");
       };
 
-      const handleShareOrDownload = async (blob, filename) => {
-        const file = new File([blob], filename, { type: "image/jpeg" });
+      const handleShareOrDownloadFiles = async (entries) => {
+        const validEntries = (entries || []).filter(
+          (entry) => entry && entry.blob && entry.filename
+        );
+        if (!validEntries.length) return;
         const shareText = buildShareText();
-        if (
-          isMobileDevice &&
-          navigator.canShare &&
-          navigator.canShare({ files: [file] }) &&
-          navigator.share
-        ) {
+        if (isMobileDevice && navigator.canShare && navigator.share) {
           try {
-            await navigator.share({
-              files: [file],
-              title: "構造物白板照片",
-              text: shareText,
-            });
-            showToast("已開啟分享面板，請選擇儲存影像。", "success");
-            return;
+            const files = validEntries.map(
+              ({ blob, filename }) => new File([blob], filename, { type: "image/jpeg" })
+            );
+            if (navigator.canShare({ files })) {
+              await navigator.share({
+                files,
+                title: "構造物白板照片",
+                text: shareText,
+              });
+              showToast("已開啟分享面板，請選擇儲存影像。", "success");
+              return;
+            }
           } catch (error) {
             if (error.name !== "AbortError") {
               showToast("分享面板不可用，將自動下載影像。");
             }
           }
         }
-        downloadBlob(blob, filename);
-        showToast("已下載圖片，可直接選擇儲存位置。", "success");
+        validEntries.forEach(({ blob, filename }) => downloadBlob(blob, filename));
+        if (validEntries.length > 1) {
+          showToast("已下載圖片（含白板與原始照片）。", "success");
+        } else {
+          showToast("已下載圖片，可直接選擇儲存位置。", "success");
+        }
       };
 
       const exportBoardImage = async () => {
@@ -1755,7 +1777,14 @@
           dataUrl = applyExifToDataUrl(dataUrl);
           const blob = dataUrlToBlob(dataUrl);
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
-          await handleShareOrDownload(blob, `whiteboard_${timestamp}.jpg`);
+          const fileEntries = [
+            { blob, filename: `whiteboard_${timestamp}.jpg` },
+          ];
+          const rawBlob = captureRawPhotoBlob();
+          if (rawBlob) {
+            fileEntries.push({ blob: rawBlob, filename: `photo_${timestamp}.jpg` });
+          }
+          await handleShareOrDownloadFiles(fileEntries);
         } catch (error) {
           console.error(error);
           showToast("匯出失敗，請再試一次。");
