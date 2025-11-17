@@ -763,8 +763,11 @@
       const isMobileDevice = /android|iphone|ipad|ipod|mobile/i.test(
         (navigator.userAgent || "").toLowerCase()
       );
+      const GEOLOCATION_TIMEOUT_MS = 15000;
       let lastPhotoMetadata = null;
       let lastPhotoExifBytes = null;
+      let pendingCaptureCoordinatesPromise = null;
+      let shouldApplyCaptureCoordinates = false;
 
       const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
       const FIELD_HISTORY_LIMIT = 20;
@@ -995,6 +998,48 @@
           reader.readAsDataURL(file);
         });
 
+      const requestCaptureCoordinates = () => {
+        if (!navigator.geolocation) {
+          pendingCaptureCoordinatesPromise = Promise.resolve(null);
+          return pendingCaptureCoordinatesPromise;
+        }
+        pendingCaptureCoordinatesPromise = new Promise((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude } = position.coords || {};
+              if (
+                typeof latitude === "number" &&
+                !Number.isNaN(latitude) &&
+                typeof longitude === "number" &&
+                !Number.isNaN(longitude)
+              ) {
+                resolve({ latitude, longitude });
+              } else {
+                resolve(null);
+              }
+            },
+            (error) => {
+              console.warn("定位失敗，無法寫入座標。", error);
+              resolve(null);
+            },
+            { enableHighAccuracy: true, timeout: GEOLOCATION_TIMEOUT_MS, maximumAge: 0 }
+          );
+        });
+        return pendingCaptureCoordinatesPromise;
+      };
+
+      const consumePendingCaptureCoordinates = async () => {
+        if (!pendingCaptureCoordinatesPromise) return null;
+        try {
+          return await pendingCaptureCoordinatesPromise;
+        } catch (error) {
+          console.warn("讀取定位資訊失敗", error);
+          return null;
+        } finally {
+          pendingCaptureCoordinatesPromise = null;
+        }
+      };
+
       const asciiFromView = (view, start, length) => {
         let chars = "";
         for (let i = 0; i < length && start + i < view.byteLength; i += 1) {
@@ -1196,7 +1241,7 @@
         }
       };
 
-      const applyPhotoMetadata = async (file, dataUrl) => {
+      const applyPhotoMetadata = async (file, dataUrl, extraGps) => {
         if (!file) return;
         let metadata = {};
         try {
@@ -1208,6 +1253,13 @@
           metadata && (metadata.date || metadata.gps || metadata.orientation)
             ? { ...metadata }
             : null;
+        if (extraGps && typeof extraGps.latitude === "number" && typeof extraGps.longitude === "number") {
+          lastPhotoMetadata = lastPhotoMetadata || {};
+          lastPhotoMetadata.gps = {
+            latitude: extraGps.latitude,
+            longitude: extraGps.longitude,
+          };
+        }
         if (window.piexif && dataUrl) {
           try {
             const exifObj = piexif.load(dataUrl);
@@ -1275,7 +1327,10 @@
 
       const handlePhotoFiles = async (files) => {
         const [file] = files || [];
-        if (!file) return;
+        if (!file) {
+          shouldApplyCaptureCoordinates = false;
+          return;
+        }
         let dataUrl = null;
         try {
           dataUrl = await readFileAsDataURL(file);
@@ -1289,7 +1344,11 @@
           showToast("照片載入失敗，請重新選擇。");
           return;
         }
-        await applyPhotoMetadata(file, dataUrl);
+        const captureCoordinates = shouldApplyCaptureCoordinates
+          ? await consumePendingCaptureCoordinates()
+          : null;
+        shouldApplyCaptureCoordinates = false;
+        await applyPhotoMetadata(file, dataUrl, captureCoordinates);
       };
 
       const applyColorPreset = (button) => {
@@ -1550,7 +1609,11 @@
         }
       };
 
-      takePhotoBtn.addEventListener("click", () => takePhotoInput.click());
+      takePhotoBtn.addEventListener("click", () => {
+        shouldApplyCaptureCoordinates = true;
+        requestCaptureCoordinates();
+        takePhotoInput.click();
+      });
       uploadPhotoBtn.addEventListener("click", () => uploadInput.click());
       takePhotoInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
       uploadInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
