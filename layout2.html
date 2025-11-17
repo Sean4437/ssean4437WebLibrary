@@ -787,6 +787,7 @@
       const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
       const takePhotoInput = document.getElementById("takePhotoInput");
       const uploadInput = document.getElementById("uploadInput");
+      let pendingCaptureCoordinatesPromise = null;
       const photoLayer = document.getElementById("photoLayer");
       const photoImage = document.getElementById("photoImage");
       const placeholder = document.getElementById("placeholder");
@@ -952,6 +953,7 @@
         }
         return new Blob([array], { type: mime });
       };
+
 
       const convertToTwd97 = (lat, lon) => {
         if (typeof proj4 !== "function") {
@@ -1344,7 +1346,7 @@
         }
       };
 
-      const applyPhotoMetadata = async (file, dataUrl) => {
+      const applyPhotoMetadata = async (file, dataUrl, extraGps) => {
         if (!file) return;
         let metadata = {};
         try {
@@ -1356,13 +1358,20 @@
           metadata && (metadata.date || metadata.gps || metadata.orientation)
             ? { ...metadata }
             : null;
+        if (extraGps && typeof extraGps.latitude === "number" && typeof extraGps.longitude === "number") {
+          lastPhotoMetadata = lastPhotoMetadata || {};
+          lastPhotoMetadata.gps = {
+            latitude: extraGps.latitude,
+            longitude: extraGps.longitude,
+          };
+        }
         if (window.piexif && dataUrl) {
           try {
             const exifObj = piexif.load(dataUrl);
             if (exifObj["0th"]) {
               delete exifObj["0th"][piexif.ImageIFD.Orientation];
             }
-            lastPhotoExifBytes = piexif.dump(exifObj);
+            lastPhotoExifBytes = extraGps ? null : piexif.dump(exifObj);
           } catch (error) {
             console.warn("EXIF 載入失敗", error);
             lastPhotoExifBytes = null;
@@ -1449,7 +1458,8 @@
           showToast("照片載入失敗，請重新選擇。");
           return;
         }
-        await applyPhotoMetadata(file, dataUrl);
+        const captureCoordinates = await consumePendingCaptureCoordinates();
+        await applyPhotoMetadata(file, dataUrl, captureCoordinates);
       };
 
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -1712,7 +1722,10 @@
         }
       };
 
-      takePhotoBtn.addEventListener("click", () => takePhotoInput.click());
+      takePhotoBtn.addEventListener("click", () => {
+        requestCaptureCoordinates();
+        takePhotoInput.click();
+      });
       uploadPhotoBtn.addEventListener("click", () => uploadInput.click());
       takePhotoInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
       uploadInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
