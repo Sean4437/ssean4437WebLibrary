@@ -768,6 +768,7 @@
       let lastPhotoExifBytes = null;
       let pendingCaptureCoordinatesPromise = null;
       let shouldApplyCaptureCoordinates = false;
+      let pendingUploadMetadata = null;
 
       const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
       const FIELD_HISTORY_LIMIT = 20;
@@ -823,11 +824,30 @@
       const toExifDateTime = (dateStr) =>
         `${dateStr.replace(/-/g, ":")} 00:00:00`;
 
-      const applyExifToDataUrl = (dataUrl) => {
+      const resolveMetadataForExport = async () => {
+        if (!shouldApplyCaptureCoordinates && pendingUploadMetadata?.file) {
+          try {
+            const { file, dataUrl } = pendingUploadMetadata;
+            const metadata = await extractExifMetadata(file);
+            if (metadata && (metadata.date || metadata.gps)) {
+              return {
+                date: metadata.date || null,
+                gps: metadata.gps || null,
+              };
+            }
+          } catch (error) {
+            console.warn("匯出前讀取上傳照片 EXIF 失敗", error);
+          }
+        }
+        return lastPhotoMetadata;
+      };
+
+      const applyExifToDataUrl = async (dataUrl) => {
         if (!window.piexif) return dataUrl;
         try {
+          const metadataForExport = await resolveMetadataForExport();
           let exifObj = loadExifObjectFromBytes(lastPhotoExifBytes);
-          if (!exifObj && lastPhotoMetadata && (lastPhotoMetadata.date || lastPhotoMetadata.gps)) {
+          if (!exifObj && metadataForExport && (metadataForExport.date || metadataForExport.gps)) {
             exifObj = { "0th": {}, Exif: {}, GPS: {} };
           }
           if (!exifObj) return dataUrl;
@@ -836,15 +856,15 @@
           exifObj.GPS = exifObj.GPS || {};
           delete exifObj["0th"][piexif.ImageIFD.Orientation];
 
-          if (lastPhotoMetadata?.date) {
-            const dateTime = toExifDateTime(lastPhotoMetadata.date);
+          if (metadataForExport?.date) {
+            const dateTime = toExifDateTime(metadataForExport.date);
             exifObj["0th"][piexif.ImageIFD.DateTime] = dateTime;
             exifObj.Exif[piexif.ExifIFD.DateTimeOriginal] = dateTime;
             exifObj.Exif[piexif.ExifIFD.CreateDate] = dateTime;
           }
 
-          if (lastPhotoMetadata?.gps) {
-            const { latitude, longitude } = lastPhotoMetadata.gps;
+          if (metadataForExport?.gps) {
+            const { latitude, longitude } = metadataForExport.gps;
             if (
               typeof latitude === "number" &&
               !Number.isNaN(latitude) &&
@@ -1360,10 +1380,17 @@
           ? await consumePendingCaptureCoordinates()
           : null;
         shouldApplyCaptureCoordinates = false;
+        if (!shouldApplyCaptureCoordinates) {
+          pendingUploadMetadata = { file, dataUrl };
+        } else {
+          pendingUploadMetadata = null;
+        }
         await applyPhotoMetadata(file, dataUrl, captureCoordinates);
-        if (!captureCoordinates && pendingCaptureCoordinatesPromise) {
+        if (!captureCoordinates) {
           pendingCaptureCoordinatesPromise = null;
           shouldApplyCaptureCoordinates = false;
+        } else {
+          pendingUploadMetadata = null;
         }
       };
 
@@ -1608,8 +1635,8 @@
             scale: window.devicePixelRatio || 2,
           });
           const isPortrait = canvas.height >= canvas.width;
-          let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-          dataUrl = applyExifToDataUrl(dataUrl);
+            let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+            dataUrl = await applyExifToDataUrl(dataUrl);
           const blob = dataUrlToBlob(dataUrl);
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
           const filename = `whiteboard_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
