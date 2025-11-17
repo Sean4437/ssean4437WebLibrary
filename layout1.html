@@ -767,8 +767,6 @@
       let lastPhotoMetadata = null;
       let lastPhotoExifBytes = null;
       let pendingCaptureCoordinatesPromise = null;
-      let shouldApplyCaptureCoordinates = false;
-      let pendingUploadMetadata = null;
 
       const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
       const FIELD_HISTORY_LIMIT = 20;
@@ -824,28 +822,12 @@
       const toExifDateTime = (dateStr) =>
         `${dateStr.replace(/-/g, ":")} 00:00:00`;
 
-      const resolveMetadataForExport = async () => {
-        if (!shouldApplyCaptureCoordinates && pendingUploadMetadata?.file) {
-          try {
-            const { file, dataUrl } = pendingUploadMetadata;
-            const metadata = await extractExifMetadata(file);
-            if (metadata && (metadata.date || metadata.gps)) {
-              return {
-                date: metadata.date || null,
-                gps: metadata.gps || null,
-              };
-            }
-          } catch (error) {
-            console.warn("匯出前讀取上傳照片 EXIF 失敗", error);
-          }
-        }
-        return lastPhotoMetadata;
-      };
+      const resolveMetadataForExport = () => lastPhotoMetadata;
 
-      const applyExifToDataUrl = async (dataUrl) => {
+      const applyExifToDataUrl = (dataUrl) => {
         if (!window.piexif) return dataUrl;
         try {
-          const metadataForExport = await resolveMetadataForExport();
+          const metadataForExport = resolveMetadataForExport();
           let exifObj = loadExifObjectFromBytes(lastPhotoExifBytes);
           if (!exifObj && metadataForExport && (metadataForExport.date || metadataForExport.gps)) {
             exifObj = { "0th": {}, Exif: {}, GPS: {} };
@@ -1359,10 +1341,7 @@
 
       const handlePhotoFiles = async (files) => {
         const [file] = files || [];
-        if (!file) {
-          shouldApplyCaptureCoordinates = false;
-          return;
-        }
+        if (!file) return;
         let dataUrl = null;
         try {
           dataUrl = await readFileAsDataURL(file);
@@ -1376,22 +1355,8 @@
           showToast("照片載入失敗，請重新選擇。");
           return;
         }
-        const captureCoordinates = shouldApplyCaptureCoordinates
-          ? await consumePendingCaptureCoordinates()
-          : null;
-        shouldApplyCaptureCoordinates = false;
-        if (!shouldApplyCaptureCoordinates) {
-          pendingUploadMetadata = { file, dataUrl };
-        } else {
-          pendingUploadMetadata = null;
-        }
+        const captureCoordinates = await consumePendingCaptureCoordinates();
         await applyPhotoMetadata(file, dataUrl, captureCoordinates);
-        if (!captureCoordinates) {
-          pendingCaptureCoordinatesPromise = null;
-          shouldApplyCaptureCoordinates = false;
-        } else {
-          pendingUploadMetadata = null;
-        }
       };
 
       const applyColorPreset = (button) => {
@@ -1636,7 +1601,7 @@
           });
           const isPortrait = canvas.height >= canvas.width;
             let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-            dataUrl = await applyExifToDataUrl(dataUrl);
+            dataUrl = applyExifToDataUrl(dataUrl);
           const blob = dataUrlToBlob(dataUrl);
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
           const filename = `whiteboard_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
@@ -1653,7 +1618,6 @@
       };
 
       takePhotoBtn.addEventListener("click", () => {
-        shouldApplyCaptureCoordinates = true;
         requestCaptureCoordinates();
         takePhotoInput.click();
       });
