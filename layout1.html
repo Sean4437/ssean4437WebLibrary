@@ -822,45 +822,44 @@
       const toExifDateTime = (dateStr) =>
         `${dateStr.replace(/-/g, ":")} 00:00:00`;
 
-      const resolveMetadataForExport = () => lastPhotoMetadata;
-
       const applyExifToDataUrl = (dataUrl) => {
         if (!window.piexif) return dataUrl;
         try {
-          const metadataForExport = resolveMetadataForExport();
-          let exifObj = loadExifObjectFromBytes(lastPhotoExifBytes);
-          if (!exifObj && metadataForExport && (metadataForExport.date || metadataForExport.gps)) {
-            exifObj = { "0th": {}, Exif: {}, GPS: {} };
+          if (lastPhotoExifBytes) {
+            return piexif.insert(lastPhotoExifBytes, dataUrl);
           }
-          if (!exifObj) return dataUrl;
-          exifObj["0th"] = exifObj["0th"] || {};
-          exifObj.Exif = exifObj.Exif || {};
-          exifObj.GPS = exifObj.GPS || {};
-          delete exifObj["0th"][piexif.ImageIFD.Orientation];
-
-          if (metadataForExport?.date) {
-            const dateTime = toExifDateTime(metadataForExport.date);
-            exifObj["0th"][piexif.ImageIFD.DateTime] = dateTime;
-            exifObj.Exif[piexif.ExifIFD.DateTimeOriginal] = dateTime;
-            exifObj.Exif[piexif.ExifIFD.CreateDate] = dateTime;
+          if (!lastPhotoMetadata) return dataUrl;
+          const zeroth = {};
+          const exif = {};
+          const gps = {};
+          if (lastPhotoMetadata.date) {
+            const dateTime = toExifDateTime(lastPhotoMetadata.date);
+            zeroth[piexif.ImageIFD.DateTime] = dateTime;
+            exif[piexif.ExifIFD.DateTimeOriginal] = dateTime;
+            exif[piexif.ExifIFD.CreateDate] = dateTime;
           }
-
-          if (metadataForExport?.gps) {
-            const { latitude, longitude } = metadataForExport.gps;
+          if (lastPhotoMetadata.gps) {
+            const { latitude, longitude } = lastPhotoMetadata.gps;
             if (
               typeof latitude === "number" &&
               !Number.isNaN(latitude) &&
               typeof longitude === "number" &&
               !Number.isNaN(longitude)
             ) {
-              exifObj.GPS[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
-              exifObj.GPS[piexif.GPSIFD.GPSLatitude] = decimalToDmsRational(latitude);
-              exifObj.GPS[piexif.GPSIFD.GPSLongitudeRef] = longitude >= 0 ? "E" : "W";
-              exifObj.GPS[piexif.GPSIFD.GPSLongitude] = decimalToDmsRational(longitude);
+              gps[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
+              gps[piexif.GPSIFD.GPSLatitude] = decimalToDmsRational(latitude);
+              gps[piexif.GPSIFD.GPSLongitudeRef] = longitude >= 0 ? "E" : "W";
+              gps[piexif.GPSIFD.GPSLongitude] = decimalToDmsRational(longitude);
             }
           }
-
-          const exifBytes = piexif.dump(exifObj);
+          if (!Object.keys(zeroth).length && !Object.keys(exif).length && !Object.keys(gps).length) {
+            return dataUrl;
+          }
+          const exifBytes = piexif.dump({
+            "0th": zeroth,
+            Exif: exif,
+            GPS: gps,
+          });
           return piexif.insert(exifBytes, dataUrl);
         } catch (error) {
           console.warn("EXIF 寫入失敗", error);
@@ -1000,17 +999,6 @@
           reader.onerror = () => reject(new Error("failed to load file"));
           reader.readAsDataURL(file);
         });
-
-      const loadExifObjectFromBytes = (bytes) => {
-        if (!bytes || !window.piexif) return null;
-        try {
-          const base64 = btoa(bytes);
-          return piexif.load(`data:image/jpeg;base64,${base64}`);
-        } catch (error) {
-          console.warn("EXIF 位元資料解析失敗", error);
-          return null;
-        }
-      };
 
       const requestCaptureCoordinates = () => {
         if (!navigator.geolocation) {
@@ -1280,7 +1268,7 @@
             if (exifObj["0th"]) {
               delete exifObj["0th"][piexif.ImageIFD.Orientation];
             }
-            lastPhotoExifBytes = piexif.dump(exifObj);
+            lastPhotoExifBytes = extraGps ? null : piexif.dump(exifObj);
           } catch (error) {
             console.warn("EXIF 載入失敗", error);
             lastPhotoExifBytes = null;
