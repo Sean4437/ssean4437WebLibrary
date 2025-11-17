@@ -826,38 +826,47 @@
       const applyExifToDataUrl = (dataUrl) => {
         if (!window.piexif) return dataUrl;
         try {
+          let exifObj = null;
           if (lastPhotoExifBytes) {
-            return piexif.insert(lastPhotoExifBytes, dataUrl);
+            try {
+              exifObj = piexif.load(lastPhotoExifBytes);
+            } catch (error) {
+              console.warn("解析暫存 EXIF 失敗", error);
+              exifObj = null;
+            }
           }
-          if (!lastPhotoMetadata) return dataUrl;
-          const zeroth = {};
-          const exif = {};
-          const gps = {};
-          if (lastPhotoMetadata.date) {
+          if (!exifObj && lastPhotoMetadata && (lastPhotoMetadata.date || lastPhotoMetadata.gps)) {
+            exifObj = { "0th": {}, Exif: {}, GPS: {} };
+          }
+          if (!exifObj) return dataUrl;
+          exifObj["0th"] = exifObj["0th"] || {};
+          exifObj.Exif = exifObj.Exif || {};
+          exifObj.GPS = exifObj.GPS || {};
+          delete exifObj["0th"][piexif.ImageIFD.Orientation];
+
+          if (lastPhotoMetadata?.date) {
             const dateTime = toExifDateTime(lastPhotoMetadata.date);
-            zeroth[piexif.ImageIFD.DateTime] = dateTime;
-            exif[piexif.ExifIFD.DateTimeOriginal] = dateTime;
-            exif[piexif.ExifIFD.CreateDate] = dateTime;
+            exifObj["0th"][piexif.ImageIFD.DateTime] = dateTime;
+            exifObj.Exif[piexif.ExifIFD.DateTimeOriginal] = dateTime;
+            exifObj.Exif[piexif.ExifIFD.CreateDate] = dateTime;
           }
-          if (lastPhotoMetadata.gps) {
+
+          if (lastPhotoMetadata?.gps) {
             const { latitude, longitude } = lastPhotoMetadata.gps;
-            gps[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
-            gps[piexif.GPSIFD.GPSLatitude] = decimalToDmsRational(latitude);
-            gps[piexif.GPSIFD.GPSLongitudeRef] = longitude >= 0 ? "E" : "W";
-            gps[piexif.GPSIFD.GPSLongitude] = decimalToDmsRational(longitude);
+            if (
+              typeof latitude === "number" &&
+              !Number.isNaN(latitude) &&
+              typeof longitude === "number" &&
+              !Number.isNaN(longitude)
+            ) {
+              exifObj.GPS[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
+              exifObj.GPS[piexif.GPSIFD.GPSLatitude] = decimalToDmsRational(latitude);
+              exifObj.GPS[piexif.GPSIFD.GPSLongitudeRef] = longitude >= 0 ? "E" : "W";
+              exifObj.GPS[piexif.GPSIFD.GPSLongitude] = decimalToDmsRational(longitude);
+            }
           }
-          if (
-            !Object.keys(zeroth).length &&
-            !Object.keys(exif).length &&
-            !Object.keys(gps).length
-          ) {
-            return dataUrl;
-          }
-          const exifBytes = piexif.dump({
-            "0th": zeroth,
-            Exif: exif,
-            GPS: gps,
-          });
+
+          const exifBytes = piexif.dump(exifObj);
           return piexif.insert(exifBytes, dataUrl);
         } catch (error) {
           console.warn("EXIF 寫入失敗", error);
