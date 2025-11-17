@@ -1358,6 +1358,10 @@
           : null;
         shouldApplyCaptureCoordinates = false;
         await applyPhotoMetadata(file, dataUrl, captureCoordinates);
+        if (!captureCoordinates && pendingCaptureCoordinatesPromise) {
+          pendingCaptureCoordinatesPromise = null;
+          shouldApplyCaptureCoordinates = false;
+        }
       };
 
       const applyColorPreset = (button) => {
