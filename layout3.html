@@ -34,7 +34,7 @@
       }
 
       .app-shell {
-        width: min(560px, 100%);
+        width: min(840px, 100%);
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -1738,9 +1738,10 @@
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
+          const exportScale = (window.devicePixelRatio || 1) * 1.5;
           const canvas = await html2canvas(captureArea, {
             backgroundColor: null,
-            scale: window.devicePixelRatio || 2,
+            scale: exportScale,
           });
           const isPortrait = canvas.height >= canvas.width;
             let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
