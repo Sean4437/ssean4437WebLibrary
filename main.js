@@ -1178,6 +1178,7 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const historyFields = ["projectName", "inspectionLocation", "inspector", "testResult"];
       const historyTextFields = ["projectName", "inspectionLocation", "inspector"];
       const autoSyncFields = Object.keys(formInputs);
+      const autoHistoryFields = ["projectName", "inspectionLocation", "inspector", "testResult"];
 
       clearBoardBtn.addEventListener("click", () => {
         clearBoard();
@@ -1254,6 +1255,9 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
           }
           syncField(field);
         });
+        if (autoHistoryFields.includes(field)) {
+          input.addEventListener("blur", () => saveFieldHistory(field, input.value));
+        }
       });
 
       exportBtn.addEventListener("click", exportBoardImage);
