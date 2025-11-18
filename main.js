@@ -48,12 +48,17 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       let lastPhotoExifBytes = null;
       let pendingCaptureCoordinatesPromise = null;
 
-      const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
+      const layoutIdentifier =
+        document.body.dataset.layoutId ||
+        (window.location.pathname.match(/layout(\d+)/)?.[1] && `layout${window.location.pathname.match(/layout(\d+)/)[1]}`) ||
+        "layout";
+      const buildStorageKey = (base) => `${base}_${layoutIdentifier}`;
+      const FIELD_HISTORY_STORAGE_KEY = buildStorageKey("whiteboard_field_history");
       const FIELD_HISTORY_LIMIT = 20;
-      const WHITEBOARD_VISIBILITY_STORAGE_KEY = "whiteboard_visibility";
-      const EXPORT_SIZE_STORAGE_KEY = "whiteboard_export_size";
-      const COORDINATE_HISTORY_STORAGE_KEY = "whiteboard_coordinate_history";
-      const COORDINATE_FORMAT_STORAGE_KEY = "whiteboard_coordinate_format";
+      const WHITEBOARD_VISIBILITY_STORAGE_KEY = buildStorageKey("whiteboard_visibility");
+      const EXPORT_SIZE_STORAGE_KEY = buildStorageKey("whiteboard_export_size");
+      const COORDINATE_HISTORY_STORAGE_KEY = buildStorageKey("whiteboard_coordinate_history");
+      const COORDINATE_FORMAT_STORAGE_KEY = buildStorageKey("whiteboard_coordinate_format");
       const COORDINATE_FORMATS = {
         WGS84: "wgs84",
         TWD97: "twd97",
