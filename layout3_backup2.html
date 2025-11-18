@@ -109,29 +109,6 @@
         color: #cbd5f5;
       }
 
-      .coordinate-format-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-      }
-
-      .coordinate-format-option {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 0.35rem 0.65rem;
-        border-radius: 999px;
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        background: rgba(15, 23, 42, 0.45);
-        font-size: 0.9rem;
-        cursor: pointer;
-      }
-
-      .coordinate-format-option input {
-        margin: 0;
-        accent-color: #38bdf8;
-      }
-
       .panel-actions {
         margin-top: 0.8rem;
         display: grid;
@@ -345,8 +322,8 @@
 
       .photo-watermark {
         position: absolute;
-        right: clamp(0.02rem, 0.8vw, 0.15rem);
-        bottom: clamp(0.02rem, 0.8vw, 0.15rem);
+        right: clamp(0.35rem, 3vw, 0.85rem);
+        bottom: clamp(0.3rem, 2.5vw, 0.75rem);
         color: #fbbf24;
         font-size: clamp(0.65rem, 2.5vw, 0.9rem);
         letter-spacing: 0.18em;
@@ -355,12 +332,6 @@
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
         pointer-events: none;
         z-index: 5;
-      }
-
-      .photo-watermark--top-right {
-        top: clamp(0.02rem, 0.8vw, 0.15rem);
-        bottom: auto;
-        text-align: right;
       }
 
       .whiteboard-wrapper {
@@ -599,19 +570,6 @@
             ></textarea>
             <div class="history-dropdown" id="testResultHistoryDropdown"></div>
           </div>
-          <div class="form-field">
-            <label>座標顯示</label>
-            <div class="coordinate-format-group" role="group" aria-label="座標顯示格式">
-              <label class="coordinate-format-option">
-                <input type="radio" name="coordinateFormat" value="twd97" checked />
-                <span>TWD97（X / Y）</span>
-              </label>
-              <label class="coordinate-format-option">
-                <input type="radio" name="coordinateFormat" value="wgs84" />
-                <span>緯度、經度</span>
-              </label>
-            </div>
-          </div>
         </div>
         <div class="panel-hint">輸入完畢後按下「套用到白板」。</div>
         <div class="panel-actions">
@@ -752,7 +710,6 @@
             </div>
           </div>
         </div>
-        <div class="photo-watermark photo-watermark--top-right" id="photoCoordinate" hidden>座標未取得</div>
         <div class="photo-watermark" id="photoWatermark">日期未設定</div>
       </div>
 
@@ -799,8 +756,6 @@
       const exportBtn = document.getElementById("exportBtn");
       const toastMessage = document.getElementById("toastMessage");
       const photoWatermark = document.getElementById("photoWatermark");
-      const photoCoordinate = document.getElementById("photoCoordinate");
-      const coordinateFormatInputs = document.querySelectorAll('input[name="coordinateFormat"]');
       whiteboardWrapper.dataset.userPositioned = "false";
       const advancedControls = document.getElementById("advancedControls");
       const toggleAdvanced = document.getElementById("toggleAdvanced");
@@ -815,12 +770,6 @@
 
       const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
       const FIELD_HISTORY_LIMIT = 20;
-      const COORDINATE_FORMAT_STORAGE_KEY = "whiteboard_coordinate_format";
-      const COORDINATE_FORMATS = {
-        WGS84: "wgs84",
-        TWD97: "twd97",
-      };
-      let coordinateFormat = COORDINATE_FORMATS.TWD97;
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -854,108 +803,6 @@
       const updateWatermarkDate = () => {
         if (!photoWatermark) return;
         photoWatermark.textContent = formatWatermarkDate(formInputs.testDate.value);
-      };
-
-      const formatDecimalCoordinates = (latitude, longitude) => {
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
-        return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-      };
-
-      const degToRad = (value) => (value * Math.PI) / 180;
-
-      const convertToTwd97 = (latitude, longitude) => {
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
-        try {
-          const a = 6378137.0;
-          const f = 1 / 298.257222101;
-          const b = a * (1 - f);
-          const e2 = (a * a - b * b) / (a * a);
-          const ePrime2 = (a * a - b * b) / (b * b);
-          const k0 = 0.9999;
-          const lon0 = degToRad(121);
-          const x0 = 250000;
-          const y0 = 0;
-          const latRad = degToRad(latitude);
-          const lonRad = degToRad(longitude);
-          const sinLat = Math.sin(latRad);
-          const cosLat = Math.cos(latRad);
-          const tanLat = Math.tan(latRad);
-          const N = a / Math.sqrt(1 - e2 * sinLat * sinLat);
-          const T = tanLat * tanLat;
-          const C = ePrime2 * cosLat * cosLat;
-          const A = (lonRad - lon0) * cosLat;
-          const e4 = e2 * e2;
-          const e6 = e4 * e2;
-          const M =
-            a *
-            ((1 - e2 / 4 - (3 * e4) / 64 - (5 * e6) / 256) * latRad -
-              ((3 * e2) / 8 + (3 * e4) / 32 + (45 * e6) / 1024) * Math.sin(2 * latRad) +
-              ((15 * e4) / 256 + (45 * e6) / 1024) * Math.sin(4 * latRad) -
-              ((35 * e6) / 3072) * Math.sin(6 * latRad));
-
-          const x =
-            x0 +
-            k0 *
-              N *
-              (A +
-                ((1 - T + C) * Math.pow(A, 3)) / 6 +
-                ((5 - 18 * T + T * T + 72 * C - 58 * ePrime2) * Math.pow(A, 5)) / 120);
-
-          const y =
-            y0 +
-            k0 *
-              (M +
-                N *
-                  tanLat *
-                  (Math.pow(A, 2) / 2 +
-                    ((5 - T + 9 * C + 4 * C * C) * Math.pow(A, 4)) / 24 +
-                    ((61 - 58 * T + T * T + 600 * C - 330 * ePrime2) * Math.pow(A, 6)) / 720));
-          return [x, y];
-        } catch (error) {
-          console.warn("TWD97 轉換失敗", error);
-          return null;
-        }
-      };
-
-      const formatTwdText = (x, y) => {
-        if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
-        return `X:${Math.round(x)} Y:${Math.round(y)}`;
-      };
-
-      const resolveCoordinateText = () => {
-        const gps = lastPhotoMetadata?.gps;
-        if (!gps || typeof gps.latitude !== "number" || typeof gps.longitude !== "number") {
-          return null;
-        }
-        if (coordinateFormat === COORDINATE_FORMATS.TWD97) {
-          const twd = convertToTwd97(gps.latitude, gps.longitude);
-          const twdText = twd ? formatTwdText(twd[0], twd[1]) : null;
-          if (twdText) return twdText;
-        }
-        return formatDecimalCoordinates(gps.latitude, gps.longitude);
-      };
-
-      const updateCoordinateOverlay = () => {
-        if (!photoCoordinate) return;
-        const text = resolveCoordinateText();
-        if (!text) {
-          photoCoordinate.hidden = true;
-          photoCoordinate.textContent = "";
-          return;
-        }
-        photoCoordinate.hidden = false;
-        photoCoordinate.textContent = text;
-      };
-
-      const setCoordinateFormat = (value) => {
-        if (!Object.values(COORDINATE_FORMATS).includes(value)) return;
-        coordinateFormat = value;
-        try {
-          localStorage.setItem(COORDINATE_FORMAT_STORAGE_KEY, value);
-        } catch (error) {
-          console.warn("儲存座標格式失敗", error);
-        }
-        updateCoordinateOverlay();
       };
 
       const decimalToDmsRational = (value) => {
@@ -1450,7 +1297,6 @@
             : "已套用拍攝日期，如需修改可手動調整。",
           "success"
         );
-        updateCoordinateOverlay();
       };
 
       const autoResizeTextarea = (textarea) => {
@@ -1657,7 +1503,6 @@
         syncAllFields();
         lastPhotoMetadata = null;
         lastPhotoExifBytes = null;
-        updateCoordinateOverlay();
       };
 
       const updateBoardColor = (color) => {
@@ -1834,13 +1679,6 @@
       exportBtn.addEventListener("click", exportBoardImage);
       window.addEventListener("resize", updateStageAspect);
       photoImage.addEventListener("load", updateStageAspect);
-      coordinateFormatInputs.forEach((input) => {
-        input.addEventListener("change", () => {
-          if (input.checked) {
-            setCoordinateFormat(input.value);
-          }
-        });
-      });
 
       if (isMobileDevice) {
         boardScaleInput.value = "35";
@@ -1853,17 +1691,6 @@
       if (!formInputs.testDate.value) {
         formInputs.testDate.valueAsDate = new Date();
       }
-      try {
-        const savedFormat = localStorage.getItem(COORDINATE_FORMAT_STORAGE_KEY);
-        if (Object.values(COORDINATE_FORMATS).includes(savedFormat)) {
-          coordinateFormat = savedFormat;
-        }
-      } catch (error) {
-        console.warn("讀取座標格式失敗", error);
-      }
-      coordinateFormatInputs.forEach((input) => {
-        input.checked = input.value === coordinateFormat;
-      });
       syncAllFields();
       updateBoardScale(boardScaleInput.value);
       updateFontScale(fontScaleInput.value);
@@ -1874,7 +1701,6 @@
       updateTextColor(textColorInput.value);
       updateLineColor(lineColorInput.value);
       updateWatermarkDate();
-      updateCoordinateOverlay();
       requestAnimationFrame(positionBoardAtBottomLeft);
 
       toggleAdvanced.addEventListener("click", () => {
