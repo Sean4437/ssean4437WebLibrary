@@ -109,29 +109,6 @@
         color: #cbd5f5;
       }
 
-      .coordinate-format-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-      }
-
-      .coordinate-format-option {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 0.35rem 0.65rem;
-        border-radius: 999px;
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        background: rgba(15, 23, 42, 0.45);
-        font-size: 0.9rem;
-        cursor: pointer;
-      }
-
-      .coordinate-format-option input {
-        margin: 0;
-        accent-color: #38bdf8;
-      }
-
       .panel-actions {
         margin-top: 0.8rem;
         display: grid;
@@ -173,6 +150,24 @@
         border-color: #38bdf8;
         outline: none;
         transform: translateY(-1px);
+      }
+
+      .color-swatch--toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #0f172a;
+        background: #bbf7d0;
+      }
+
+      .color-swatch--toggle::before {
+        display: none;
+      }
+
+      .color-swatch--toggle[data-board-visible="false"] {
+        background: #cbd5f5;
+        color: #475569;
       }
 
       .sr-only {
@@ -260,6 +255,39 @@
         font-weight: 600;
         padding: 0.6rem 1.25rem;
         cursor: pointer;
+      }
+
+      .coordinate-toggle-btn {
+        width: 100%;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.08));
+        padding: 0.55rem 0.85rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font: inherit;
+        color: #e2e8f0;
+        cursor: pointer;
+        transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+      }
+
+      .coordinate-toggle-btn strong {
+        font-size: 1rem;
+        letter-spacing: 0.08em;
+        color: #fbbf24;
+      }
+
+      .coordinate-toggle-btn span {
+        font-size: 0.85rem;
+        color: #cbd5f5;
+        letter-spacing: 0.04em;
+      }
+
+      .coordinate-toggle-btn:hover,
+      .coordinate-toggle-btn:focus-visible {
+        border-color: rgba(59, 130, 246, 0.8);
+        outline: none;
       }
 
       #applyDataBtn {
@@ -600,17 +628,11 @@
             <div class="history-dropdown" id="testResultHistoryDropdown"></div>
           </div>
           <div class="form-field">
-            <label>座標顯示</label>
-            <div class="coordinate-format-group" role="group" aria-label="座標顯示格式">
-              <label class="coordinate-format-option">
-                <input type="radio" name="coordinateFormat" value="twd97" checked />
-                <span>TWD97（X / Y）</span>
-              </label>
-              <label class="coordinate-format-option">
-                <input type="radio" name="coordinateFormat" value="wgs84" />
-                <span>緯度、經度</span>
-              </label>
-            </div>
+            <label for="coordinateFormatButton">座標顯示</label>
+            <button type="button" class="coordinate-toggle-btn" id="coordinateFormatButton">
+              <span>點擊切換</span>
+              <strong id="coordinateFormatText">TWD97</strong>
+            </button>
           </div>
         </div>
         <div class="panel-hint">輸入完畢後按下「套用到白板」。</div>
@@ -677,6 +699,16 @@
               aria-label="半透明白主題"
             >
               <span class="sr-only">半透明白主題</span>
+            </button>
+            <button
+              type="button"
+              class="color-swatch color-swatch--toggle"
+              id="toggleBoardButton"
+              aria-pressed="true"
+              data-board-visible="true"
+            >
+              <span class="sr-only">白板顯示開關</span>
+              <span id="boardVisibilityLabel">白板開</span>
             </button>
           </div>
           <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
@@ -793,6 +825,10 @@
       const boardOpacityValue = document.getElementById("boardOpacityValue");
       const textColorInput = document.getElementById("textColor");
       const lineColorInput = document.getElementById("lineColor");
+      const coordinateFormatButton = document.getElementById("coordinateFormatButton");
+      const coordinateFormatText = document.getElementById("coordinateFormatText");
+      const boardVisibilityButton = document.getElementById("toggleBoardButton");
+      const boardVisibilityLabel = document.getElementById("boardVisibilityLabel");
       const colorPresetButtons = document.querySelectorAll("[data-color-preset]");
       const applyDataBtn = document.getElementById("applyDataBtn");
       const clearBoardBtn = document.getElementById("clearBoardBtn");
@@ -815,6 +851,7 @@
 
       const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
       const FIELD_HISTORY_LIMIT = 20;
+      const WHITEBOARD_VISIBILITY_STORAGE_KEY = "whiteboard_visibility";
       const COORDINATE_FORMAT_STORAGE_KEY = "whiteboard_coordinate_format";
       const COORDINATE_FORMATS = {
         WGS84: "wgs84",
@@ -922,6 +959,34 @@
         return `X:${Math.round(x)} Y:${Math.round(y)}`;
       };
 
+      const updateBoardVisibilityButton = (visible) => {
+        if (!boardVisibilityButton || !boardVisibilityLabel) return;
+        boardVisibilityButton.dataset.boardVisible = String(visible);
+        boardVisibilityButton.setAttribute("aria-pressed", visible ? "true" : "false");
+        boardVisibilityLabel.textContent = visible ? "白板開" : "白板關";
+      };
+
+      const setWhiteboardVisibility = (visible) => {
+        if (!whiteboardWrapper) return;
+        whiteboardWrapper.hidden = !visible;
+        updateBoardVisibilityButton(visible);
+        try {
+          localStorage.setItem(WHITEBOARD_VISIBILITY_STORAGE_KEY, String(Boolean(visible)));
+        } catch (error) {
+          console.warn("儲存白板可見狀態失敗", error);
+        }
+      };
+
+      const updateCoordinateFormatButton = () => {
+        if (!coordinateFormatButton) return;
+        const label = coordinateFormat === COORDINATE_FORMATS.TWD97 ? "TWD97" : "經緯";
+        const description = coordinateFormat === COORDINATE_FORMATS.TWD97 ? "X / Y" : "Lat / Lng";
+        coordinateFormatButton.setAttribute("aria-label", `座標顯示：${label} (${description})`);
+        if (coordinateFormatText) {
+          coordinateFormatText.textContent = label;
+        }
+      };
+
       const resolveCoordinateText = () => {
         const gps = lastPhotoMetadata?.gps;
         if (!gps || typeof gps.latitude !== "number" || typeof gps.longitude !== "number") {
@@ -955,6 +1020,7 @@
         } catch (error) {
           console.warn("儲存座標格式失敗", error);
         }
+        updateCoordinateFormatButton();
         updateCoordinateOverlay();
       };
 
@@ -1738,7 +1804,7 @@
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
-          const exportScale = (window.devicePixelRatio || 1) * 1.5;
+          const exportScale = window.devicePixelRatio || 1;
           const canvas = await html2canvas(captureArea, {
             backgroundColor: null,
             scale: exportScale,
@@ -1812,9 +1878,20 @@
       lineColorInput.addEventListener("input", (event) =>
         updateLineColor(event.target.value)
       );
+      boardVisibilityButton.addEventListener("click", () => {
+        const nextState = boardVisibilityButton.dataset.boardVisible !== "true";
+        setWhiteboardVisibility(nextState);
+      });
       colorPresetButtons.forEach((button) =>
         button.addEventListener("click", () => applyColorPreset(button))
       );
+      coordinateFormatButton.addEventListener("click", () => {
+        const nextFormat =
+          coordinateFormat === COORDINATE_FORMATS.TWD97
+            ? COORDINATE_FORMATS.WGS84
+            : COORDINATE_FORMATS.TWD97;
+        setCoordinateFormat(nextFormat);
+      });
       refreshAllFieldHistoryUI();
 
       historyTextFields.forEach((field) => {
@@ -1835,13 +1912,6 @@
       exportBtn.addEventListener("click", exportBoardImage);
       window.addEventListener("resize", updateStageAspect);
       photoImage.addEventListener("load", updateStageAspect);
-      coordinateFormatInputs.forEach((input) => {
-        input.addEventListener("change", () => {
-          if (input.checked) {
-            setCoordinateFormat(input.value);
-          }
-        });
-      });
 
       if (isMobileDevice) {
         boardScaleInput.value = "35";
@@ -1862,9 +1932,17 @@
       } catch (error) {
         console.warn("讀取座標格式失敗", error);
       }
-      coordinateFormatInputs.forEach((input) => {
-        input.checked = input.value === coordinateFormat;
-      });
+      updateCoordinateFormatButton();
+      let savedVisibility = true;
+      try {
+        const storedVisibility = localStorage.getItem(WHITEBOARD_VISIBILITY_STORAGE_KEY);
+        if (storedVisibility === "true" || storedVisibility === "false") {
+          savedVisibility = storedVisibility === "true";
+        }
+      } catch (error) {
+        console.warn("讀取白板可見狀態失敗", error);
+      }
+      setWhiteboardVisibility(savedVisibility);
       syncAllFields();
       updateBoardScale(boardScaleInput.value);
       updateFontScale(fontScaleInput.value);
