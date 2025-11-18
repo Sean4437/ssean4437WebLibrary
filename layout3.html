@@ -255,11 +255,43 @@
         font-weight: 600;
         padding: 0.6rem 1.25rem;
         cursor: pointer;
+        transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+      }
+
+      .ghost-btn:hover,
+      .ghost-btn:focus-visible {
+        border-color: rgba(56, 189, 248, 0.85);
+        color: #38bdf8;
+        outline: none;
+      }
+
+      .ghost-button--accent {
+        border: none;
+        background: linear-gradient(135deg, #38bdf8, #6366f1);
+        color: #0f172a;
+        font-weight: 700;
+        box-shadow: 0 12px 24px rgba(56, 189, 248, 0.35);
+      }
+
+      .ghost-button--danger {
+        border-color: rgba(248, 113, 113, 0.75);
+        color: #fecaca;
+      }
+
+      .ghost-button--danger:hover,
+      .ghost-button--danger:focus-visible {
+        border-color: rgba(248, 113, 113, 1);
+        color: #f87171;
       }
 
       .size-toggle-group {
         display: flex;
         gap: 0.4rem;
+      }
+
+      .history-actions {
+        display: flex;
+        gap: 0.5rem;
       }
 
       .size-toggle {
@@ -666,6 +698,14 @@
               <button type="button" class="size-toggle" data-export-size="large">大</button>
             </div>
           </div>
+          <div class="form-field" style="grid-column: 1 / -1">
+            <label>座標紀錄</label>
+            <div class="history-actions">
+              <button type="button" class="ghost-btn ghost-button--accent" id="downloadCoordinateHistory">下載紀錄</button>
+              <button type="button" class="ghost-btn ghost-button--danger" id="clearCoordinateHistory">清除紀錄</button>
+            </div>
+            <p class="panel-hint">上傳或拍照後，座標會依時間戳記自動累積，直到手動清除。</p>
+          </div>
         </div>
         <div class="panel-hint">輸入完畢後按下「套用到白板」。</div>
         <div class="panel-actions">
@@ -860,6 +900,8 @@
       const coordinateFormatButton = document.getElementById("coordinateFormatButton");
       const coordinateFormatText = document.getElementById("coordinateFormatText");
       const exportSizeButtons = document.querySelectorAll("[data-export-size]");
+      const downloadCoordinateHistoryBtn = document.getElementById("downloadCoordinateHistory");
+      const clearCoordinateHistoryBtn = document.getElementById("clearCoordinateHistory");
       const boardVisibilityButton = document.getElementById("toggleBoardButton");
       const boardVisibilityLabel = document.getElementById("boardVisibilityLabel");
       const colorPresetButtons = document.querySelectorAll("[data-color-preset]");
@@ -885,6 +927,7 @@
       const FIELD_HISTORY_LIMIT = 20;
       const WHITEBOARD_VISIBILITY_STORAGE_KEY = "whiteboard_visibility";
       const EXPORT_SIZE_STORAGE_KEY = "whiteboard_export_size";
+      const COORDINATE_HISTORY_STORAGE_KEY = "whiteboard_coordinate_history";
       const COORDINATE_FORMAT_STORAGE_KEY = "whiteboard_coordinate_format";
       const COORDINATE_FORMATS = {
         WGS84: "wgs84",
@@ -897,6 +940,7 @@
         large: 1.5,
       };
       let exportSize = "medium";
+      let coordinateHistory = [];
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -1043,6 +1087,78 @@
         } catch (error) {
           console.warn("儲存輸出尺寸失敗", error);
         }
+      };
+
+      const loadCoordinateHistory = () => {
+        try {
+          const raw = localStorage.getItem(COORDINATE_HISTORY_STORAGE_KEY);
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+          console.warn("讀取座標紀錄失敗", error);
+          return [];
+        }
+      };
+
+      const saveCoordinateHistory = () => {
+        try {
+          localStorage.setItem(COORDINATE_HISTORY_STORAGE_KEY, JSON.stringify(coordinateHistory));
+        } catch (error) {
+          console.warn("儲存座標紀錄失敗", error);
+        }
+      };
+
+      const recordCoordinateHistory = () => {
+        const gps = lastPhotoMetadata?.gps;
+        if (!gps || typeof gps.latitude !== "number" || typeof gps.longitude !== "number") return;
+        const twd = convertToTwd97(gps.latitude, gps.longitude);
+        const record = {
+          timestamp: new Date().toISOString(),
+          latitude: Number(gps.latitude.toFixed(6)),
+          longitude: Number(gps.longitude.toFixed(6)),
+        };
+        if (twd) {
+          record.twdX = Math.round(twd[0]);
+          record.twdY = Math.round(twd[1]);
+        }
+        coordinateHistory.push(record);
+        saveCoordinateHistory();
+      };
+
+      const clearCoordinateHistory = () => {
+        coordinateHistory = [];
+        saveCoordinateHistory();
+        showToast("座標紀錄已清除。", "success");
+      };
+
+      const downloadCoordinateHistory = () => {
+        if (!coordinateHistory.length) {
+          showToast("目前沒有座標紀錄。");
+          return;
+        }
+        const rows = [
+          ["timestamp", "latitude", "longitude", "twdX", "twdY"].join(","),
+          ...coordinateHistory.map((item) =>
+            [
+              item.timestamp,
+              item.latitude ?? "",
+              item.longitude ?? "",
+              item.twdX ?? "",
+              item.twdY ?? "",
+            ].join(",")
+          ),
+        ];
+        const csv = rows.join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `coordinate_history_${new Date().toISOString().split("T")[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 0);
       };
 
       const resolveCoordinateText = () => {
@@ -1575,6 +1691,7 @@
           "success"
         );
         updateCoordinateOverlay();
+        recordCoordinateHistory();
       };
 
       const autoResizeTextarea = (textarea) => {
@@ -1948,6 +2065,8 @@
       exportSizeButtons.forEach((button) =>
         button.addEventListener("click", () => setExportSize(button.dataset.exportSize))
       );
+      clearCoordinateHistoryBtn?.addEventListener("click", clearCoordinateHistory);
+      downloadCoordinateHistoryBtn?.addEventListener("click", downloadCoordinateHistory);
       coordinateFormatButton.addEventListener("click", () => {
         const nextFormat =
           coordinateFormat === COORDINATE_FORMATS.TWD97
@@ -2000,6 +2119,7 @@
         console.warn("讀取座標格式失敗", error);
       }
       updateCoordinateFormatButton();
+      coordinateHistory = loadCoordinateHistory();
       try {
         const storedExportSize = localStorage.getItem(EXPORT_SIZE_STORAGE_KEY);
         if (storedExportSize && EXPORT_SIZE_SCALE[storedExportSize]) {
