@@ -7,556 +7,106 @@
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
     <title>麗鄴電子白板-布局4</title>
+    <link rel="stylesheet" href="main.css" />
     <style>
-      :root {
-        --board-fill: #f8fafc;
-        --text-color: #0f172a;
-        --line-color: #000000;
-        --board-rotation: 0deg;
-        --board-scale-x: 0.45;
-        --board-scale-y: 0.45;
-        font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
-          BlinkMacSystemFont, sans-serif;
-        line-height: 1.45;
-        color: #0f172a;
-        background: #0f172a;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        padding: 1.25rem;
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 150px);
-        background: radial-gradient(circle, #1e293b, #0f172a);
+      .field-label-row {
         display: flex;
-        justify-content: center;
-      }
-
-      .app-shell {
-        width: min(560px, 100%);
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      h1 {
-        color: #f8fafc;
-        text-align: center;
-        margin: 0;
-        font-size: clamp(1.4rem, 5vw, 2.1rem);
-        letter-spacing: 0.08em;
-      }
-
-      .version-note {
-        text-align: center;
-        color: #facc15;
-        font-size: 0.95rem;
-        margin-top: 0.3rem;
-        font-weight: 600;
-      }
-
-      .panel {
-        background: rgba(15, 23, 42, 0.45);
-        border-radius: 20px;
-        padding: 1rem 1.1rem;
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        color: #e2e8f0;
-        backdrop-filter: blur(12px);
-      }
-
-      .panel h3 {
-        margin: 0 0 0.75rem;
-        font-size: 1.05rem;
-        letter-spacing: 0.05em;
-      }
-
-      .data-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 0.75rem;
-      }
-
-      .form-field {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-      }
-
-      .form-field label {
-        font-size: 0.9rem;
-      }
-
-      .form-field input,
-      .form-field textarea {
-        border-radius: 12px;
-        border: 1px solid rgba(226, 232, 240, 0.35);
-        background: rgba(15, 23, 42, 0.6);
-        color: #f8fafc;
-        font: inherit;
-        padding: 0.55rem 0.7rem;
-      }
-
-      .form-field textarea {
-        min-height: 90px;
-        resize: none;
-        overflow: hidden;
-      }
-
-      .history-dropdown {
-        margin-top: 0.4rem;
-        border: 1px solid rgba(148, 163, 184, 0.4);
-        border-radius: 12px;
-        background: rgba(15, 23, 42, 0.9);
-        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.4);
-        max-height: 200px;
-        overflow-y: auto;
-        display: none;
-        flex-direction: column;
-        gap: 0.25rem;
-        padding: 0.4rem;
-      }
-
-      .history-dropdown.is-visible {
-        display: flex;
-      }
-
-      .history-dropdown button {
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        border-radius: 8px;
-        padding: 0.4rem 0.55rem;
-        background: rgba(15, 23, 42, 0.65);
-        color: #e2e8f0;
-        font: inherit;
-        text-align: left;
-        cursor: pointer;
-        transition: border-color 0.2s ease, background 0.2s ease;
-      }
-
-      .history-dropdown button:hover,
-      .history-dropdown button:focus-visible {
-        border-color: #38bdf8;
-        background: rgba(56, 189, 248, 0.2);
-        outline: none;
-      }
-
-      .coordinate-field {
-        border: 1px solid rgba(226, 232, 240, 0.35);
-        border-radius: 12px;
-        padding: 0.6rem 0.75rem;
-        background: rgba(15, 23, 42, 0.6);
-        color: #f8fafc;
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-      }
-
-      .coordinate-meta {
-        font-size: 0.9rem;
-        color: #cbd5f5;
-      }
-
-      .coordinate-actions {
-        margin-top: 0.5rem;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
         align-items: center;
+        justify-content: space-between;
+        gap: 0.35rem;
       }
-
-      .coordinate-actions .ghost-btn {
-        padding: 0.45rem 1.2rem;
+      .field-label-row label {
+        flex: 1;
+      }
+      .edit-label-btn {
         border-radius: 999px;
-        border: none;
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        background: rgba(15, 23, 42, 0.45);
+        color: #e2e8f0;
+        font-size: 0.75rem;
+        padding: 0.15rem 0.6rem;
+        cursor: pointer;
+      }
+      .edit-label-btn:hover,
+      .edit-label-btn:focus-visible {
+        border-color: rgba(148, 163, 184, 0.9);
+        background: rgba(59, 130, 246, 0.3);
+      }
+      .field-move-controls {
+        margin-top: 0.35rem;
+        display: flex;
+        gap: 0.4rem;
+        justify-content: flex-end;
+      }
+      .field-move-btn {
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        background: rgba(15, 23, 42, 0.45);
+        color: #e2e8f0;
+        padding: 0.15rem 0.65rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        line-height: 1;
+      }
+      .field-move-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .rename-dialog-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+      }
+      .rename-dialog-backdrop.is-visible {
+        display: flex;
+      }
+      .rename-dialog {
+        width: min(360px, 90%);
+        border-radius: 20px;
+        background: #0f172a;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        padding: 1rem 1.1rem;
+        color: #f8fafc;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      }
+      .rename-dialog h4 {
+        margin: 0 0 0.6rem;
+        font-size: 1.05rem;
+      }
+      .rename-dialog input {
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid rgba(226, 232, 240, 0.4);
+        background: rgba(15, 23, 42, 0.6);
+        color: #f8fafc;
+        padding: 0.5rem 0.6rem;
+        font: inherit;
+      }
+      .rename-dialog-actions {
+        margin-top: 0.8rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+      }
+      .rename-dialog-actions button {
+        border-radius: 999px;
+        padding: 0.35rem 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid transparent;
+      }
+      .rename-cancel-btn {
+        background: transparent;
+        color: #cbd5f5;
+        border-color: rgba(148, 163, 184, 0.4);
+      }
+      .rename-confirm-btn {
         background: linear-gradient(120deg, #38bdf8, #6366f1);
         color: #0f172a;
-        font-weight: 700;
-        box-shadow: 0 10px 18px rgba(56, 189, 248, 0.35);
-      }
-
-      .coordinate-status {
-        font-size: 0.85rem;
-        color: #cbd5f5;
-      }
-
-      .board-coordinate {
-        display: flex;
-        flex-direction: column;
-        gap: 0.15rem;
-        width: 100%;
-      }
-
-      .board-coordinate span:first-child {
-        font-size: 0.95rem;
-        font-weight: 600;
-      }
-
-      .board-coordinate-meta {
-        font-size: 0.9rem;
-        letter-spacing: 0.03em;
-      }
-
-      .panel-hint {
-        margin-top: 0.4rem;
-        font-size: 0.83rem;
-        color: #cbd5f5;
-      }
-
-      .panel-actions {
-        margin-top: 0.8rem;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 0.75rem;
-        align-items: center;
-      }
-
-      .toggle-advanced {
-        margin-top: 0.6rem;
-        width: 100%;
-      }
-
-      .advanced-controls {
-        margin-top: 0.5rem;
-        border-top: 1px dashed rgba(148, 163, 184, 0.4);
-        padding-top: 0.6rem;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 0.75rem;
-      }
-
-      .advanced-controls[hidden] {
-        display: none !important;
-      }
-
-      .panel-control {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-      }
-
-      .panel-control input[type="range"] {
-        flex: 1;
-      }
-
-      .ghost-btn {
-        border-radius: 999px;
-        border: 1px solid rgba(226, 232, 240, 0.45);
-        background: transparent;
-        color: #e2e8f0;
-        font-weight: 600;
-        padding: 0.6rem 1.25rem;
-        cursor: pointer;
-      }
-
-      .controls {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 0.75rem;
-      }
-
-      .btn {
-        border: none;
-        border-radius: 999px;
-        padding: 0.75rem 1.1rem;
-        font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
-        color: #fff;
-        background: linear-gradient(135deg, #2563eb, #3b82f6);
-        box-shadow: 0 10px 18px rgba(37, 99, 235, 0.3);
-      }
-
-      .btn-secondary {
-        background: transparent;
-        border: 2px solid #94a3b8;
-        color: #e2e8f0;
-        box-shadow: none;
-      }
-
-      .stage {
-        position: relative;
-        width: 100%;
-        border-radius: 0;
-        overflow: hidden;
-        background: transparent;
-        box-shadow: none;
-        border: none;
-        --stage-aspect: 56.25%;
-      }
-
-      .stage::before {
-        content: "";
-        display: block;
-        padding-top: var(--stage-aspect);
-      }
-
-      .stage-content {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: transparent;
-      }
-
-      .stage-content.exporting {
-        background: transparent;
-      }
-
-      .stage-content img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-      }
-
-      .stage-placeholder {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.35rem;
-        text-align: center;
-        color: #cbd5f5;
-      }
-
-      .photo-watermark {
-        position: absolute;
-        right: clamp(0.35rem, 3vw, 0.85rem);
-        bottom: clamp(0.3rem, 2.5vw, 0.75rem);
-        color: #fbbf24;
-        font-size: clamp(0.65rem, 2.5vw, 0.9rem);
-        letter-spacing: 0.18em;
-        font-weight: 800;
-        -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.9);
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
-        pointer-events: none;
-        z-index: 5;
-      }
-
-      .whiteboard-wrapper {
-        --board-scale-x: clamp(0.35, calc(25vw / 100), 0.45);
-        --board-scale-y: clamp(0.35, calc(25vw / 100), 0.45);
-        --board-width: min(480px, 90%);
-        position: absolute;
-        left: 50%;
-        top: 70%;
-        transform: translate(-50%, -50%) rotate(var(--board-rotation))
-          scale(var(--board-scale-x), var(--board-scale-y));
-        transform-origin: center;
-        width: var(--board-width);
-        touch-action: none;
-        transition: box-shadow 0.15s ease;
-      }
-
-      .whiteboard-wrapper.is-resizing {
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
-      }
-
-      .resize-handle {
-        position: absolute;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: #38bdf8;
-        border: 2px solid #fff;
-        box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
-        display: none;
-        z-index: 10;
-        touch-action: none;
-      }
-
-      .whiteboard-wrapper.show-handles .resize-handle {
-        display: block;
-      }
-
-      .resize-handle[data-handle="top-left"] {
-        top: -8px;
-        left: -8px;
-        cursor: nwse-resize;
-      }
-
-      .resize-handle[data-handle="top-right"] {
-        top: -8px;
-        right: -8px;
-        cursor: nesw-resize;
-      }
-
-      .resize-handle[data-handle="bottom-right"] {
-        bottom: -8px;
-        right: -8px;
-        cursor: nwse-resize;
-      }
-
-      .resize-handle[data-handle="bottom-left"] {
-        bottom: -8px;
-        left: -8px;
-        cursor: nesw-resize;
-      }
-      .whiteboard {
-        width: 100%;
-        background: var(--board-fill);
-        border-radius: 0;
-        border: 4px solid var(--line-color);
-        padding: 0.75rem;
-        color: var(--text-color);
-        box-shadow: none;
-        font-weight: 700;
-      }
-
-      .whiteboard.exporting {
-        box-shadow: none;
-      }
-
-      .whiteboard-content {
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
-      }
-
-      .board-row {
-        display: flex;
-        align-items: center;
-        gap: 0.2rem;
-      }
-
-      .board-row label {
-        flex: 0 0 72px;
-        font-size: 0.86rem;
-        letter-spacing: 0.03em;
-        color: var(--text-color);
-        position: relative;
-        padding-right: 0.2rem;
-      }
-
-      .board-row label::after {
-        content: "：";
-        position: absolute;
-        right: 0;
-      }
-
-      .board-block label::after {
-        content: "：";
-      }
-
-      .board-value {
-        flex: 1;
-        min-height: 34px;
-        border: 1px solid var(--line-color);
-        border-radius: 10px;
-        padding: 0.35rem 0.55rem;
-        background: var(--board-fill);
-        font-size: 0.96rem;
-        font-weight: 600;
-        color: var(--text-color);
-        white-space: pre-wrap;
-      }
-
-      .board-block {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-      }
-
-      .board-block label {
-        font-size: 0.88rem;
-        letter-spacing: 0.04em;
-        color: var(--text-color);
-      }
-
-      .board-notes {
-        min-height: 3.2rem;
-        border: 1px solid var(--line-color);
-        border-radius: 14px;
-        padding: 0.65rem 0.75rem;
-        background: var(--board-fill);
-        font-size: 1rem;
-        line-height: 1.4;
-        color: var(--text-color);
-        white-space: pre-wrap;
-      }
-
-      .signature-placeholder-box {
-        flex: 1;
-        min-height: 80px;
-        border: 1px dashed var(--line-color);
-        border-radius: 12px;
-        background: var(--board-fill);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-color);
-        font-size: 0.95rem;
-      }
-
-      .action-bar {
-        position: fixed;
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(520px, calc(100% - 1.5rem));
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
-        padding: 0.85rem 1rem;
-        border-radius: 24px;
-        background: rgba(15, 23, 42, 0.85);
-        box-shadow: 0 20px 35px rgba(0, 0, 0, 0.45);
-        backdrop-filter: blur(12px);
-      }
-
-      .action-btn {
-        border: none;
-        border-radius: 999px;
-        padding: 0.85rem 1.25rem;
-        font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
-      }
-
-      .action-btn.primary {
-        background: linear-gradient(135deg, #059669, #10b981);
-        color: #fff;
-      }
-
-      .action-btn.secondary {
-        background: rgba(255, 255, 255, 0.08);
-        color: #f8fafc;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-      }
-
-      .toast-message {
-        position: fixed;
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(520px, calc(100% - 1.5rem));
-        padding: 0.75rem 1rem;
-        border-radius: 16px;
-        background: rgba(15, 23, 42, 0.9);
-        color: #f8fafc;
-        text-align: center;
-        font-size: 0.95rem;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease, transform 0.3s ease;
-      }
-
-      .toast-message.visible {
-        opacity: 1;
-        transform: translateX(-50%) translateY(-8px);
-      }
-
-      .toast-message[data-variant="success"] {
-        background: rgba(34, 197, 94, 0.9);
-        color: #052e13;
-      }
-
-      .hidden-input {
-        display: none !important;
       }
     </style>
   </head>
@@ -565,59 +115,191 @@
 
       <section class="panel">
         <h3>資料輸入面板</h3>
-        <div class="data-grid">
-          <div class="form-field">
-            <label for="inputProjectName">工程名稱</label>
-            <input id="inputProjectName" type="text" placeholder="請輸入工程名稱" autocomplete="off" />
+        <div class="data-grid" id="fieldOrderContainer">
+          <div class="form-field" data-field-key="projectName">
+            <div class="field-label-row">
+              <label for="inputProjectName" data-field-label="projectName">工程名稱</label>
+              <button type="button" class="edit-label-btn" data-label-edit="projectName">改名</button>
+            </div>
+            <input
+              id="inputProjectName"
+              type="text"
+              placeholder="請輸入工程名稱"
+              autocomplete="off"
+            />
             <div class="history-dropdown" id="projectNameHistoryDropdown"></div>
+            <div class="field-move-controls">
+              <button type="button" class="field-move-btn" data-move-field="up" aria-label="工程名稱上移">↑</button>
+              <button type="button" class="field-move-btn" data-move-field="down" aria-label="工程名稱下移">↓</button>
+            </div>
           </div>
-          <div class="form-field">
-            <label for="inputInspectionLocation">檢查位置</label>
-            <input id="inputInspectionLocation" type="text" placeholder="請輸入檢查位置" autocomplete="off" />
+          <div class="form-field" data-field-key="inspectionLocation">
+            <div class="field-label-row">
+              <label for="inputInspectionLocation" data-field-label="inspectionLocation">檢查位置</label>
+              <button type="button" class="edit-label-btn" data-label-edit="inspectionLocation">改名</button>
+            </div>
+            <input
+              id="inputInspectionLocation"
+              type="text"
+              placeholder="請輸入檢查位置"
+              autocomplete="off"
+            />
             <div class="history-dropdown" id="inspectionLocationHistoryDropdown"></div>
+            <div class="field-move-controls">
+              <button type="button" class="field-move-btn" data-move-field="up" aria-label="檢查位置上移">↑</button>
+              <button type="button" class="field-move-btn" data-move-field="down" aria-label="檢查位置下移">↓</button>
+            </div>
           </div>
-          <div class="form-field">
-            <label for="inputTestDate">檢查日期</label>
+          <div class="form-field" data-field-key="testDate">
+            <div class="field-label-row">
+              <label for="inputTestDate" data-field-label="testDate">檢查日期</label>
+              <button type="button" class="edit-label-btn" data-label-edit="testDate">改名</button>
+            </div>
             <input id="inputTestDate" type="date" />
+            <div class="field-move-controls">
+              <button type="button" class="field-move-btn" data-move-field="up" aria-label="檢查日期上移">↑</button>
+              <button type="button" class="field-move-btn" data-move-field="down" aria-label="檢查日期下移">↓</button>
+            </div>
+          </div>
+          <div class="form-field" data-field-key="inspector">
+            <div class="field-label-row">
+              <label for="inputInspector" data-field-label="inspector">檢查人員</label>
+              <button type="button" class="edit-label-btn" data-label-edit="inspector">改名</button>
+            </div>
+            <input
+              id="inputInspector"
+              type="text"
+              placeholder="請輸入檢查人員"
+              autocomplete="off"
+            />
+            <div class="history-dropdown" id="inspectorHistoryDropdown"></div>
+            <div class="field-move-controls">
+              <button type="button" class="field-move-btn" data-move-field="up" aria-label="檢查人員上移">↑</button>
+              <button type="button" class="field-move-btn" data-move-field="down" aria-label="檢查人員下移">↓</button>
+            </div>
+          </div>
+          <div class="form-field" data-field-key="testResult" style="grid-column: 1 / -1">
+            <div class="field-label-row">
+              <label for="inputTestResult" data-field-label="testResult">檢查紀錄</label>
+              <button type="button" class="edit-label-btn" data-label-edit="testResult">改名</button>
+            </div>
+            <textarea
+              id="inputTestResult"
+              placeholder="寫下檢查內容、測量結果等"
+              autocomplete="off"
+            ></textarea>
+            <div class="history-dropdown" id="testResultHistoryDropdown"></div>
+            <div class="field-move-controls">
+              <button type="button" class="field-move-btn" data-move-field="up" aria-label="檢查紀錄上移">↑</button>
+              <button type="button" class="field-move-btn" data-move-field="down" aria-label="檢查紀錄下移">↓</button>
+            </div>
           </div>
           <div class="form-field">
-            <label for="inputInspector">檢查人員</label>
-            <input id="inputInspector" type="text" placeholder="請輸入檢查人員" autocomplete="off" />
-            <div class="history-dropdown" id="inspectorHistoryDropdown"></div>
-          </div>
-          <div class="form-field" style="grid-column: 1 / -1">
-            <label for="inputTestResult">檢查紀錄</label>
-            <textarea id="inputTestResult" placeholder="寫下檢查內容、測量結果等" autocomplete="off"></textarea>
-            <div class="history-dropdown" id="testResultHistoryDropdown"></div>
-          </div>
-          <div class="form-field" style="grid-column: 1 / -1">
-            <label>現場座標</label>
-            <div class="coordinate-field">
-              <div id="coordinateDmsField">尚未取得</div>
-              <div class="coordinate-meta" id="coordinateTwdField">X：— Y：—</div>
-            </div>
-            <div class="coordinate-actions">
-              <button type="button" class="ghost-btn" id="detectCoordinateBtn">取得座標</button>
-              <span class="coordinate-status" id="coordinateStatus">請允許定位以自動帶入</span>
-            </div>
+            <label for="coordinateFormatButton">座標顯示</label>
+            <button type="button" class="coordinate-toggle-btn" id="coordinateFormatButton">
+              <span>點擊切換</span>
+              <strong id="coordinateFormatText">TWD97</strong>
+            </button>
           </div>
         </div>
-        <div class="panel-hint">輸入完畢後按下「套用到白板」。</div>
         <div class="panel-actions">
+          <label class="panel-control">
+            <span>文字大小</span>
+            <input type="range" id="fontScale" min="80" max="300" value="200" />
+            <span id="fontScaleValue">200%</span>
+          </label>
+          <label class="panel-control">
+            <span>白板寬度</span>
+            <input type="range" id="boardWidth" min="240" max="640" value="350" />
+            <span id="boardWidthValue">350px</span>
+          </label>
+          <div class="color-preset-group" role="group" aria-label="白板配色快捷">
+            <button
+              type="button"
+              class="color-swatch"
+              style="--swatch-color: #f8fafc"
+              data-color-preset
+              data-board-color="#f8fafc"
+              data-text-color="#0f172a"
+              data-line-color="#000000"
+              data-board-opacity="100"
+              aria-label="白色主題"
+            >
+              <span class="sr-only">白色主題</span>
+            </button>
+            <button
+              type="button"
+              class="color-swatch"
+              style="--swatch-color: #065f46"
+              data-color-preset
+              data-board-color="#065f46"
+              data-text-color="#f8fafc"
+              data-line-color="#f8fafc"
+              data-board-opacity="100"
+              aria-label="綠色主題"
+            >
+              <span class="sr-only">綠色主題</span>
+            </button>
+            <button
+              type="button"
+              class="color-swatch"
+              style="--swatch-color: rgba(15, 23, 42, 0.5)"
+              data-color-preset
+              data-board-color="#1f293b"
+              data-text-color="#f8fafc"
+              data-line-color="#f8fafc"
+              data-board-opacity="85"
+              aria-label="半透明灰主題"
+            >
+              <span class="sr-only">半透明灰主題</span>
+            </button>
+            <button
+              type="button"
+              class="color-swatch"
+              style="--swatch-color: rgba(255, 255, 255, 0.8)"
+              data-color-preset
+              data-board-color="#f8fafc"
+              data-text-color="#0f172a"
+              data-line-color="#000000"
+              data-board-opacity="82"
+              aria-label="半透明白主題"
+            >
+              <span class="sr-only">半透明白主題</span>
+            </button>
+            <button
+              type="button"
+              class="color-swatch color-swatch--toggle"
+              id="toggleBoardButton"
+              aria-pressed="true"
+              data-board-visible="true"
+            >
+              <span class="sr-only">白板顯示開關</span>
+              <span id="boardVisibilityLabel">白板開</span>
+            </button>
+          </div>
+        </div>
+        <button type="button" class="ghost-btn toggle-advanced" id="toggleAdvanced">顯示更多調整</button>
+        <div class="panel-actions advanced-controls" id="advancedControls" hidden>
           <label class="panel-control">
             <span>白板尺寸</span>
             <input type="range" id="boardScale" min="10" max="120" value="45" />
             <span id="boardScaleValue">45%</span>
           </label>
           <label class="panel-control">
-            <span>白板寬度</span>
-            <input type="range" id="boardWidth" min="240" max="640" value="480" />
-            <span id="boardWidthValue">480px</span>
+            <span>輸出尺寸</span>
+            <div class="size-toggle-group" role="group" aria-label="輸出尺寸選擇">
+              <button type="button" class="size-toggle" data-export-size="small">小</button>
+              <button type="button" class="size-toggle" data-export-size="medium">中</button>
+              <button type="button" class="size-toggle is-active" data-export-size="large">大</button>
+            </div>
           </label>
-          <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
-        </div>
-        <button type="button" class="ghost-btn toggle-advanced" id="toggleAdvanced">顯示更多調整</button>
-        <div class="panel-actions advanced-controls" id="advancedControls" hidden>
+          <label class="panel-control">
+            <span>座標紀錄</span>
+            <div class="history-actions">
+              <button type="button" class="ghost-btn ghost-button--accent" id="downloadCoordinateHistory">下載紀錄</button>
+              <button type="button" class="ghost-btn ghost-button--danger" id="clearCoordinateHistory">清除紀錄</button>
+            </div>
+          </label>
           <label class="panel-control">
             <span>白板傾斜</span>
             <input type="range" id="boardRotation" min="-20" max="20" value="0" />
@@ -657,61 +339,40 @@
           </div>
         </div>
         <div class="whiteboard-wrapper" id="whiteboardWrapper">
-          <button class="resize-handle" data-handle="top-left" type="button" aria-label="調整白板 左上"></button>
-          <button class="resize-handle" data-handle="top-right" type="button" aria-label="調整白板 右上"></button>
-          <button class="resize-handle" data-handle="bottom-right" type="button" aria-label="調整白板 右下"></button>
-          <button class="resize-handle" data-handle="bottom-left" type="button" aria-label="調整白板 左下"></button>
           <div class="whiteboard" id="whiteboard">
-            <div class="whiteboard-content">
-              <div class="board-row">
-                <label>工程名稱</label>
-                <div class="board-value" id="displayProjectName">—</div>
-              </div>
-              <div class="board-row">
-                <label>檢查位置</label>
-                <div class="board-value" id="displayInspectionLocation">—</div>
-              </div>
-              <div class="board-block">
-                <label>檢查紀錄</label>
-                <div class="board-notes" id="displayTestResult">—</div>
-              </div>
-              <div class="board-block">
-                <label>定位座標</label>
-                <div class="board-coordinate">
-                  <span id="displayCoordinateDms">—</span>
-                  <span class="board-coordinate-meta" id="displayCoordinateTwd">X：— Y：—</span>
-                </div>
-              </div>
-              <div class="board-row">
-                <label>檢查日期</label>
-                <div class="board-value" id="displayTestDate">—</div>
-              </div>
-              <div class="board-row">
-                <label>檢查人員</label>
-                <div class="board-value" id="displayInspector">—</div>
-              </div>
-            </div>
+            <div class="whiteboard-content" id="whiteboardFields"></div>
           </div>
         </div>
+        <div class="photo-watermark photo-watermark--top-right" id="photoCoordinate" hidden>座標未取得</div>
         <div class="photo-watermark" id="photoWatermark">日期未設定</div>
       </div>
 
-      <div class="action-bar">
-        <button class="action-btn secondary" id="clearBoardBtn">清除白板</button>
-        <button class="action-btn primary" id="exportBtn">匯出整張圖片</button>
+  <div class="action-bar">
+    <button class="action-btn secondary" id="clearBoardBtn">清除白板</button>
+    <button class="action-btn primary" id="exportBtn">匯出整張圖片</button>
+  </div>
+  <div class="rename-dialog-backdrop" id="renameDialogBackdrop" aria-hidden="true">
+    <div class="rename-dialog" role="dialog" aria-modal="true" aria-labelledby="renameDialogTitle">
+      <h4 id="renameDialogTitle">調整欄位名稱</h4>
+      <input type="text" id="renameFieldInput" placeholder="輸入欄位名稱" />
+      <div class="rename-dialog-actions">
+        <button type="button" class="rename-cancel-btn" id="renameCancelBtn">取消</button>
+        <button type="button" class="rename-confirm-btn" id="renameConfirmBtn">儲存</button>
       </div>
+    </div>
+  </div>
 
-      <p id="toastMessage" class="toast-message" role="status" aria-live="polite"></p>
+  <p id="toastMessage" class="toast-message" role="status" aria-live="polite"></p>
 
       <input type="file" accept="image/*" capture="environment" class="hidden-input" id="takePhotoInput" />
       <input type="file" accept="image/*" class="hidden-input" id="uploadInput" />
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/proj4@2.9.1/dist/proj4.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    
     <script>
-      const takePhotoBtn = document.getElementById("takePhotoBtn");
+const takePhotoBtn = document.getElementById("takePhotoBtn");
       const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
       const takePhotoInput = document.getElementById("takePhotoInput");
       const uploadInput = document.getElementById("uploadInput");
@@ -720,12 +381,14 @@
       const placeholder = document.getElementById("placeholder");
       const whiteboardWrapper = document.getElementById("whiteboardWrapper");
       const whiteboard = document.getElementById("whiteboard");
+      const whiteboardFields = document.getElementById("whiteboardFields");
       const captureArea = document.getElementById("captureArea");
       const boardScaleInput = document.getElementById("boardScale");
       const boardScaleValue = document.getElementById("boardScaleValue");
-      const resizeHandles = document.querySelectorAll(".resize-handle");
       const boardWidthInput = document.getElementById("boardWidth");
       const boardWidthValue = document.getElementById("boardWidthValue");
+      const fontScaleInput = document.getElementById("fontScale");
+      const fontScaleValue = document.getElementById("fontScaleValue");
       const boardRotationInput = document.getElementById("boardRotation");
       const boardRotationValue = document.getElementById("boardRotationValue");
       const boardColorInput = document.getElementById("boardColor");
@@ -733,35 +396,58 @@
       const boardOpacityValue = document.getElementById("boardOpacityValue");
       const textColorInput = document.getElementById("textColor");
       const lineColorInput = document.getElementById("lineColor");
-      const detectCoordinateBtn = document.getElementById("detectCoordinateBtn");
-      const coordinateStatus = document.getElementById("coordinateStatus");
-      const defaultCoordinateStatusText =
-        coordinateStatus?.textContent || "請允許定位以自動帶入";
-      const coordinateDmsField = document.getElementById("coordinateDmsField");
-      const coordinateTwdField = document.getElementById("coordinateTwdField");
-      const displayCoordinateDms = document.getElementById("displayCoordinateDms");
-      const displayCoordinateTwd = document.getElementById("displayCoordinateTwd");
-      const applyDataBtn = document.getElementById("applyDataBtn");
+      const coordinateFormatButton = document.getElementById("coordinateFormatButton");
+      const coordinateFormatText = document.getElementById("coordinateFormatText");
+      const exportSizeButtons = document.querySelectorAll("[data-export-size]");
+      const downloadCoordinateHistoryBtn = document.getElementById("downloadCoordinateHistory");
+      const clearCoordinateHistoryBtn = document.getElementById("clearCoordinateHistory");
+      const boardVisibilityButton = document.getElementById("toggleBoardButton");
+      const boardVisibilityLabel = document.getElementById("boardVisibilityLabel");
+      const colorPresetButtons = document.querySelectorAll("[data-color-preset]");
       const clearBoardBtn = document.getElementById("clearBoardBtn");
       const exportBtn = document.getElementById("exportBtn");
       const toastMessage = document.getElementById("toastMessage");
       const photoWatermark = document.getElementById("photoWatermark");
+      const photoCoordinate = document.getElementById("photoCoordinate");
+      const renameDialogBackdrop = document.getElementById("renameDialogBackdrop");
+      const renameFieldInput = document.getElementById("renameFieldInput");
+      const renameCancelBtn = document.getElementById("renameCancelBtn");
+      const renameConfirmBtn = document.getElementById("renameConfirmBtn");
+      whiteboardWrapper.dataset.userPositioned = "false";
       const advancedControls = document.getElementById("advancedControls");
       const toggleAdvanced = document.getElementById("toggleAdvanced");
-      whiteboardWrapper.dataset.userPositioned = "false";
-      let boardScaleBase = Number(boardScaleInput.value) / 100;
-      let boardStretchX = 1;
-      let boardStretchY = 1;
 
       const isMobileDevice = /android|iphone|ipad|ipod|mobile/i.test(
         (navigator.userAgent || "").toLowerCase()
       );
+      const GEOLOCATION_TIMEOUT_MS = 15000;
       let lastPhotoMetadata = null;
       let lastPhotoExifBytes = null;
-      const TWD97_PROJECTION =
-        "+proj=tmerc +lat_0=0 +lon_0=121 +k=0.9999 +x_0=250000 +y_0=0 +ellps=GRS80 +units=m +no_defs";
-      const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_layout_geo";
+      let pendingCaptureCoordinatesPromise = null;
+
+      const layoutIdentifier =
+        document.body.dataset.layoutId ||
+        (window.location.pathname.match(/layout(\d+)/)?.[1] && `layout${window.location.pathname.match(/layout(\d+)/)[1]}`) ||
+        "layout";
+      const buildStorageKey = (base) => `${base}_${layoutIdentifier}`;
+      const FIELD_HISTORY_STORAGE_KEY = buildStorageKey("whiteboard_field_history");
       const FIELD_HISTORY_LIMIT = 20;
+      const WHITEBOARD_VISIBILITY_STORAGE_KEY = buildStorageKey("whiteboard_visibility");
+      const EXPORT_SIZE_STORAGE_KEY = buildStorageKey("whiteboard_export_size");
+      const COORDINATE_HISTORY_STORAGE_KEY = buildStorageKey("whiteboard_coordinate_history");
+      const COORDINATE_FORMAT_STORAGE_KEY = buildStorageKey("whiteboard_coordinate_format");
+      const COORDINATE_FORMATS = {
+        WGS84: "wgs84",
+        TWD97: "twd97",
+      };
+      let coordinateFormat = COORDINATE_FORMATS.TWD97;
+      const EXPORT_SIZE_SCALE = {
+        small: 0.8,
+        medium: 1,
+        large: 1.5,
+      };
+      let exportSize = "large";
+      let coordinateHistory = [];
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -771,18 +457,230 @@
         inspector: document.getElementById("inputInspector"),
       };
 
-      const displayTargets = {
-        projectName: document.getElementById("displayProjectName"),
-        inspectionLocation: document.getElementById("displayInspectionLocation"),
-        testResult: document.getElementById("displayTestResult"),
-        testDate: document.getElementById("displayTestDate"),
-        inspector: document.getElementById("displayInspector"),
-      };
       const historyDropdowns = {
         projectName: document.getElementById("projectNameHistoryDropdown"),
         inspectionLocation: document.getElementById("inspectionLocationHistoryDropdown"),
         inspector: document.getElementById("inspectorHistoryDropdown"),
         testResult: document.getElementById("testResultHistoryDropdown"),
+      };
+
+      const formData = {
+        projectName: "",
+        inspectionLocation: "",
+        testResult: "",
+        testDate: "",
+        inspector: "",
+      };
+
+
+      const fieldOrderContainer = document.getElementById("fieldOrderContainer");
+      const FIELD_LABELS_STORAGE_KEY = buildStorageKey("whiteboard_field_labels");
+      const DEFAULT_FIELD_LABELS = {
+        projectName: "工程名稱",
+        inspectionLocation: "檢查位置",
+        testResult: "檢查紀錄",
+        testDate: "檢查日期",
+        inspector: "檢查人員",
+      };
+      const loadFieldLabels = () => {
+        try {
+          const raw = localStorage.getItem(FIELD_LABELS_STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object") {
+              return { ...DEFAULT_FIELD_LABELS, ...parsed };
+            }
+          }
+        } catch (error) {
+          console.warn("讀取欄位名稱失敗", error);
+        }
+        return { ...DEFAULT_FIELD_LABELS };
+      };
+      const saveFieldLabels = () => {
+        try {
+          localStorage.setItem(FIELD_LABELS_STORAGE_KEY, JSON.stringify(fieldLabels));
+        } catch (error) {
+          console.warn("儲存欄位名稱失敗", error);
+        }
+      };
+      let fieldLabels = loadFieldLabels();
+      const applyFieldLabels = () => {
+        Object.keys(DEFAULT_FIELD_LABELS).forEach((key) => {
+          const labelText = fieldLabels[key] || DEFAULT_FIELD_LABELS[key];
+          const labelElement = document.querySelector(`[data-field-label="${key}"]`);
+          if (labelElement) {
+            labelElement.textContent = labelText;
+          }
+        });
+      };
+      const REORDERABLE_FIELD_KEYS = Object.keys(DEFAULT_FIELD_LABELS);
+      const FIELD_ORDER_STORAGE_KEY = buildStorageKey("whiteboard_field_order");
+
+      const loadFieldOrder = () => {
+        try {
+          const raw = localStorage.getItem(FIELD_ORDER_STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              const sanitized = parsed.filter((key) => REORDERABLE_FIELD_KEYS.includes(key));
+              const missing = REORDERABLE_FIELD_KEYS.filter((key) => !sanitized.includes(key));
+              return sanitized.concat(missing);
+            }
+          }
+        } catch (error) {
+          console.warn("讀取欄位順序失敗", error);
+        }
+        return [...REORDERABLE_FIELD_KEYS];
+      };
+
+      const saveFieldOrder = () => {
+        try {
+          localStorage.setItem(FIELD_ORDER_STORAGE_KEY, JSON.stringify(fieldOrder));
+        } catch (error) {
+          console.warn("儲存欄位順序失敗", error);
+        }
+      };
+
+      let fieldOrder = loadFieldOrder();
+
+      const fieldElements = REORDERABLE_FIELD_KEYS.reduce((acc, key) => {
+        const element = document.querySelector(`[data-field-key="${key}"]`);
+        if (element) acc[key] = element;
+        return acc;
+      }, {});
+
+      const updateMoveButtonsState = () => {
+        REORDERABLE_FIELD_KEYS.forEach((key) => {
+          const element = fieldElements[key];
+          if (!element) return;
+          const upBtn = element.querySelector('[data-move-field="up"]');
+          const downBtn = element.querySelector('[data-move-field="down"]');
+          const index = fieldOrder.indexOf(key);
+          if (upBtn) upBtn.disabled = index <= 0;
+          if (downBtn) downBtn.disabled = index === fieldOrder.length - 1;
+        });
+      };
+
+      const applyFieldOrderToDOM = () => {
+        if (!fieldOrderContainer) return;
+        fieldOrder = fieldOrder.filter((key) => REORDERABLE_FIELD_KEYS.includes(key));
+        REORDERABLE_FIELD_KEYS.forEach((key) => {
+          if (!fieldOrder.includes(key)) {
+            fieldOrder.push(key);
+          }
+        });
+        fieldOrder.forEach((key) => {
+          const element = fieldElements[key];
+          if (element) {
+            fieldOrderContainer.appendChild(element);
+          }
+        });
+        updateMoveButtonsState();
+      };
+
+      const moveFieldPosition = (key, offset) => {
+        const index = fieldOrder.indexOf(key);
+        const targetIndex = index + offset;
+        if (index < 0 || targetIndex < 0 || targetIndex >= fieldOrder.length) return;
+        fieldOrder.splice(index, 1);
+        fieldOrder.splice(targetIndex, 0, key);
+        saveFieldOrder();
+        applyFieldOrderToDOM();
+        renderWhiteboardFields();
+      };
+
+      document.querySelectorAll('[data-move-field]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const fieldKey = button.closest('[data-field-key]')?.dataset.fieldKey;
+          if (!fieldKey) return;
+          const direction = button.dataset.moveField === 'up' ? -1 : 1;
+          moveFieldPosition(fieldKey, direction);
+        });
+      });
+
+      let pendingLabelKey = null;
+      const closeRenameDialog = () => {
+        pendingLabelKey = null;
+        if (renameDialogBackdrop) {
+          renameDialogBackdrop.classList.remove("is-visible");
+          renameDialogBackdrop.setAttribute("aria-hidden", "true");
+        }
+      };
+
+      const openRenameDialog = (key) => {
+        if (!DEFAULT_FIELD_LABELS[key]) return;
+        pendingLabelKey = key;
+        const current = fieldLabels[key] || DEFAULT_FIELD_LABELS[key];
+        if (renameFieldInput) {
+          renameFieldInput.value = current;
+          renameFieldInput.setSelectionRange(0, current.length);
+        }
+        if (renameDialogBackdrop) {
+          renameDialogBackdrop.classList.add("is-visible");
+          renameDialogBackdrop.setAttribute("aria-hidden", "false");
+        }
+        setTimeout(() => renameFieldInput?.focus(), 20);
+      };
+
+      const confirmRename = () => {
+        if (!pendingLabelKey) {
+          closeRenameDialog();
+          return;
+        }
+        const raw = renameFieldInput?.value ?? "";
+        const trimmed = raw.trim();
+        fieldLabels[pendingLabelKey] = trimmed || DEFAULT_FIELD_LABELS[pendingLabelKey];
+        saveFieldLabels();
+        applyFieldLabels();
+        renderWhiteboardFields();
+        closeRenameDialog();
+      };
+
+      document.querySelectorAll("[data-label-edit]").forEach((button) => {
+        button.addEventListener("click", () => openRenameDialog(button.dataset.labelEdit));
+      });
+      renameCancelBtn?.addEventListener("click", closeRenameDialog);
+      renameConfirmBtn?.addEventListener("click", confirmRename);
+      renameFieldInput?.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          confirmRename();
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          closeRenameDialog();
+        }
+      });
+      renameDialogBackdrop?.addEventListener("click", (event) => {
+        if (event.target === renameDialogBackdrop) {
+          closeRenameDialog();
+        }
+      });
+
+      const getFieldDisplayValue = (key) => {
+        if (key === 'testDate') {
+          return formatWatermarkDate(formInputs.testDate?.value || '') || '—';
+        }
+        const text = (formData[key] || '').trim();
+        return text || '—';
+      };
+
+      const renderWhiteboardFields = () => {
+        if (!whiteboardFields) return;
+        whiteboardFields.innerHTML = '';
+        fieldOrder.forEach((key) => {
+          if (!DEFAULT_FIELD_LABELS[key]) return;
+          const isNotes = key === 'testResult';
+          const wrapper = document.createElement('div');
+          wrapper.className = isNotes ? 'board-block' : 'board-row';
+          const label = document.createElement('label');
+          label.textContent = fieldLabels[key] || DEFAULT_FIELD_LABELS[key];
+          const value = document.createElement('div');
+          value.className = isNotes ? 'board-notes' : 'board-value';
+          value.textContent = getFieldDisplayValue(key);
+          wrapper.appendChild(label);
+          wrapper.appendChild(value);
+          whiteboardFields.appendChild(wrapper);
+        });
       };
 
       const formatWatermarkDate = (value) => {
@@ -797,91 +695,230 @@
         photoWatermark.textContent = formatWatermarkDate(formInputs.testDate.value);
       };
 
-      const formatDmsComponent = (value, positiveSuffix, negativeSuffix) => {
-        const direction = value >= 0 ? positiveSuffix : negativeSuffix;
-        const absolute = Math.abs(value);
-        const degrees = Math.floor(absolute);
-        const minutesFloat = (absolute - degrees) * 60;
-        const minutes = Math.floor(minutesFloat);
-        const seconds = Math.round((minutesFloat - minutes) * 60);
-        return `${degrees}°${String(minutes).padStart(2, "0")}'${String(seconds)
-          .toString()
-          .padStart(2, "0")}"${direction}`;
+      const formatDecimalCoordinates = (latitude, longitude) => {
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+        return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
       };
 
-      const formatDmsPair = (lat, lon) => {
-        const latText = formatDmsComponent(lat, "N", "S");
-        const lonText = formatDmsComponent(lon, "E", "W");
-        return `${latText} ${lonText}`;
-      };
+      const degToRad = (value) => (value * Math.PI) / 180;
 
-      const formatTwdText = (x, y) => {
-        const roundedX = Math.round(x);
-        const roundedY = Math.round(y);
-        return `X：${roundedX}　Y：${roundedY}`;
-      };
-
-      const convertToTwd97 = (lat, lon) => {
-        if (typeof proj4 !== "function") {
-          return null;
-        }
+      const convertToTwd97 = (latitude, longitude) => {
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
         try {
-          return proj4("EPSG:4326", TWD97_PROJECTION, [lon, lat]);
+          const a = 6378137.0;
+          const f = 1 / 298.257222101;
+          const b = a * (1 - f);
+          const e2 = (a * a - b * b) / (a * a);
+          const ePrime2 = (a * a - b * b) / (b * b);
+          const k0 = 0.9999;
+          const lon0 = degToRad(121);
+          const x0 = 250000;
+          const y0 = 0;
+          const latRad = degToRad(latitude);
+          const lonRad = degToRad(longitude);
+          const sinLat = Math.sin(latRad);
+          const cosLat = Math.cos(latRad);
+          const tanLat = Math.tan(latRad);
+          const N = a / Math.sqrt(1 - e2 * sinLat * sinLat);
+          const T = tanLat * tanLat;
+          const C = ePrime2 * cosLat * cosLat;
+          const A = (lonRad - lon0) * cosLat;
+          const e4 = e2 * e2;
+          const e6 = e4 * e2;
+          const M =
+            a *
+            ((1 - e2 / 4 - (3 * e4) / 64 - (5 * e6) / 256) * latRad -
+              ((3 * e2) / 8 + (3 * e4) / 32 + (45 * e6) / 1024) * Math.sin(2 * latRad) +
+              ((15 * e4) / 256 + (45 * e6) / 1024) * Math.sin(4 * latRad) -
+              ((35 * e6) / 3072) * Math.sin(6 * latRad));
+
+          const x =
+            x0 +
+            k0 *
+              N *
+              (A +
+                ((1 - T + C) * Math.pow(A, 3)) / 6 +
+                ((5 - 18 * T + T * T + 72 * C - 58 * ePrime2) * Math.pow(A, 5)) / 120);
+
+          const y =
+            y0 +
+            k0 *
+              (M +
+                N *
+                  tanLat *
+                  (Math.pow(A, 2) / 2 +
+                    ((5 - T + 9 * C + 4 * C * C) * Math.pow(A, 4)) / 24 +
+                    ((61 - 58 * T + T * T + 600 * C - 330 * ePrime2) * Math.pow(A, 6)) / 720));
+          return [x, y];
         } catch (error) {
           console.warn("TWD97 轉換失敗", error);
           return null;
         }
       };
 
-      const updateCoordinateDisplay = (dmsText, twdText) => {
-        coordinateDmsField.textContent = dmsText || "尚未取得";
-        coordinateTwdField.textContent = twdText || "X：— Y：—";
-        displayCoordinateDms.textContent = dmsText || "—";
-        displayCoordinateTwd.textContent = twdText || "X：— Y：—";
+      const formatTwdText = (x, y) => {
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+        return `X:${Math.round(x)} Y:${Math.round(y)}`;
       };
 
-      const resolveGeoErrorMessage = (error) => {
-        if (!error) return "定位失敗，請稍後再試。";
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            return "定位權限被拒絕，請開啟定位權限。";
-          case error.POSITION_UNAVAILABLE:
-            return "目前無法取得位置資訊。";
-          case error.TIMEOUT:
-            return "定位逾時，請移動到訊號較佳的位置。";
-          default:
-            return "定位失敗，請稍後再試。";
+      const updateBoardVisibilityButton = (visible) => {
+        if (!boardVisibilityButton || !boardVisibilityLabel) return;
+        boardVisibilityButton.dataset.boardVisible = String(visible);
+        boardVisibilityButton.setAttribute("aria-pressed", visible ? "true" : "false");
+        boardVisibilityLabel.textContent = visible ? "白板開" : "白板關";
+      };
+
+      const setWhiteboardVisibility = (visible) => {
+        if (!whiteboardWrapper) return;
+        whiteboardWrapper.hidden = !visible;
+        updateBoardVisibilityButton(visible);
+        try {
+          localStorage.setItem(WHITEBOARD_VISIBILITY_STORAGE_KEY, String(Boolean(visible)));
+        } catch (error) {
+          console.warn("儲存白板可見狀態失敗", error);
         }
       };
 
-      const detectCoordinates = () => {
-        if (!navigator.geolocation) {
-          const message = "此裝置不支援定位功能。";
-          coordinateStatus.textContent = message;
-          showToast(message);
+      const updateCoordinateFormatButton = () => {
+        if (!coordinateFormatButton) return;
+        const label = coordinateFormat === COORDINATE_FORMATS.TWD97 ? "TWD97" : "經緯";
+        const description = coordinateFormat === COORDINATE_FORMATS.TWD97 ? "X / Y" : "Lat / Lng";
+        coordinateFormatButton.setAttribute("aria-label", `座標顯示：${label} (${description})`);
+        if (coordinateFormatText) {
+          coordinateFormatText.textContent = label;
+        }
+      };
+
+      const updateExportSizeButtons = () => {
+        exportSizeButtons.forEach((button) => {
+          const isActive = button.dataset.exportSize === exportSize;
+          button.classList.toggle("is-active", isActive);
+          button.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
+      };
+
+      const setExportSize = (size) => {
+        if (!EXPORT_SIZE_SCALE[size]) return;
+        exportSize = size;
+        updateExportSizeButtons();
+        try {
+          localStorage.setItem(EXPORT_SIZE_STORAGE_KEY, size);
+        } catch (error) {
+          console.warn("儲存輸出尺寸失敗", error);
+        }
+      };
+
+      const loadCoordinateHistory = () => {
+        try {
+          const raw = localStorage.getItem(COORDINATE_HISTORY_STORAGE_KEY);
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+          console.warn("讀取座標紀錄失敗", error);
+          return [];
+        }
+      };
+
+      const saveCoordinateHistory = () => {
+        try {
+          localStorage.setItem(COORDINATE_HISTORY_STORAGE_KEY, JSON.stringify(coordinateHistory));
+        } catch (error) {
+          console.warn("儲存座標紀錄失敗", error);
+        }
+      };
+
+      const recordCoordinateHistory = () => {
+        const gps = lastPhotoMetadata?.gps;
+        if (!gps || typeof gps.latitude !== "number" || typeof gps.longitude !== "number") return;
+        const twd = convertToTwd97(gps.latitude, gps.longitude);
+        const record = {
+          timestamp: new Date().toISOString(),
+          latitude: Number(gps.latitude.toFixed(6)),
+          longitude: Number(gps.longitude.toFixed(6)),
+        };
+        if (twd) {
+          record.twdX = Math.round(twd[0]);
+          record.twdY = Math.round(twd[1]);
+        }
+        coordinateHistory.push(record);
+        saveCoordinateHistory();
+      };
+
+      const clearCoordinateHistory = () => {
+        coordinateHistory = [];
+        saveCoordinateHistory();
+        showToast("座標紀錄已清除。", "success");
+      };
+
+      const downloadCoordinateHistory = () => {
+        if (!coordinateHistory.length) {
+          showToast("目前沒有座標紀錄。");
           return;
         }
-        coordinateStatus.textContent = "定位中…";
-        detectCoordinateBtn.disabled = true;
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            const dmsText = formatDmsPair(latitude, longitude);
-            const twd = convertToTwd97(latitude, longitude);
-            const twdText = twd ? formatTwdText(twd[0], twd[1]) : "X：— Y：—";
-            updateCoordinateDisplay(dmsText, twdText);
-            coordinateStatus.textContent = "定位成功";
-            showToast("已更新座標資訊。", "success");
-            detectCoordinateBtn.disabled = false;
-          },
-          (error) => {
-            const message = resolveGeoErrorMessage(error);
-            coordinateStatus.textContent = message;
-            showToast(message);
-            detectCoordinateBtn.disabled = false;
-          },
-          { enableHighAccuracy: true, timeout: 15000 }
-        );
+        const rows = [
+          ["timestamp", "latitude", "longitude", "twdX", "twdY"].join(","),
+          ...coordinateHistory.map((item) =>
+            [
+              item.timestamp,
+              item.latitude ?? "",
+              item.longitude ?? "",
+              item.twdX ?? "",
+              item.twdY ?? "",
+            ].join(",")
+          ),
+        ];
+        const csv = rows.join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `coordinate_history_${new Date().toISOString().split("T")[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+      };
+
+      const resolveCoordinateText = () => {
+        const gps = lastPhotoMetadata?.gps;
+        if (!gps || typeof gps.latitude !== "number" || typeof gps.longitude !== "number") {
+          return null;
+        }
+        if (coordinateFormat === COORDINATE_FORMATS.TWD97) {
+          const twd = convertToTwd97(gps.latitude, gps.longitude);
+          const twdText = twd ? formatTwdText(twd[0], twd[1]) : null;
+          if (twdText) return twdText;
+        }
+        return formatDecimalCoordinates(gps.latitude, gps.longitude);
+      };
+
+      const updateCoordinateOverlay = () => {
+        const text = resolveCoordinateText();
+        if (!photoCoordinate) {
+          renderWhiteboardFields();
+          return;
+        }
+        if (!text) {
+          photoCoordinate.hidden = true;
+          photoCoordinate.textContent = "";
+        } else {
+          photoCoordinate.hidden = false;
+          photoCoordinate.textContent = text;
+        }
+        renderWhiteboardFields();
+      };
+
+      const setCoordinateFormat = (value) => {
+        if (!Object.values(COORDINATE_FORMATS).includes(value)) return;
+        coordinateFormat = value;
+        try {
+          localStorage.setItem(COORDINATE_FORMAT_STORAGE_KEY, value);
+        } catch (error) {
+          console.warn("儲存座標格式失敗", error);
+        }
+        updateCoordinateFormatButton();
+        updateCoordinateOverlay();
       };
 
       const decimalToDmsRational = (value) => {
@@ -919,16 +956,19 @@
           }
           if (lastPhotoMetadata.gps) {
             const { latitude, longitude } = lastPhotoMetadata.gps;
-            gps[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
-            gps[piexif.GPSIFD.GPSLatitude] = decimalToDmsRational(latitude);
-            gps[piexif.GPSIFD.GPSLongitudeRef] = longitude >= 0 ? "E" : "W";
-            gps[piexif.GPSIFD.GPSLongitude] = decimalToDmsRational(longitude);
+            if (
+              typeof latitude === "number" &&
+              !Number.isNaN(latitude) &&
+              typeof longitude === "number" &&
+              !Number.isNaN(longitude)
+            ) {
+              gps[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
+              gps[piexif.GPSIFD.GPSLatitude] = decimalToDmsRational(latitude);
+              gps[piexif.GPSIFD.GPSLongitudeRef] = longitude >= 0 ? "E" : "W";
+              gps[piexif.GPSIFD.GPSLongitude] = decimalToDmsRational(longitude);
+            }
           }
-          if (
-            !Object.keys(zeroth).length &&
-            !Object.keys(exif).length &&
-            !Object.keys(gps).length
-          ) {
+          if (!Object.keys(zeroth).length && !Object.keys(exif).length && !Object.keys(gps).length) {
             return dataUrl;
           }
           const exifBytes = piexif.dump({
@@ -955,6 +995,112 @@
         return new Blob([array], { type: mime });
       };
 
+      const readFieldHistoryStore = () => {
+        try {
+          const raw = localStorage.getItem(FIELD_HISTORY_STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return typeof parsed === "object" && parsed ? parsed : {};
+        } catch (error) {
+          console.warn("讀取歷史資料失敗", error);
+          return {};
+        }
+      };
+
+      let fieldHistory = readFieldHistoryStore();
+
+      const writeFieldHistoryStore = () => {
+        try {
+          localStorage.setItem(FIELD_HISTORY_STORAGE_KEY, JSON.stringify(fieldHistory));
+        } catch (error) {
+          console.warn("儲存歷史資料失敗", error);
+        }
+      };
+
+      const getFieldHistory = (field) => {
+        const list = fieldHistory[field];
+        return Array.isArray(list) ? list : [];
+      };
+
+      const saveFieldHistory = (field, value) => {
+        const trimmed = (value || "").trim();
+        if (!trimmed) return;
+        const current = getFieldHistory(field).filter((item) => item !== trimmed);
+        current.unshift(trimmed);
+        fieldHistory[field] = current.slice(0, FIELD_HISTORY_LIMIT);
+        writeFieldHistoryStore();
+        updateDropdownContent(field);
+      };
+      const renderHistoryDropdown = (field) => {
+        const dropdown = historyDropdowns[field];
+        if (!dropdown) return false;
+        dropdown.innerHTML = "";
+        const history = getFieldHistory(field);
+        if (!history.length) return false;
+        history.forEach((item) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = item;
+          button.addEventListener("mousedown", (event) => {
+            event.preventDefault();
+            const targetInput = formInputs[field];
+            if (!targetInput) return;
+            targetInput.value = item;
+            if (field === "testResult") {
+              autoResizeTextarea(targetInput);
+            }
+            syncField(field);
+            hideFieldHistory(field);
+          });
+          dropdown.appendChild(button);
+        });
+        return true;
+      };
+
+      const updateDropdownContent = (field) => {
+        const dropdown = historyDropdowns[field];
+        if (!dropdown) return;
+        const wasVisible = dropdown.classList.contains("is-visible");
+        const hasItems = renderHistoryDropdown(field);
+        if (wasVisible && hasItems) {
+          dropdown.classList.add("is-visible");
+        } else if (!hasItems) {
+          dropdown.classList.remove("is-visible");
+        }
+      };
+
+      const refreshAllFieldHistoryUI = () => {
+        Object.keys(historyDropdowns).forEach((field) => {
+          renderHistoryDropdown(field);
+          hideFieldHistory(field);
+        });
+      };
+
+      const historyDropdownHideTimers = {};
+
+      const showFieldHistory = (field) => {
+        const dropdown = historyDropdowns[field];
+        if (!dropdown) return;
+        clearTimeout(historyDropdownHideTimers[field]);
+        const hasItems = renderHistoryDropdown(field);
+        if (hasItems) {
+          dropdown.classList.add("is-visible");
+        }
+      };
+
+      const hideFieldHistory = (field) => {
+        const dropdown = historyDropdowns[field];
+        if (!dropdown) return;
+        dropdown.classList.remove("is-visible");
+      };
+
+      const scheduleHideFieldHistory = (field) => {
+        clearTimeout(historyDropdownHideTimers[field]);
+        historyDropdownHideTimers[field] = setTimeout(
+          () => hideFieldHistory(field),
+          120
+        );
+      };
+
       const formatDateInputValue = (date) => {
         if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
         const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -969,6 +1115,48 @@
           reader.onerror = () => reject(new Error("failed to load file"));
           reader.readAsDataURL(file);
         });
+
+      const requestCaptureCoordinates = () => {
+        if (!navigator.geolocation) {
+          pendingCaptureCoordinatesPromise = Promise.resolve(null);
+          return pendingCaptureCoordinatesPromise;
+        }
+        pendingCaptureCoordinatesPromise = new Promise((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude } = position.coords || {};
+              if (
+                typeof latitude === "number" &&
+                !Number.isNaN(latitude) &&
+                typeof longitude === "number" &&
+                !Number.isNaN(longitude)
+              ) {
+                resolve({ latitude, longitude });
+              } else {
+                resolve(null);
+              }
+            },
+            (error) => {
+              console.warn("定位失敗，無法寫入座標。", error);
+              resolve(null);
+            },
+            { enableHighAccuracy: true, timeout: GEOLOCATION_TIMEOUT_MS, maximumAge: 0 }
+          );
+        });
+        return pendingCaptureCoordinatesPromise;
+      };
+
+      const consumePendingCaptureCoordinates = async () => {
+        if (!pendingCaptureCoordinatesPromise) return null;
+        try {
+          return await pendingCaptureCoordinatesPromise;
+        } catch (error) {
+          console.warn("讀取定位資訊失敗", error);
+          return null;
+        } finally {
+          pendingCaptureCoordinatesPromise = null;
+        }
+      };
 
       const asciiFromView = (view, start, length) => {
         let chars = "";
@@ -1090,6 +1278,14 @@
             parseIfdForMetadata(view, pointer, base, little, metadata);
             continue;
           }
+          if (tag === 0x8825) {
+            const pointer = base + view.getUint32(rawValueOffset, little);
+            const gps = parseGpsIfd(view, pointer, base, little);
+            if (gps) {
+              metadata.gps = gps;
+            }
+            continue;
+          }
           if (tag === 0x0112 && type === 3 && count >= 1) {
             const orientation =
               valueSize > 2
@@ -1097,14 +1293,6 @@
                 : view.getUint16(rawValueOffset, little);
             if (orientation) {
               metadata.orientation = orientation;
-            }
-            continue;
-          }
-          if (tag === 0x8825) {
-            const pointer = base + view.getUint32(rawValueOffset, little);
-            const gps = parseGpsIfd(view, pointer, base, little);
-            if (gps) {
-              metadata.gps = gps;
             }
             continue;
           }
@@ -1152,6 +1340,7 @@
             return {
               date: metadata.primaryDate || metadata.fallbackDate || null,
               gps: metadata.gps || null,
+              orientation: metadata.orientation || null,
             };
           }
           offset += 2 + length;
@@ -1159,30 +1348,8 @@
         return {};
       };
 
-      const extractExifMetadata = async (file, dataUrl) => {
-        if (!file) return {};
-        if (window.piexif && dataUrl) {
-          try {
-            const exifObj = piexif.load(dataUrl);
-            const metadata = {};
-            const dateTimeOriginal =
-              exifObj.Exif?.[piexif.ExifIFD.DateTimeOriginal] ||
-              exifObj.Exif?.[piexif.ExifIFD.CreateDate] ||
-              exifObj["0th"]?.[piexif.ImageIFD.DateTime] ||
-              null;
-            if (dateTimeOriginal) {
-              metadata.date = dateTimeOriginal.split(" ")[0].replace(/:/g, "-");
-            }
-            if (exifObj["0th"]) {
-              delete exifObj["0th"][piexif.ImageIFD.Orientation];
-            }
-            metadata.exifBytes = piexif.dump(exifObj);
-            return metadata;
-          } catch (error) {
-            console.warn("EXIF 解析失敗", error);
-          }
-        }
-        if (!/image\/jpe?g/i.test(file.type || "")) return {};
+      const extractExifMetadata = async (file) => {
+        if (!file || !/image\/jpe?g/i.test(file.type || "")) return {};
         try {
           const buffer = await file.arrayBuffer();
           return readExifMetadataFromBuffer(buffer) || {};
@@ -1192,48 +1359,41 @@
         }
       };
 
-      const applyPhotoMetadata = async (file, dataUrl) => {
+      const applyPhotoMetadata = async (file, dataUrl, extraGps) => {
         if (!file) return;
         let metadata = {};
         try {
-          metadata = await extractExifMetadata(file, dataUrl);
+          metadata = await extractExifMetadata(file);
         } catch (error) {
           console.warn("讀取 EXIF 資料失敗", error);
         }
         lastPhotoMetadata =
           metadata && (metadata.date || metadata.gps || metadata.orientation)
-            ? {
-                date: metadata.date || null,
-                gps: metadata.gps || null,
-                orientation: metadata.orientation || null,
-              }
+            ? { ...metadata }
             : null;
-        let exifBytes = metadata?.exifBytes || null;
-        if (exifBytes && window.piexif) {
+        if (extraGps && typeof extraGps.latitude === "number" && typeof extraGps.longitude === "number") {
+          lastPhotoMetadata = lastPhotoMetadata || {};
+          lastPhotoMetadata.gps = {
+            latitude: extraGps.latitude,
+            longitude: extraGps.longitude,
+          };
+        }
+        if (window.piexif && dataUrl) {
           try {
-            const exifObj = piexif.load(exifBytes);
+            const exifObj = piexif.load(dataUrl);
             if (exifObj["0th"]) {
               delete exifObj["0th"][piexif.ImageIFD.Orientation];
             }
-            exifBytes = piexif.dump(exifObj);
+            lastPhotoExifBytes = extraGps ? null : piexif.dump(exifObj);
           } catch (error) {
-            console.warn("移除 Orientation 失敗", error);
+            console.warn("EXIF 載入失敗", error);
+            lastPhotoExifBytes = null;
           }
+        } else {
+          lastPhotoExifBytes = null;
         }
-        lastPhotoExifBytes = exifBytes;
         if (lastPhotoMetadata?.orientation) {
           delete lastPhotoMetadata.orientation;
-        }
-        if (metadata?.gps) {
-          const { latitude, longitude } = metadata.gps;
-          const dmsText = formatDmsPair(latitude, longitude);
-          const twd = convertToTwd97(latitude, longitude);
-          const twdText = twd ? formatTwdText(twd[0], twd[1]) : "X：— Y：—";
-          updateCoordinateDisplay(dmsText, twdText);
-          coordinateStatus.textContent = "已套用 EXIF 座標";
-        } else {
-          updateCoordinateDisplay();
-          coordinateStatus.textContent = defaultCoordinateStatusText;
         }
         const exifDate = metadata.date;
         const usedExif = Boolean(exifDate);
@@ -1253,130 +1413,14 @@
             : "已套用拍攝日期，如需修改可手動調整。",
           "success"
         );
+        updateCoordinateOverlay();
+        recordCoordinateHistory();
       };
 
       const autoResizeTextarea = (textarea) => {
         if (!textarea) return;
         textarea.style.height = "auto";
         textarea.style.height = `${Math.min(textarea.scrollHeight, 600)}px`;
-      };
-
-      const readFieldHistoryStore = () => {
-        try {
-          let raw = localStorage.getItem(FIELD_HISTORY_STORAGE_KEY);
-          if (!raw) {
-            const legacyKeys = [
-              "whiteboard_field_history_layout34",
-              "whiteboard_field_history_v1",
-            ];
-            for (const key of legacyKeys) {
-              const legacyRaw = localStorage.getItem(key);
-              if (legacyRaw) {
-                localStorage.setItem(FIELD_HISTORY_STORAGE_KEY, legacyRaw);
-                raw = legacyRaw;
-                break;
-              }
-            }
-          }
-          const parsed = raw ? JSON.parse(raw) : {};
-          return typeof parsed === "object" && parsed ? parsed : {};
-        } catch (error) {
-          console.warn("讀取歷史資料失敗", error);
-          return {};
-        }
-      };
-
-      let fieldHistory = readFieldHistoryStore();
-
-      const writeFieldHistoryStore = () => {
-        try {
-          localStorage.setItem(FIELD_HISTORY_STORAGE_KEY, JSON.stringify(fieldHistory));
-        } catch (error) {
-          console.warn("儲存歷史資料失敗", error);
-        }
-      };
-
-      const getFieldHistory = (field) => {
-        const list = fieldHistory[field];
-        return Array.isArray(list) ? list : [];
-      };
-
-      const renderHistoryDropdown = (field) => {
-        const dropdown = historyDropdowns[field];
-        if (!dropdown) return false;
-        dropdown.innerHTML = "";
-        const history = getFieldHistory(field);
-        if (!history.length) return false;
-        history.forEach((item) => {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.textContent = item;
-          button.addEventListener("mousedown", (event) => {
-            event.preventDefault();
-            const targetInput = formInputs[field];
-            if (!targetInput) return;
-            targetInput.value = item;
-            if (field === "testResult") {
-              autoResizeTextarea(targetInput);
-            }
-            syncField(field);
-            hideFieldHistory(field);
-          });
-          dropdown.appendChild(button);
-        });
-        return true;
-      };
-
-      const updateDropdownContent = (field) => {
-        const dropdown = historyDropdowns[field];
-        if (!dropdown) return;
-        const wasVisible = dropdown.classList.contains("is-visible");
-        const hasItems = renderHistoryDropdown(field);
-        if (wasVisible && hasItems) {
-          dropdown.classList.add("is-visible");
-        } else if (!hasItems) {
-          dropdown.classList.remove("is-visible");
-        }
-      };
-
-      const saveFieldHistory = (field, value) => {
-        const trimmed = (value || "").trim();
-        if (!trimmed) return;
-        const current = getFieldHistory(field).filter((item) => item !== trimmed);
-        current.unshift(trimmed);
-        fieldHistory[field] = current.slice(0, FIELD_HISTORY_LIMIT);
-        writeFieldHistoryStore();
-        updateDropdownContent(field);
-      };
-
-      const refreshAllFieldHistoryUI = () => {
-        Object.keys(historyDropdowns).forEach((field) => {
-          renderHistoryDropdown(field);
-          hideFieldHistory(field);
-        });
-      };
-
-      const historyDropdownHideTimers = {};
-
-      const showFieldHistory = (field) => {
-        const dropdown = historyDropdowns[field];
-        if (!dropdown) return;
-        clearTimeout(historyDropdownHideTimers[field]);
-        const hasItems = renderHistoryDropdown(field);
-        if (hasItems) {
-          dropdown.classList.add("is-visible");
-        }
-      };
-
-      const hideFieldHistory = (field) => {
-        const dropdown = historyDropdowns[field];
-        if (!dropdown) return;
-        dropdown.classList.remove("is-visible");
-      };
-
-      const scheduleHideFieldHistory = (field) => {
-        clearTimeout(historyDropdownHideTimers[field]);
-        historyDropdownHideTimers[field] = setTimeout(() => hideFieldHistory(field), 120);
       };
 
       const showToast = (message, variant = "info") => {
@@ -1417,18 +1461,33 @@
           showToast("照片載入失敗，請重新選擇。");
           return;
         }
-        await applyPhotoMetadata(file, dataUrl);
+        const captureCoordinates = await consumePendingCaptureCoordinates();
+        await applyPhotoMetadata(file, dataUrl, captureCoordinates);
+      };
+
+      const applyColorPreset = (button) => {
+        if (!button?.dataset) return;
+        const { boardColor, textColor, lineColor, boardOpacity } = button.dataset;
+        if (boardColor) {
+          boardColorInput.value = boardColor;
+          updateBoardColor(boardColor);
+        }
+        if (textColor) {
+          textColorInput.value = textColor;
+          updateTextColor(textColor);
+        }
+        if (lineColor) {
+          lineColorInput.value = lineColor;
+          updateLineColor(lineColor);
+        }
+        if (boardOpacity) {
+          boardOpacityInput.value = boardOpacity;
+          updateBoardOpacity(boardOpacity);
+        }
+        showToast("已套用預設配色。", "success");
       };
 
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-
-      const applyBoardScale = () => {
-        const scaleX = boardScaleBase * boardStretchX;
-        const scaleY = boardScaleBase * boardStretchY;
-        whiteboardWrapper.style.setProperty("--board-scale-x", scaleX.toString());
-        whiteboardWrapper.style.setProperty("--board-scale-y", scaleY.toString());
-        boardScaleValue.textContent = `${Math.round(boardScaleBase * 100)}%`;
-      };
 
       const startDrag = (event) => {
         if (event.target.closest("input, textarea, button, select")) return;
@@ -1499,74 +1558,34 @@
         whiteboardWrapper.style.top = `${(centerY / stageRect.height) * 100}%`;
       };
 
+      let baseBoardScale = Number(boardScaleInput.value) / 100;
+      let fontScaleFactor = Number(fontScaleInput.value) / 100;
+
+      const applyScale = () => {
+        const combinedScale = baseBoardScale * fontScaleFactor;
+        whiteboardWrapper.style.setProperty("--board-scale", combinedScale.toString());
+        document.documentElement.style.setProperty("--whiteboard-font-scale", fontScaleFactor.toString());
+      };
+
       const updateBoardScale = (value) => {
         const percent = Math.max(10, Math.min(120, Number(value)));
-        boardScaleBase = percent / 100;
-        applyBoardScale();
+        baseBoardScale = percent / 100;
+        boardScaleValue.textContent = `${percent}%`;
+        applyScale();
         if (whiteboardWrapper.dataset.userPositioned !== "true") {
           requestAnimationFrame(positionBoardAtBottomLeft);
         }
       };
 
-      const RESIZE_DIRECTIONS = {
-        "top-left": { x: -1, y: -1 },
-        "top-right": { x: 1, y: -1 },
-        "bottom-right": { x: 1, y: 1 },
-        "bottom-left": { x: -1, y: 1 },
-      };
 
-      let handleHideTimer = null;
-      const showHandles = () => {
-        whiteboardWrapper.classList.add("show-handles");
-        clearTimeout(handleHideTimer);
-      };
-      const hideHandles = () => {
-        if (whiteboardWrapper.dataset.resizingHandle) return;
-        clearTimeout(handleHideTimer);
-        handleHideTimer = setTimeout(
-          () => whiteboardWrapper.classList.remove("show-handles"),
-          800
-        );
-      };
-
-      const startHandleResize = (handle, event) => {
-        const dir = RESIZE_DIRECTIONS[handle];
-        if (!dir) return;
-        event.preventDefault();
-        event.stopPropagation();
-        whiteboardWrapper.dataset.userPositioned = "true";
-        whiteboardWrapper.classList.add("is-resizing");
-        whiteboardWrapper.dataset.resizingHandle = handle;
-        whiteboardWrapper.dataset.startPointerX =
-          event.clientX ?? event.touches?.[0]?.clientX ?? 0;
-        whiteboardWrapper.dataset.startPointerY =
-          event.clientY ?? event.touches?.[0]?.clientY ?? 0;
-        whiteboardWrapper.dataset.stretchX = boardStretchX.toString();
-        whiteboardWrapper.dataset.stretchY = boardStretchY.toString();
-      };
-
-      const handleResizeMove = (event) => {
-        const handle = whiteboardWrapper.dataset.resizingHandle;
-        if (!handle) return;
-        const dir = RESIZE_DIRECTIONS[handle];
-        if (!dir) return;
-        event.preventDefault();
-        const startX = parseFloat(whiteboardWrapper.dataset.startPointerX);
-        const startY = parseFloat(whiteboardWrapper.dataset.startPointerY);
-        const pointerX = event.clientX ?? event.touches?.[0]?.clientX ?? 0;
-        const pointerY = event.clientY ?? event.touches?.[0]?.clientY ?? 0;
-        const deltaX = ((pointerX - startX) / captureArea.offsetWidth) * dir.x;
-        const deltaY = ((pointerY - startY) / captureArea.offsetHeight) * dir.y;
-        const baseStretchX = parseFloat(whiteboardWrapper.dataset.stretchX) || 1;
-        const baseStretchY = parseFloat(whiteboardWrapper.dataset.stretchY) || 1;
-        boardStretchX = clamp(baseStretchX * (1 + deltaX), 0.4, 2.5);
-        boardStretchY = clamp(baseStretchY * (1 + deltaY), 0.4, 2.5);
-        applyBoardScale();
-      };
-
-      const endHandleResize = () => {
-        whiteboardWrapper.classList.remove("is-resizing");
-        delete whiteboardWrapper.dataset.resizingHandle;
+      const updateFontScale = (value) => {
+        const percent = Math.max(50, Math.min(300, Number(value)));
+        fontScaleFactor = percent / 100;
+        fontScaleValue.textContent = `${percent}%`;
+        applyScale();
+        if (whiteboardWrapper.dataset.userPositioned !== "true") {
+          requestAnimationFrame(positionBoardAtBottomLeft);
+        }
       };
 
       const updateBoardWidth = (value) => {
@@ -1587,11 +1606,16 @@
       };
 
       function syncField(key) {
-        const value = formInputs[key].value.trim();
-        displayTargets[key].textContent = value || "—";
+        const input = formInputs[key];
+        if (!input) return;
+        const rawValue = input.value;
         if (key === "testDate") {
+          formData[key] = rawValue;
           updateWatermarkDate();
+        } else {
+          formData[key] = rawValue.trim();
         }
+        renderWhiteboardFields();
       }
 
       const syncAllFields = () => Object.keys(formInputs).forEach(syncField);
@@ -1602,8 +1626,7 @@
         syncAllFields();
         lastPhotoMetadata = null;
         lastPhotoExifBytes = null;
-        updateCoordinateDisplay();
-        coordinateStatus.textContent = defaultCoordinateStatusText;
+        updateCoordinateOverlay();
       };
 
       const updateBoardColor = (color) => {
@@ -1645,10 +1668,15 @@
 
       const buildShareText = () => {
         const sections = [
-          { label: "檢查位置", value: displayTargets.inspectionLocation.textContent },
-          { label: "檢查日期", value: displayTargets.testDate.textContent },
+          { key: "inspectionLocation", value: formData.inspectionLocation || "—" },
+          { key: "testDate", value: formatWatermarkDate(formData.testDate || "") || "—" },
         ];
-        return sections.map((item) => `${item.label}：${item.value || "—"}`).join("\n");
+        return sections
+          .map((item) => {
+            const label = fieldLabels[item.key] || DEFAULT_FIELD_LABELS[item.key] || "";
+            return `${label}：${item.value || "—"}`;
+          })
+          .join("\n");
       };
 
       const handleShareOrDownload = async (blob, filename) => {
@@ -1684,15 +1712,20 @@
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
+          const baseScale = window.devicePixelRatio || 1;
+          const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
+          const exportScale = baseScale * sizeMultiplier;
           const canvas = await html2canvas(captureArea, {
             backgroundColor: null,
-            scale: window.devicePixelRatio || 2,
+            scale: exportScale,
           });
-          let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-          dataUrl = applyExifToDataUrl(dataUrl);
+          const isPortrait = canvas.height >= canvas.width;
+            let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+            dataUrl = applyExifToDataUrl(dataUrl);
           const blob = dataUrlToBlob(dataUrl);
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
-          await handleShareOrDownload(blob, `whiteboard_${timestamp}.jpg`);
+          const filename = `whiteboard_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
+          await handleShareOrDownload(blob, filename);
         } catch (error) {
           console.error(error);
           showToast("匯出失敗，請再試一次。");
@@ -1704,7 +1737,10 @@
         }
       };
 
-      takePhotoBtn.addEventListener("click", () => takePhotoInput.click());
+      takePhotoBtn.addEventListener("click", () => {
+        requestCaptureCoordinates();
+        takePhotoInput.click();
+      });
       uploadPhotoBtn.addEventListener("click", () => uploadInput.click());
       takePhotoInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
       uploadInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
@@ -1716,12 +1752,8 @@
 
       const historyFields = ["projectName", "inspectionLocation", "inspector", "testResult"];
       const historyTextFields = ["projectName", "inspectionLocation", "inspector"];
-
-      applyDataBtn.addEventListener("click", () => {
-        syncAllFields();
-        historyFields.forEach((field) => saveFieldHistory(field, formInputs[field].value));
-        showToast("白板內容已更新。", "success");
-      });
+      const autoSyncFields = Object.keys(formInputs);
+      const autoHistoryFields = ["projectName", "inspectionLocation", "inspector", "testResult"];
 
       clearBoardBtn.addEventListener("click", () => {
         clearBoard();
@@ -1731,29 +1763,14 @@
       boardScaleInput.addEventListener("input", (event) =>
         updateBoardScale(event.target.value)
       );
-      resizeHandles.forEach((handle) => {
-        ["pointerdown", "touchstart"].forEach((type) =>
-          handle.addEventListener(type, (event) =>
-            startHandleResize(handle.dataset.handle, event)
-          )
-        );
-      });
-      ["pointerenter", "touchstart"].forEach((type) =>
-        whiteboardWrapper.addEventListener(type, showHandles, { passive: true })
-      );
-      ["pointerleave"].forEach((type) =>
-        whiteboardWrapper.addEventListener(type, hideHandles)
-      );
-      window.addEventListener("pointermove", handleResizeMove, { passive: false });
-      window.addEventListener("touchmove", handleResizeMove, { passive: false });
-      window.addEventListener("pointerup", endHandleResize);
-      window.addEventListener("pointercancel", endHandleResize);
-      window.addEventListener("touchend", endHandleResize);
       boardWidthInput.addEventListener("input", (event) =>
         updateBoardWidth(event.target.value)
       );
       boardRotationInput.addEventListener("input", (event) =>
         updateBoardRotation(event.target.value)
+      );
+      fontScaleInput.addEventListener("input", (event) =>
+        updateFontScale(event.target.value)
       );
       boardColorInput.addEventListener("input", (event) =>
         updateBoardColor(event.target.value)
@@ -1767,6 +1784,25 @@
       lineColorInput.addEventListener("input", (event) =>
         updateLineColor(event.target.value)
       );
+      boardVisibilityButton.addEventListener("click", () => {
+        const nextState = boardVisibilityButton.dataset.boardVisible !== "true";
+        setWhiteboardVisibility(nextState);
+      });
+      colorPresetButtons.forEach((button) =>
+        button.addEventListener("click", () => applyColorPreset(button))
+      );
+      exportSizeButtons.forEach((button) =>
+        button.addEventListener("click", () => setExportSize(button.dataset.exportSize))
+      );
+      clearCoordinateHistoryBtn?.addEventListener("click", clearCoordinateHistory);
+      downloadCoordinateHistoryBtn?.addEventListener("click", downloadCoordinateHistory);
+      coordinateFormatButton.addEventListener("click", () => {
+        const nextFormat =
+          coordinateFormat === COORDINATE_FORMATS.TWD97
+            ? COORDINATE_FORMATS.WGS84
+            : COORDINATE_FORMATS.TWD97;
+        setCoordinateFormat(nextFormat);
+      });
       refreshAllFieldHistoryUI();
 
       historyTextFields.forEach((field) => {
@@ -1777,9 +1813,27 @@
         input.addEventListener("blur", () => scheduleHideFieldHistory(field));
       });
 
-      formInputs.testResult.addEventListener("focus", () => showFieldHistory("testResult"));
-      formInputs.testResult.addEventListener("blur", () => scheduleHideFieldHistory("testResult"));
-      detectCoordinateBtn.addEventListener("click", detectCoordinates);
+      formInputs.testResult.addEventListener("focus", () =>
+        showFieldHistory("testResult")
+      );
+      formInputs.testResult.addEventListener("blur", () =>
+        scheduleHideFieldHistory("testResult")
+      );
+
+      autoSyncFields.forEach((field) => {
+        const input = formInputs[field];
+        if (!input) return;
+        const eventName = input.type === "date" ? "change" : "input";
+        input.addEventListener(eventName, () => {
+          if (field === "testResult") {
+            autoResizeTextarea(formInputs.testResult);
+          }
+          syncField(field);
+        });
+        if (autoHistoryFields.includes(field)) {
+          input.addEventListener("blur", () => saveFieldHistory(field, input.value));
+        }
+      });
 
       exportBtn.addEventListener("click", exportBoardImage);
       window.addEventListener("resize", updateStageAspect);
@@ -1787,25 +1841,64 @@
 
       if (isMobileDevice) {
         boardScaleInput.value = "35";
-        boardScaleBase = 0.35;
         boardScaleValue.textContent = "35%";
-        applyBoardScale();
+        boardWidthInput.value = "320";
+        boardWidthValue.textContent = "320px";
+        fontScaleInput.value = "130";
+        fontScaleValue.textContent = "130%";
       }
       if (!formInputs.testDate.value) {
         formInputs.testDate.valueAsDate = new Date();
       }
+      if (!isMobileDevice) {
+        fontScaleInput.value = "200";
+        fontScaleValue.textContent = "200%";
+      }
+      try {
+        const savedFormat = localStorage.getItem(COORDINATE_FORMAT_STORAGE_KEY);
+        if (Object.values(COORDINATE_FORMATS).includes(savedFormat)) {
+          coordinateFormat = savedFormat;
+        }
+      } catch (error) {
+        console.warn("讀取座標格式失敗", error);
+      }
+      updateCoordinateFormatButton();
+      coordinateHistory = loadCoordinateHistory();
+      try {
+        const storedExportSize = localStorage.getItem(EXPORT_SIZE_STORAGE_KEY);
+        if (storedExportSize && EXPORT_SIZE_SCALE[storedExportSize]) {
+          exportSize = storedExportSize;
+        }
+      } catch (error) {
+        console.warn("讀取輸出尺寸失敗", error);
+      }
+      updateExportSizeButtons();
+      let savedVisibility = true;
+      try {
+        const storedVisibility = localStorage.getItem(WHITEBOARD_VISIBILITY_STORAGE_KEY);
+        if (storedVisibility === "true" || storedVisibility === "false") {
+          savedVisibility = storedVisibility === "true";
+        }
+      } catch (error) {
+        console.warn("讀取白板可見狀態失敗", error);
+      }
+      setWhiteboardVisibility(savedVisibility);
       syncAllFields();
       updateBoardScale(boardScaleInput.value);
+      updateFontScale(fontScaleInput.value);
       updateBoardWidth(boardWidthInput.value);
       updateBoardRotation(boardRotationInput.value);
       updateBoardColor(boardColorInput.value);
       updateBoardOpacity(boardOpacityInput.value);
       updateTextColor(textColorInput.value);
       updateLineColor(lineColorInput.value);
-      updateCoordinateDisplay();
       updateWatermarkDate();
+      updateCoordinateOverlay();
+      applyFieldLabels();
+      applyFieldOrderToDOM();
+      renderWhiteboardFields();
       requestAnimationFrame(positionBoardAtBottomLeft);
-      autoResizeTextarea(formInputs.testResult);
+
       toggleAdvanced.addEventListener("click", () => {
         const isHidden = advancedControls.hasAttribute("hidden");
         if (isHidden) {
@@ -1816,6 +1909,7 @@
           toggleAdvanced.textContent = "顯示更多調整";
         }
       });
+      autoResizeTextarea(formInputs.testResult);
       formInputs.testResult.addEventListener("input", () => {
         autoResizeTextarea(formInputs.testResult);
         showFieldHistory("testResult");
@@ -1823,6 +1917,7 @@
       formInputs.testDate.addEventListener("change", () =>
         syncField("testDate")
       );
+
     </script>
   </body>
 </html>
