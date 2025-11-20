@@ -14,99 +14,93 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.35rem;
+        position: relative;
       }
       .field-label-row label {
         flex: 1;
+        cursor: pointer;
+        transition: color 0.2s ease;
       }
-      .edit-label-btn {
-        border-radius: 999px;
+      .field-label-row label:hover,
+      .field-label-row label:focus-visible {
+        color: #38bdf8;
+      }
+      .form-field[data-field-key] {
+        cursor: grab;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .form-field[data-field-key].is-dragging {
+        opacity: 0.65;
+        cursor: grabbing;
+        border: 1px dashed rgba(148, 163, 184, 0.6);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.45);
+      }
+      .inline-label-input {
+        flex: 1;
+        border-radius: 10px;
         border: 1px solid rgba(148, 163, 184, 0.45);
-        background: rgba(15, 23, 42, 0.45);
+        background: rgba(15, 23, 42, 0.5);
+        color: #f8fafc;
+        font: inherit;
+        padding: 0.3rem 0.5rem;
+      }
+      .label-context-menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        min-width: 160px;
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        background: rgba(15, 23, 42, 0.96);
+        box-shadow: 0 20px 40px rgba(2, 6, 23, 0.6);
+        padding: 0.4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        z-index: 2200;
+      }
+      .label-context-menu button {
+        border-radius: 10px;
+        border: 1px solid transparent;
+        background: transparent;
         color: #e2e8f0;
-        font-size: 0.75rem;
-        padding: 0.15rem 0.6rem;
+        font-size: 0.9rem;
+        padding: 0.25rem 0.5rem;
+        text-align: left;
         cursor: pointer;
       }
-      .edit-label-btn:hover,
-      .edit-label-btn:focus-visible {
-        border-color: rgba(148, 163, 184, 0.9);
-        background: rgba(59, 130, 246, 0.3);
+      .label-context-menu button:hover,
+      .label-context-menu button:focus-visible {
+        border-color: rgba(59, 130, 246, 0.65);
+        background: rgba(59, 130, 246, 0.2);
       }
-      .field-move-controls {
-        margin-top: 0.35rem;
-        display: flex;
-        gap: 0.4rem;
-        justify-content: flex-end;
+      .label-context-menu .menu-section-title {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        padding: 0.15rem 0.5rem;
       }
-      .field-move-btn {
-        border-radius: 999px;
-        border: 1px solid rgba(148, 163, 184, 0.45);
-        background: rgba(15, 23, 42, 0.45);
+      .label-menu-trigger {
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(15, 23, 42, 0.4);
         color: #e2e8f0;
-        padding: 0.15rem 0.65rem;
+        border-radius: 10px;
+        padding: 0.15rem 0.45rem;
         font-size: 0.85rem;
         cursor: pointer;
-        line-height: 1;
+        transition: background 0.2s ease, border-color 0.2s ease;
       }
-      .field-move-btn:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
+      .label-menu-trigger:hover,
+      .label-menu-trigger:focus-visible {
+        border-color: rgba(59, 130, 246, 0.65);
+        background: rgba(59, 130, 246, 0.2);
       }
-      .rename-dialog-backdrop {
-        position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.7);
-        display: none;
+      .coordinate-toggle-inline {
+        display: inline-flex;
         align-items: center;
-        justify-content: center;
-        z-index: 2000;
-      }
-      .rename-dialog-backdrop.is-visible {
-        display: flex;
-      }
-      .rename-dialog {
-        width: min(360px, 90%);
-        border-radius: 20px;
-        background: #0f172a;
-        border: 1px solid rgba(148, 163, 184, 0.4);
-        padding: 1rem 1.1rem;
-        color: #f8fafc;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-      }
-      .rename-dialog h4 {
-        margin: 0 0 0.6rem;
-        font-size: 1.05rem;
-      }
-      .rename-dialog input {
-        width: 100%;
-        border-radius: 10px;
-        border: 1px solid rgba(226, 232, 240, 0.4);
-        background: rgba(15, 23, 42, 0.6);
-        color: #f8fafc;
-        padding: 0.5rem 0.6rem;
-        font: inherit;
-      }
-      .rename-dialog-actions {
-        margin-top: 0.8rem;
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.5rem;
-      }
-      .rename-dialog-actions button {
-        border-radius: 999px;
-        padding: 0.35rem 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-        border: 1px solid transparent;
-      }
-      .rename-cancel-btn {
+        gap: 0.35rem;
+        padding: 0;
+        border: none;
         background: transparent;
-        color: #cbd5f5;
-        border-color: rgba(148, 163, 184, 0.4);
-      }
-      .rename-confirm-btn {
-        background: linear-gradient(120deg, #38bdf8, #6366f1);
-        color: #0f172a;
       }
     </style>
   </head>
@@ -119,7 +113,6 @@
           <div class="form-field" data-field-key="projectName">
             <div class="field-label-row">
               <label for="inputProjectName" data-field-label="projectName">工程名稱</label>
-              <button type="button" class="edit-label-btn" data-label-edit="projectName">改名</button>
             </div>
             <input
               id="inputProjectName"
@@ -128,15 +121,10 @@
               autocomplete="off"
             />
             <div class="history-dropdown" id="projectNameHistoryDropdown"></div>
-            <div class="field-move-controls">
-              <button type="button" class="field-move-btn" data-move-field="up" aria-label="工程名稱上移">↑</button>
-              <button type="button" class="field-move-btn" data-move-field="down" aria-label="工程名稱下移">↓</button>
-            </div>
           </div>
           <div class="form-field" data-field-key="inspectionLocation">
             <div class="field-label-row">
               <label for="inputInspectionLocation" data-field-label="inspectionLocation">檢查位置</label>
-              <button type="button" class="edit-label-btn" data-label-edit="inspectionLocation">改名</button>
             </div>
             <input
               id="inputInspectionLocation"
@@ -145,26 +133,16 @@
               autocomplete="off"
             />
             <div class="history-dropdown" id="inspectionLocationHistoryDropdown"></div>
-            <div class="field-move-controls">
-              <button type="button" class="field-move-btn" data-move-field="up" aria-label="檢查位置上移">↑</button>
-              <button type="button" class="field-move-btn" data-move-field="down" aria-label="檢查位置下移">↓</button>
-            </div>
           </div>
           <div class="form-field" data-field-key="testDate">
             <div class="field-label-row">
               <label for="inputTestDate" data-field-label="testDate">檢查日期</label>
-              <button type="button" class="edit-label-btn" data-label-edit="testDate">改名</button>
             </div>
             <input id="inputTestDate" type="date" />
-            <div class="field-move-controls">
-              <button type="button" class="field-move-btn" data-move-field="up" aria-label="檢查日期上移">↑</button>
-              <button type="button" class="field-move-btn" data-move-field="down" aria-label="檢查日期下移">↓</button>
-            </div>
           </div>
           <div class="form-field" data-field-key="inspector">
             <div class="field-label-row">
               <label for="inputInspector" data-field-label="inspector">檢查人員</label>
-              <button type="button" class="edit-label-btn" data-label-edit="inspector">改名</button>
             </div>
             <input
               id="inputInspector"
@@ -173,15 +151,10 @@
               autocomplete="off"
             />
             <div class="history-dropdown" id="inspectorHistoryDropdown"></div>
-            <div class="field-move-controls">
-              <button type="button" class="field-move-btn" data-move-field="up" aria-label="檢查人員上移">↑</button>
-              <button type="button" class="field-move-btn" data-move-field="down" aria-label="檢查人員下移">↓</button>
-            </div>
           </div>
           <div class="form-field" data-field-key="testResult" style="grid-column: 1 / -1">
             <div class="field-label-row">
               <label for="inputTestResult" data-field-label="testResult">檢查紀錄</label>
-              <button type="button" class="edit-label-btn" data-label-edit="testResult">改名</button>
             </div>
             <textarea
               id="inputTestResult"
@@ -189,17 +162,6 @@
               autocomplete="off"
             ></textarea>
             <div class="history-dropdown" id="testResultHistoryDropdown"></div>
-            <div class="field-move-controls">
-              <button type="button" class="field-move-btn" data-move-field="up" aria-label="檢查紀錄上移">↑</button>
-              <button type="button" class="field-move-btn" data-move-field="down" aria-label="檢查紀錄下移">↓</button>
-            </div>
-          </div>
-          <div class="form-field">
-            <label for="coordinateFormatButton">座標顯示</label>
-            <button type="button" class="coordinate-toggle-btn" id="coordinateFormatButton">
-              <span>點擊切換</span>
-              <strong id="coordinateFormatText">TWD97</strong>
-            </button>
           </div>
         </div>
         <div class="panel-actions">
@@ -276,6 +238,11 @@
               <span class="sr-only">白板顯示開關</span>
               <span id="boardVisibilityLabel">白板開</span>
             </button>
+            <div class="coordinate-toggle-inline">
+              <button type="button" class="coordinate-toggle-btn" id="coordinateFormatButton">
+                <strong id="coordinateFormatText">TWD97</strong>
+              </button>
+            </div>
           </div>
         </div>
         <button type="button" class="ghost-btn toggle-advanced" id="toggleAdvanced">顯示更多調整</button>
@@ -347,20 +314,10 @@
         <div class="photo-watermark" id="photoWatermark">日期未設定</div>
       </div>
 
-  <div class="action-bar">
-    <button class="action-btn secondary" id="clearBoardBtn">清除白板</button>
-    <button class="action-btn primary" id="exportBtn">匯出整張圖片</button>
-  </div>
-  <div class="rename-dialog-backdrop" id="renameDialogBackdrop" aria-hidden="true">
-    <div class="rename-dialog" role="dialog" aria-modal="true" aria-labelledby="renameDialogTitle">
-      <h4 id="renameDialogTitle">調整欄位名稱</h4>
-      <input type="text" id="renameFieldInput" placeholder="輸入欄位名稱" />
-      <div class="rename-dialog-actions">
-        <button type="button" class="rename-cancel-btn" id="renameCancelBtn">取消</button>
-        <button type="button" class="rename-confirm-btn" id="renameConfirmBtn">儲存</button>
+      <div class="action-bar">
+        <button class="action-btn secondary" id="clearBoardBtn">清除白板</button>
+        <button class="action-btn primary" id="exportBtn">匯出整張圖片</button>
       </div>
-    </div>
-  </div>
 
   <p id="toastMessage" class="toast-message" role="status" aria-live="polite"></p>
 
@@ -409,10 +366,6 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const toastMessage = document.getElementById("toastMessage");
       const photoWatermark = document.getElementById("photoWatermark");
       const photoCoordinate = document.getElementById("photoCoordinate");
-      const renameDialogBackdrop = document.getElementById("renameDialogBackdrop");
-      const renameFieldInput = document.getElementById("renameFieldInput");
-      const renameCancelBtn = document.getElementById("renameCancelBtn");
-      const renameConfirmBtn = document.getElementById("renameConfirmBtn");
       whiteboardWrapper.dataset.userPositioned = "false";
       const advancedControls = document.getElementById("advancedControls");
       const toggleAdvanced = document.getElementById("toggleAdvanced");
@@ -471,10 +424,10 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         testDate: "",
         inspector: "",
       };
-
-
       const fieldOrderContainer = document.getElementById("fieldOrderContainer");
       const FIELD_LABELS_STORAGE_KEY = buildStorageKey("whiteboard_field_labels");
+      const LABEL_HISTORY_STORAGE_KEY = buildStorageKey("whiteboard_label_history");
+      const LABEL_HISTORY_LIMIT = 10;
       const DEFAULT_FIELD_LABELS = {
         projectName: "工程名稱",
         inspectionLocation: "檢查位置",
@@ -503,7 +456,210 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
           console.warn("儲存欄位名稱失敗", error);
         }
       };
+      const loadLabelHistoryStore = () => {
+        try {
+          const raw = localStorage.getItem(LABEL_HISTORY_STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : null;
+          return parsed && typeof parsed === "object" ? parsed : {};
+        } catch (error) {
+          console.warn("讀取欄位名稱歷史失敗", error);
+          return {};
+        }
+      };
+
+      const saveLabelHistoryStore = () => {
+        try {
+          localStorage.setItem(LABEL_HISTORY_STORAGE_KEY, JSON.stringify(labelHistoryStore));
+        } catch (error) {
+          console.warn("儲存欄位名稱歷史失敗", error);
+        }
+      };
+
+      const recordLabelHistory = (key, value) => {
+        if (!key || !value) return;
+        const history = labelHistoryStore[key] || [];
+        const filtered = history.filter((item) => item !== value);
+        filtered.unshift(value);
+        labelHistoryStore[key] = filtered.slice(0, LABEL_HISTORY_LIMIT);
+        saveLabelHistoryStore();
+        renderLabelHistorySelect(key);
+      };
+
       let fieldLabels = loadFieldLabels();
+      let labelHistoryStore = loadLabelHistoryStore();
+      const labelHistoryTriggers = {};
+      let activeLabelMenuKey = null;
+      let labelHistoryMenu = null;
+
+      const ensureLabelHistoryMenu = () => {
+        if (labelHistoryMenu && document.body.contains(labelHistoryMenu)) {
+          return labelHistoryMenu;
+        }
+        labelHistoryMenu = document.createElement("div");
+        labelHistoryMenu.className = "label-context-menu";
+        labelHistoryMenu.hidden = true;
+        labelHistoryMenu.addEventListener("pointerdown", (event) => event.stopPropagation());
+        document.body.appendChild(labelHistoryMenu);
+        return labelHistoryMenu;
+      };
+
+      const renderLabelHistoryMenu = (key) => {
+        const menu = ensureLabelHistoryMenu();
+        menu.innerHTML = "";
+        const title = document.createElement("div");
+        title.className = "menu-section-title";
+        title.textContent = "歷史標籤";
+        menu.appendChild(title);
+        const history = labelHistoryStore[key] || [];
+        history.forEach((labelText) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = labelText;
+          button.addEventListener("click", () => {
+            commitFieldLabelValue(key, labelText);
+            closeLabelHistoryMenu();
+          });
+          menu.appendChild(button);
+        });
+        const resetButton = document.createElement("button");
+        resetButton.type = "button";
+        resetButton.textContent = "恢復預設";
+        resetButton.addEventListener("click", () => {
+          commitFieldLabelValue(key, DEFAULT_FIELD_LABELS[key], { recordHistory: true });
+          closeLabelHistoryMenu();
+        });
+        menu.appendChild(resetButton);
+        return menu;
+      };
+
+      const positionLabelHistoryMenu = (trigger) => {
+        const menu = ensureLabelHistoryMenu();
+        menu.style.visibility = "hidden";
+        menu.hidden = false;
+        menu.style.top = "0px";
+        menu.style.left = "0px";
+        const menuRect = menu.getBoundingClientRect();
+        const triggerRect = trigger.getBoundingClientRect();
+        const margin = 8;
+        let top = triggerRect.bottom + margin;
+        let left = triggerRect.right - menuRect.width;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        if (left + menuRect.width > viewportWidth - margin) {
+          left = viewportWidth - margin - menuRect.width;
+        }
+        if (left < margin) left = margin;
+        if (top + menuRect.height > viewportHeight - margin) {
+          top = triggerRect.top - margin - menuRect.height;
+        }
+        if (top < margin) top = margin;
+        menu.style.top = `${top}px`;
+        menu.style.left = `${left}px`;
+        menu.style.visibility = "visible";
+      };
+
+      const openLabelHistoryMenu = (key) => {
+        const trigger = labelHistoryTriggers[key];
+        if (!trigger) return;
+        const history = labelHistoryStore[key] || [];
+        if (!history.length) return;
+        renderLabelHistoryMenu(key);
+        positionLabelHistoryMenu(trigger);
+        activeLabelMenuKey = key;
+        trigger.setAttribute("aria-expanded", "true");
+        setFieldDragEnabled(key, false);
+        trigger.dataset.menuOpen = "true";
+      };
+
+      const closeLabelHistoryMenu = (key = activeLabelMenuKey) => {
+        if (!key) return;
+        const trigger = labelHistoryTriggers[key];
+        if (trigger) {
+          trigger.setAttribute("aria-expanded", "false");
+          trigger.dataset.menuOpen = "false";
+        }
+        setFieldDragEnabled(key, true);
+        if (activeLabelMenuKey === key) {
+          activeLabelMenuKey = null;
+        }
+        if (labelHistoryMenu) {
+          labelHistoryMenu.remove();
+          labelHistoryMenu = null;
+        }
+      };
+
+      const toggleLabelHistoryMenu = (key) => {
+        if (activeLabelMenuKey === key) {
+          closeLabelHistoryMenu();
+        } else {
+          closeLabelHistoryMenu();
+          openLabelHistoryMenu(key);
+        }
+      };
+
+      document.addEventListener(
+        "pointerdown",
+        (event) => {
+          if (!activeLabelMenuKey) return;
+          if (labelHistoryMenu?.contains(event.target)) return;
+          if (event.target.closest(".label-menu-trigger")) return;
+          closeLabelHistoryMenu();
+        },
+        true
+      );
+
+      const commitFieldLabelValue = (key, value, { recordHistory = true } = {}) => {
+        if (!DEFAULT_FIELD_LABELS[key]) return;
+        const nextValue = (value || "").trim() || DEFAULT_FIELD_LABELS[key];
+        fieldLabels[key] = nextValue;
+        if (recordHistory) {
+          recordLabelHistory(key, nextValue);
+        }
+        saveFieldLabels();
+        applyFieldLabels();
+        renderWhiteboardFields();
+        closeLabelHistoryMenu(key);
+      };
+
+      const renderLabelHistorySelect = (key) => {
+        const fieldElement = fieldElements[key];
+        const row = fieldElement?.querySelector(".field-label-row");
+        const history = labelHistoryStore[key] || [];
+        const trigger = labelHistoryTriggers[key];
+
+        if (!row || !history.length) {
+          if (trigger) {
+            trigger.remove();
+            delete labelHistoryTriggers[key];
+          }
+          if (activeLabelMenuKey === key) {
+            closeLabelHistoryMenu();
+          }
+          return;
+        }
+
+        if (!trigger) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "label-menu-trigger";
+          button.setAttribute("aria-label", "套用歷史標籤");
+          button.setAttribute("aria-expanded", "false");
+          button.innerHTML = "⋯";
+          button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            toggleLabelHistoryMenu(key);
+          });
+          row.appendChild(button);
+          labelHistoryTriggers[key] = button;
+        } else {
+          trigger.setAttribute("aria-expanded", "false");
+        }
+      };
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && activeLabelMenuKey) {
+          closeLabelHistoryMenu();
+        }
+      });
       const applyFieldLabels = () => {
         Object.keys(DEFAULT_FIELD_LABELS).forEach((key) => {
           const labelText = fieldLabels[key] || DEFAULT_FIELD_LABELS[key];
@@ -548,112 +704,161 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         if (element) acc[key] = element;
         return acc;
       }, {});
-
-      const updateMoveButtonsState = () => {
-        REORDERABLE_FIELD_KEYS.forEach((key) => {
-          const element = fieldElements[key];
-          if (!element) return;
-          const upBtn = element.querySelector('[data-move-field="up"]');
-          const downBtn = element.querySelector('[data-move-field="down"]');
-          const index = fieldOrder.indexOf(key);
-          if (upBtn) upBtn.disabled = index <= 0;
-          if (downBtn) downBtn.disabled = index === fieldOrder.length - 1;
-        });
+      const setFieldDragEnabled = (key, enabled) => {
+        const element = fieldElements[key];
+        if (!element) return;
+        element.draggable = Boolean(enabled);
+        element.dataset.dragDisabled = enabled ? "false" : "true";
       };
-
       const applyFieldOrderToDOM = () => {
         if (!fieldOrderContainer) return;
-        fieldOrder = fieldOrder.filter((key) => REORDERABLE_FIELD_KEYS.includes(key));
-        REORDERABLE_FIELD_KEYS.forEach((key) => {
-          if (!fieldOrder.includes(key)) {
-            fieldOrder.push(key);
-          }
-        });
         fieldOrder.forEach((key) => {
           const element = fieldElements[key];
           if (element) {
             fieldOrderContainer.appendChild(element);
           }
         });
-        updateMoveButtonsState();
       };
 
-      const moveFieldPosition = (key, offset) => {
-        const index = fieldOrder.indexOf(key);
-        const targetIndex = index + offset;
-        if (index < 0 || targetIndex < 0 || targetIndex >= fieldOrder.length) return;
-        fieldOrder.splice(index, 1);
-        fieldOrder.splice(targetIndex, 0, key);
+      let labelHistoryStoreInitialized = false;
+      const ensureLabelHistoryDefaults = () => {
+        if (labelHistoryStoreInitialized) return;
+        let changed = false;
+        REORDERABLE_FIELD_KEYS.forEach((key) => {
+          if (!Array.isArray(labelHistoryStore[key]) || !labelHistoryStore[key].length) {
+            labelHistoryStore[key] = [fieldLabels[key] || DEFAULT_FIELD_LABELS[key]];
+            changed = true;
+          }
+        });
+        if (changed) {
+          saveLabelHistoryStore();
+        }
+        labelHistoryStoreInitialized = true;
+      };
+      ensureLabelHistoryDefaults();
+
+      let draggingFieldKey = null;
+
+      const rebuildFieldOrderFromDOM = () => {
+        if (!fieldOrderContainer) return;
+        const orderedKeys = Array.from(
+          fieldOrderContainer.querySelectorAll("[data-field-key]")
+        )
+          .map((node) => node.dataset.fieldKey)
+          .filter((key) => REORDERABLE_FIELD_KEYS.includes(key));
+        if (!orderedKeys.length) return;
+        fieldOrder = orderedKeys;
         saveFieldOrder();
-        applyFieldOrderToDOM();
         renderWhiteboardFields();
       };
 
-      document.querySelectorAll('[data-move-field]').forEach((button) => {
-        button.addEventListener('click', () => {
-          const fieldKey = button.closest('[data-field-key]')?.dataset.fieldKey;
-          if (!fieldKey) return;
-          const direction = button.dataset.moveField === 'up' ? -1 : 1;
-          moveFieldPosition(fieldKey, direction);
-        });
-      });
-
-      let pendingLabelKey = null;
-      const closeRenameDialog = () => {
-        pendingLabelKey = null;
-        if (renameDialogBackdrop) {
-          renameDialogBackdrop.classList.remove("is-visible");
-          renameDialogBackdrop.setAttribute("aria-hidden", "true");
-        }
-      };
-
-      const openRenameDialog = (key) => {
-        if (!DEFAULT_FIELD_LABELS[key]) return;
-        pendingLabelKey = key;
-        const current = fieldLabels[key] || DEFAULT_FIELD_LABELS[key];
-        if (renameFieldInput) {
-          renameFieldInput.value = current;
-          renameFieldInput.setSelectionRange(0, current.length);
-        }
-        if (renameDialogBackdrop) {
-          renameDialogBackdrop.classList.add("is-visible");
-          renameDialogBackdrop.setAttribute("aria-hidden", "false");
-        }
-        setTimeout(() => renameFieldInput?.focus(), 20);
-      };
-
-      const confirmRename = () => {
-        if (!pendingLabelKey) {
-          closeRenameDialog();
+      const handleDragStart = (event) => {
+        const key = event.currentTarget?.dataset.fieldKey;
+        if (!key) return;
+        if (event.currentTarget?.dataset.dragDisabled === "true") {
+          event.preventDefault();
           return;
         }
-        const raw = renameFieldInput?.value ?? "";
-        const trimmed = raw.trim();
-        fieldLabels[pendingLabelKey] = trimmed || DEFAULT_FIELD_LABELS[pendingLabelKey];
-        saveFieldLabels();
-        applyFieldLabels();
-        renderWhiteboardFields();
-        closeRenameDialog();
+        draggingFieldKey = key;
+        event.currentTarget.classList.add("is-dragging");
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", key);
+        }
       };
 
-      document.querySelectorAll("[data-label-edit]").forEach((button) => {
-        button.addEventListener("click", () => openRenameDialog(button.dataset.labelEdit));
-      });
-      renameCancelBtn?.addEventListener("click", closeRenameDialog);
-      renameConfirmBtn?.addEventListener("click", confirmRename);
-      renameFieldInput?.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          confirmRename();
-        } else if (event.key === "Escape") {
-          event.preventDefault();
-          closeRenameDialog();
+      const handleDragEnd = (event) => {
+        event.currentTarget.classList.remove("is-dragging");
+        draggingFieldKey = null;
+        rebuildFieldOrderFromDOM();
+      };
+
+      const handleDragOverField = (event) => {
+        if (!draggingFieldKey) return;
+        event.preventDefault();
+        const target = event.currentTarget;
+        const targetKey = target.dataset.fieldKey;
+        if (!targetKey || targetKey === draggingFieldKey) return;
+        const draggingElement = fieldElements[draggingFieldKey];
+        if (!draggingElement) return;
+        const bounding = target.getBoundingClientRect();
+        const shouldInsertBefore = event.clientY < bounding.top + bounding.height / 2;
+        if (shouldInsertBefore) {
+          fieldOrderContainer.insertBefore(draggingElement, target);
+        } else {
+          fieldOrderContainer.insertBefore(draggingElement, target.nextSibling);
         }
-      });
-      renameDialogBackdrop?.addEventListener("click", (event) => {
-        if (event.target === renameDialogBackdrop) {
-          closeRenameDialog();
-        }
+      };
+
+      const enableFieldDragReorder = () => {
+        Object.values(fieldElements).forEach((element) => {
+          if (!element) return;
+          setFieldDragEnabled(element.dataset.fieldKey, true);
+          element.addEventListener("dragstart", handleDragStart);
+          element.addEventListener("dragend", handleDragEnd);
+          element.addEventListener("dragover", handleDragOverField);
+        });
+        fieldOrderContainer?.addEventListener("dragover", (event) => {
+          if (!draggingFieldKey) return;
+          const target = event.target.closest("[data-field-key]");
+          if (!target) {
+            event.preventDefault();
+            const draggingElement = fieldElements[draggingFieldKey];
+            if (draggingElement && draggingElement.parentNode !== fieldOrderContainer) {
+              fieldOrderContainer.appendChild(draggingElement);
+            }
+          }
+        });
+        fieldOrderContainer?.addEventListener("drop", (event) => {
+          event.preventDefault();
+          draggingFieldKey = null;
+          rebuildFieldOrderFromDOM();
+        });
+      };
+
+      const startInlineLabelEdit = (key) => {
+        if (!DEFAULT_FIELD_LABELS[key]) return;
+        const label = document.querySelector(`[data-field-label="${key}"]`);
+        if (!label || label.dataset.editing === "true") return;
+        label.dataset.editing = "true";
+        const current = fieldLabels[key] || DEFAULT_FIELD_LABELS[key];
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "inline-label-input";
+        input.value = current;
+        const finish = (commit) => {
+          if (label.dataset.editing !== "true") return;
+          label.dataset.editing = "false";
+          if (input.parentNode) {
+            input.parentNode.removeChild(input);
+          }
+          label.style.display = "";
+          if (commit) {
+            commitFieldLabelValue(key, input.value);
+          } else {
+            label.textContent = fieldLabels[key] || DEFAULT_FIELD_LABELS[key];
+          }
+        };
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            finish(true);
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            finish(false);
+          }
+        });
+        input.addEventListener("blur", () => finish(true));
+        label.style.display = "none";
+        label.parentNode.insertBefore(input, label.nextSibling);
+        requestAnimationFrame(() => {
+          input.focus();
+          input.select();
+        });
+      };
+
+      document.querySelectorAll("[data-field-label]").forEach((label) => {
+        label.addEventListener("click", () => startInlineLabelEdit(label.dataset.fieldLabel));
       });
 
       const getFieldDisplayValue = (key) => {
@@ -1894,7 +2099,9 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       updateLineColor(lineColorInput.value);
       updateWatermarkDate();
       updateCoordinateOverlay();
+      enableFieldDragReorder();
       applyFieldLabels();
+      REORDERABLE_FIELD_KEYS.forEach(renderLabelHistorySelect);
       applyFieldOrderToDOM();
       renderWhiteboardFields();
       requestAnimationFrame(positionBoardAtBottomLeft);
@@ -1921,3 +2128,4 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
     </script>
   </body>
 </html>
+
