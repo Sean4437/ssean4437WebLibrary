@@ -138,6 +138,16 @@
   </head>
   <body>
     <div class="app-shell">
+      <div class="field-visibility-panel">
+        <span class="field-visibility-title">欄位顯示</span>
+        <div class="field-visibility-list">
+          <button type="button" class="field-visibility-toggle" data-field-visibility="projectName">工程名稱</button>
+          <button type="button" class="field-visibility-toggle" data-field-visibility="inspectionLocation">檢查位置</button>
+          <button type="button" class="field-visibility-toggle" data-field-visibility="testDate">檢查日期</button>
+          <button type="button" class="field-visibility-toggle" data-field-visibility="inspector">檢查人員</button>
+          <button type="button" class="field-visibility-toggle" data-field-visibility="testResult">檢查紀錄</button>
+        </div>
+      </div>
 
       <section class="panel">
         <h3>資料輸入面板</h3>
@@ -276,16 +286,6 @@
               </button>
             </div>
           </div>
-          <div class="field-visibility-panel">
-            <span class="field-visibility-title">欄位顯示</span>
-            <div class="field-visibility-list">
-              <button type="button" class="field-visibility-toggle" data-field-visibility="projectName">工程名稱</button>
-              <button type="button" class="field-visibility-toggle" data-field-visibility="inspectionLocation">檢查位置</button>
-              <button type="button" class="field-visibility-toggle" data-field-visibility="testDate">檢查日期</button>
-              <button type="button" class="field-visibility-toggle" data-field-visibility="inspector">檢查人員</button>
-              <button type="button" class="field-visibility-toggle" data-field-visibility="testResult">檢查紀錄</button>
-            </div>
-          </div>
         </div>
         <button type="button" class="ghost-btn toggle-advanced" id="toggleAdvanced">顯示更多調整</button>
         <div class="panel-actions advanced-controls" id="advancedControls" hidden>
@@ -306,6 +306,7 @@
             <span>座標紀錄</span>
             <div class="history-actions">
               <button type="button" class="ghost-btn ghost-button--accent" id="downloadCoordinateHistory">下載紀錄</button>
+              <button type="button" class="ghost-btn ghost-button--accent" id="downloadCoordinateHistoryKml">下載 KML</button>
               <button type="button" class="ghost-btn ghost-button--danger" id="clearCoordinateHistory">清除紀錄</button>
             </div>
           </label>
@@ -399,6 +400,7 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const coordinateFormatText = document.getElementById("coordinateFormatText");
       const exportSizeButtons = document.querySelectorAll("[data-export-size]");
       const downloadCoordinateHistoryBtn = document.getElementById("downloadCoordinateHistory");
+      const downloadCoordinateHistoryKmlBtn = document.getElementById("downloadCoordinateHistoryKml");
       const clearCoordinateHistoryBtn = document.getElementById("clearCoordinateHistory");
       const boardVisibilityButton = document.getElementById("toggleBoardButton");
       const boardVisibilityLabel = document.getElementById("boardVisibilityLabel");
@@ -434,7 +436,13 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const COORDINATE_FORMATS = {
         WGS84: "wgs84",
         TWD97: "twd97",
+        NONE: "none",
       };
+      const COORDINATE_FORMAT_SEQUENCE = [
+        COORDINATE_FORMATS.TWD97,
+        COORDINATE_FORMATS.WGS84,
+        COORDINATE_FORMATS.NONE,
+      ];
       let coordinateFormat = COORDINATE_FORMATS.TWD97;
       const EXPORT_SIZE_SCALE = {
         small: 0.8,
@@ -1072,6 +1080,13 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
         return `X:${Math.round(x)} Y:${Math.round(y)}`;
       };
+      const escapeXml = (value = "") =>
+        String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&apos;");
 
       const updateBoardVisibilityButton = (visible) => {
         if (!boardVisibilityButton || !boardVisibilityLabel) return;
@@ -1091,11 +1106,15 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         }
       };
 
+      const formatLabelMap = {
+        [COORDINATE_FORMATS.TWD97]: "TWD97",
+        [COORDINATE_FORMATS.WGS84]: "經緯",
+        [COORDINATE_FORMATS.NONE]: "無",
+      };
       const updateCoordinateFormatButton = () => {
         if (!coordinateFormatButton) return;
-        const label = coordinateFormat === COORDINATE_FORMATS.TWD97 ? "TWD97" : "經緯";
-        const description = coordinateFormat === COORDINATE_FORMATS.TWD97 ? "X / Y" : "Lat / Lng";
-        coordinateFormatButton.setAttribute("aria-label", `座標顯示：${label} (${description})`);
+        const label = formatLabelMap[coordinateFormat] || "TWD97";
+        coordinateFormatButton.setAttribute("aria-label", `座標顯示：${label}`);
         if (coordinateFormatText) {
           coordinateFormatText.textContent = label;
         }
@@ -1191,8 +1210,53 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         document.body.removeChild(link);
         setTimeout(() => URL.revokeObjectURL(url), 0);
       };
+      const downloadCoordinateHistoryKml = () => {
+        const entries = (coordinateHistory || []).filter(
+          (item) =>
+            typeof item.latitude === "number" &&
+            !Number.isNaN(item.latitude) &&
+            typeof item.longitude === "number" &&
+            !Number.isNaN(item.longitude)
+        );
+        if (!entries.length) {
+          showToast("目前沒有可匯出的座標。");
+          return;
+        }
+        const placemarks = entries
+          .map((item, index) => {
+            const name = escapeXml(item.timestamp || `紀錄 ${index + 1}`);
+            const descriptionParts = [];
+            if (typeof item.twdX === "number" && typeof item.twdY === "number") {
+              descriptionParts.push(`TWD97 X：${item.twdX} Y：${item.twdY}`);
+            }
+            const description = descriptionParts.length ? `<description>${escapeXml(descriptionParts.join("\n"))}</description>` : "";
+            return `    <Placemark>
+      <name>${name}</name>
+${description ? `      ${description}\n` : ""}      <Point>
+        <coordinates>${item.longitude},${item.latitude},0</coordinates>
+      </Point>
+    </Placemark>`;
+          })
+          .join("\n");
+        const kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+${placemarks}
+  </Document>
+</kml>`;
+        const blob = new Blob([kml], { type: "application/vnd.google-earth.kml+xml" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `coordinate_history_${new Date().toISOString().split("T")[0]}.kml`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+      };
 
       const resolveCoordinateText = () => {
+        if (coordinateFormat === COORDINATE_FORMATS.NONE) return null;
         const gps = lastPhotoMetadata?.gps;
         if (!gps || typeof gps.latitude !== "number" || typeof gps.longitude !== "number") {
           return null;
@@ -1758,23 +1822,48 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       };
 
       const handlePhotoFiles = async (files) => {
-        const [file] = files || [];
-        if (!file) return;
-        let dataUrl = null;
-        try {
-          dataUrl = await readFileAsDataURL(file);
+        const fileArray = Array.from(files || []).filter(Boolean);
+        if (!fileArray.length) return;
+        const captureCoordinates = await consumePendingCaptureCoordinates();
+        let processedCount = 0;
+        let gpsCount = 0;
+        let successCount = 0;
+        for (const file of fileArray) {
+          let dataUrl = null;
+          try {
+            dataUrl = await readFileAsDataURL(file);
+          } catch (error) {
+            console.warn("讀取照片失敗", error);
+            continue;
+          }
+          successCount += 1;
+          processedCount += 1;
           photoImage.src = dataUrl;
           photoImage.hidden = false;
           placeholder.style.display = "none";
           updateStageAspect();
           whiteboardWrapper.dataset.userPositioned = "false";
           requestAnimationFrame(positionBoardAtBottomLeft);
-        } catch (error) {
-          showToast("照片載入失敗，請重新選擇。");
+          await applyPhotoMetadata(file, dataUrl, captureCoordinates);
+          const hasGps =
+            lastPhotoMetadata &&
+            typeof lastPhotoMetadata.gps?.latitude === "number" &&
+            typeof lastPhotoMetadata.gps.longitude === "number";
+          if (hasGps) {
+            gpsCount += 1;
+          }
+        }
+        if (!successCount) {
+          showToast("無法讀取任何照片，請重新選擇。");
           return;
         }
-        const captureCoordinates = await consumePendingCaptureCoordinates();
-        await applyPhotoMetadata(file, dataUrl, captureCoordinates);
+        if (processedCount > 1) {
+          const message =
+            gpsCount > 0
+              ? `已處理 ${processedCount} 張照片，取得 ${gpsCount} 筆座標。`
+              : `已處理 ${processedCount} 張照片，但沒有可用座標。`;
+          showToast(message, gpsCount > 0 ? "success" : undefined);
+        }
       };
 
       const applyColorPreset = (button) => {
@@ -2107,12 +2196,12 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         button.addEventListener("click", () => setExportSize(button.dataset.exportSize))
       );
       clearCoordinateHistoryBtn?.addEventListener("click", clearCoordinateHistory);
+      downloadCoordinateHistoryKmlBtn?.addEventListener("click", downloadCoordinateHistoryKml);
       downloadCoordinateHistoryBtn?.addEventListener("click", downloadCoordinateHistory);
       coordinateFormatButton.addEventListener("click", () => {
-        const nextFormat =
-          coordinateFormat === COORDINATE_FORMATS.TWD97
-            ? COORDINATE_FORMATS.WGS84
-            : COORDINATE_FORMATS.TWD97;
+        const currentIndex = COORDINATE_FORMAT_SEQUENCE.indexOf(coordinateFormat);
+        const nextIndex = (currentIndex + 1) % COORDINATE_FORMAT_SEQUENCE.length;
+        const nextFormat = COORDINATE_FORMAT_SEQUENCE[nextIndex] || COORDINATE_FORMATS.TWD97;
         setCoordinateFormat(nextFormat);
       });
       refreshAllFieldHistoryUI();
