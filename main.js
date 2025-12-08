@@ -1000,6 +1000,7 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         const combinedScale = baseBoardScale * fontScaleFactor;
         whiteboardWrapper.style.setProperty("--board-scale", combinedScale.toString());
         document.documentElement.style.setProperty("--whiteboard-font-scale", fontScaleFactor.toString());
+        document.documentElement.style.setProperty("--whiteboard-overlay-scale", combinedScale.toString());
       };
 
       const updateBoardScale = (value) => {
@@ -1140,8 +1141,10 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
           const baseScale = window.devicePixelRatio || 1;
           const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
           const exportScale = baseScale * sizeMultiplier;
+          const exportBg =
+            (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
           const canvas = await html2canvas(captureArea, {
-            backgroundColor: null,
+            backgroundColor: exportBg,
             scale: exportScale,
           });
           const isPortrait = canvas.height >= canvas.width;

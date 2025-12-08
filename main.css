@@ -422,7 +422,11 @@
         right: clamp(0.02rem, 0.8vw, 0.15rem);
         bottom: clamp(0.02rem, 0.8vw, 0.15rem);
         color: #fbbf24;
-        font-size: clamp(0.65rem, 2.5vw, 0.9rem);
+        font-size: clamp(
+          0.75rem,
+          calc(1rem * var(--whiteboard-overlay-scale, var(--whiteboard-font-scale, 1))),
+          3rem
+        );
         letter-spacing: 0.18em;
         font-weight: 800;
         -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.9);

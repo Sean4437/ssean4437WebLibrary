@@ -1966,6 +1966,7 @@ ${placemarks}
         const combinedScale = baseBoardScale * fontScaleFactor;
         whiteboardWrapper.style.setProperty("--board-scale", combinedScale.toString());
         document.documentElement.style.setProperty("--whiteboard-font-scale", fontScaleFactor.toString());
+        document.documentElement.style.setProperty("--whiteboard-overlay-scale", combinedScale.toString());
       };
 
       const updateBoardScale = (value) => {
@@ -2113,11 +2114,13 @@ ${placemarks}
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
+          const exportBg =
+            (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
           const baseScale = window.devicePixelRatio || 1;
           const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
           const exportScale = baseScale * sizeMultiplier;
           const canvas = await html2canvas(captureArea, {
-            backgroundColor: null,
+            backgroundColor: exportBg,
             scale: exportScale,
           });
           const isPortrait = canvas.height >= canvas.width;

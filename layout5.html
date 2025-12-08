@@ -463,7 +463,11 @@
         right: clamp(0.35rem, 3vw, 0.85rem);
         bottom: clamp(0.3rem, 2.5vw, 0.75rem);
         color: #fbbf24;
-        font-size: clamp(0.65rem, 2.5vw, 0.9rem);
+        font-size: clamp(
+          0.75rem,
+          calc(1rem * var(--whiteboard-overlay-scale, var(--whiteboard-font-scale, 1))),
+          2.2rem
+        );
         letter-spacing: 0.18em;
         font-weight: 800;
         -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.9);
@@ -1681,6 +1685,7 @@
         const combinedScale = baseBoardScale * fontScaleFactor;
         whiteboardWrapper.style.setProperty("--board-scale", combinedScale.toString());
         document.documentElement.style.setProperty("--whiteboard-font-scale", fontScaleFactor.toString());
+        document.documentElement.style.setProperty("--whiteboard-overlay-scale", combinedScale.toString());
       };
 
       const updateBoardScale = (value) => {
@@ -1816,8 +1821,10 @@
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
+          const exportBg =
+            (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
           const canvas = await html2canvas(captureArea, {
-            backgroundColor: null,
+            backgroundColor: exportBg,
             scale: window.devicePixelRatio || 2,
           });
           let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
