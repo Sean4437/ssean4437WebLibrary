@@ -282,7 +282,7 @@
             </button>
             <div class="coordinate-toggle-inline">
               <button type="button" class="coordinate-toggle-btn" id="coordinateFormatButton">
-                <strong id="coordinateFormatText">TWD97</strong>
+                <strong id="coordinateFormatText">97</strong>
               </button>
             </div>
           </div>
@@ -1107,13 +1107,13 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       };
 
       const formatLabelMap = {
-        [COORDINATE_FORMATS.TWD97]: "TWD97",
-        [COORDINATE_FORMATS.WGS84]: "經緯",
+        [COORDINATE_FORMATS.TWD97]: "97",
+        [COORDINATE_FORMATS.WGS84]: "WGS",
         [COORDINATE_FORMATS.NONE]: "無",
       };
       const updateCoordinateFormatButton = () => {
         if (!coordinateFormatButton) return;
-        const label = formatLabelMap[coordinateFormat] || "TWD97";
+        const label = formatLabelMap[coordinateFormat] || "97";
         coordinateFormatButton.setAttribute("aria-label", `座標顯示：${label}`);
         if (coordinateFormatText) {
           coordinateFormatText.textContent = label;
@@ -2328,4 +2328,5 @@ ${placemarks}
     </script>
   </body>
 </html>
+
 
