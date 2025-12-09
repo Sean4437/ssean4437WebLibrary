@@ -304,36 +304,36 @@
       }
 
       .coordinate-toggle-btn {
-        width: 100%;
-        border-radius: 16px;
+        width: 46px;
+        height: 28px;
+        border-radius: 12px;
         border: 1px solid rgba(148, 163, 184, 0.45);
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.08));
-        padding: 0.55rem 0.85rem;
-        display: flex;
-        justify-content: space-between;
+        padding: 0;
+        display: inline-flex;
+        justify-content: center;
         align-items: center;
         font: inherit;
         color: #e2e8f0;
         cursor: pointer;
-        transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+        transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.15s ease;
       }
 
       .coordinate-toggle-btn strong {
-        font-size: 1rem;
-        letter-spacing: 0.08em;
+        font-size: 0.9rem;
+        letter-spacing: 0.06em;
         color: #fbbf24;
       }
 
       .coordinate-toggle-btn span {
-        font-size: 0.85rem;
-        color: #cbd5f5;
-        letter-spacing: 0.04em;
+        display: none;
       }
 
       .coordinate-toggle-btn:hover,
       .coordinate-toggle-btn:focus-visible {
         border-color: rgba(59, 130, 246, 0.8);
         outline: none;
+        transform: translateY(-1px);
       }
 
       #applyDataBtn {
