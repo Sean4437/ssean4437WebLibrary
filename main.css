@@ -304,11 +304,11 @@
       }
 
       .coordinate-toggle-btn {
-        width: 46px;
-        height: 28px;
-        border-radius: 12px;
+        width: 38px;
+        height: 26px;
+        border-radius: 10px;
         border: 1px solid rgba(148, 163, 184, 0.45);
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.08));
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(37, 99, 235, 0.08));
         padding: 0;
         display: inline-flex;
         justify-content: center;
@@ -320,8 +320,8 @@
       }
 
       .coordinate-toggle-btn strong {
-        font-size: 0.9rem;
-        letter-spacing: 0.06em;
+        font-size: 0.78rem;
+        letter-spacing: 0.05em;
         color: #fbbf24;
       }
 
