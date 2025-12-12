@@ -9,6 +9,9 @@
     <title>麗鄴電子白板-布局4</title>
     <link rel="stylesheet" href="main.css" />
     <style>
+      .photo-watermark {
+        font-size: calc(1rem * var(--whiteboard-overlay-scale, 1));
+      }
       .field-label-row {
         display: flex;
         align-items: center;
@@ -1964,9 +1967,13 @@ ${placemarks}
 
       const applyScale = () => {
         const combinedScale = baseBoardScale * fontScaleFactor;
+        const baseOverlayScale = combinedScale * fontScaleFactor * 0.96;
+        // User feedback indicates the watermark is still too large.
+        // Applying a manual adjustment to reduce it by about half.
+        const overlayScale = baseOverlayScale / 2;
         whiteboardWrapper.style.setProperty("--board-scale", combinedScale.toString());
         document.documentElement.style.setProperty("--whiteboard-font-scale", fontScaleFactor.toString());
-        document.documentElement.style.setProperty("--whiteboard-overlay-scale", combinedScale.toString());
+        document.documentElement.style.setProperty("--whiteboard-overlay-scale", overlayScale.toString());
       };
 
       const updateBoardScale = (value) => {
