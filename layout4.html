@@ -1970,7 +1970,10 @@ ${placemarks}
         const baseOverlayScale = combinedScale * fontScaleFactor * 0.96;
         // User feedback indicates the watermark is still too large.
         // Applying a manual adjustment to reduce it by about half.
-        const overlayScale = baseOverlayScale / 2;
+        let overlayScale = baseOverlayScale / 2;
+        if (isMobileDevice) {
+          overlayScale *= 2;
+        }
         whiteboardWrapper.style.setProperty("--board-scale", combinedScale.toString());
         document.documentElement.style.setProperty("--whiteboard-font-scale", fontScaleFactor.toString());
         document.documentElement.style.setProperty("--whiteboard-overlay-scale", overlayScale.toString());
