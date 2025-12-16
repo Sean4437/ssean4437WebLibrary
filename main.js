@@ -95,7 +95,7 @@
       };
 
       const formatWatermarkDate = (value) => {
-        if (!value) return "?交??芾身摰?;
+        if (!value) return "日期未設定";
         const [year, month, day] = value.split("-");
         if (!year || !month || !day) return value;
         return `${year}/${month}/${day}`;
@@ -162,7 +162,7 @@
                     ((61 - 58 * T + T * T + 600 * C - 330 * ePrime2) * Math.pow(A, 6)) / 720));
           return [x, y];
         } catch (error) {
-          console.warn("TWD97 頧?憭望?", error);
+          console.warn("TWD97 轉換失敗", error);
           return null;
         }
       };
@@ -176,7 +176,7 @@
         if (!boardVisibilityButton || !boardVisibilityLabel) return;
         boardVisibilityButton.dataset.boardVisible = String(visible);
         boardVisibilityButton.setAttribute("aria-pressed", visible ? "true" : "false");
-        boardVisibilityLabel.textContent = visible ? "?賣?? : "?賣??;
+        boardVisibilityLabel.textContent = visible ? "白板開" : "白板關";
       };
 
       const setWhiteboardVisibility = (visible) => {
@@ -186,7 +186,7 @@
         try {
           localStorage.setItem(WHITEBOARD_VISIBILITY_STORAGE_KEY, String(Boolean(visible)));
         } catch (error) {
-          console.warn("?脣??賣?航???仃??, error);
+          console.warn("儲存白板可見狀態失敗", error);
         }
       };
 
@@ -194,7 +194,7 @@
         if (!coordinateFormatButton) return;
         const label = coordinateFormat === COORDINATE_FORMATS.TWD97 ? "97" : "WGS";
         const description = coordinateFormat === COORDINATE_FORMATS.TWD97 ? "X / Y" : "Lat / Lng";
-        coordinateFormatButton.setAttribute("aria-label", `摨扳?憿舐內嚗?{label} (${description})`);
+        coordinateFormatButton.setAttribute("aria-label", `座標顯示：${label} (${description})`);
         if (coordinateFormatText) {
           coordinateFormatText.textContent = label;
         }
@@ -215,7 +215,7 @@
         try {
           localStorage.setItem(EXPORT_SIZE_STORAGE_KEY, size);
         } catch (error) {
-          console.warn("?脣?頛詨撠箏站憭望?", error);
+          console.warn("儲存輸出尺寸失敗", error);
         }
       };
 
@@ -226,7 +226,7 @@
           const parsed = JSON.parse(raw);
           return Array.isArray(parsed) ? parsed : [];
         } catch (error) {
-          console.warn("霈?漣璅??仃??, error);
+          console.warn("讀取座標紀錄失敗", error);
           return [];
         }
       };
@@ -235,7 +235,7 @@
         try {
           localStorage.setItem(COORDINATE_HISTORY_STORAGE_KEY, JSON.stringify(coordinateHistory));
         } catch (error) {
-          console.warn("?脣?摨扳?蝝?仃??, error);
+          console.warn("儲存座標紀錄失敗", error);
         }
       };
 
@@ -259,12 +259,12 @@
       const clearCoordinateHistory = () => {
         coordinateHistory = [];
         saveCoordinateHistory();
-        showToast("摨扳?蝝?歇皜??, "success");
+        showToast("座標紀錄已清除。", "success");
       };
 
       const downloadCoordinateHistory = () => {
         if (!coordinateHistory.length) {
-          showToast("?桀?瘝?摨扳?蝝??);
+          showToast("沒有座標紀錄。");
           return;
         }
         const rows = [
@@ -324,7 +324,7 @@
         try {
           localStorage.setItem(COORDINATE_FORMAT_STORAGE_KEY, value);
         } catch (error) {
-          console.warn("?脣?摨扳??澆?憭望?", error);
+          console.warn("儲存座標格式失敗", error);
         }
         updateCoordinateFormatButton();
         updateCoordinateOverlay();
@@ -342,16 +342,16 @@
         if (displayCoordinateLatLon) {
           displayCoordinateLatLon.textContent = gps
             ? formatDecimalCoordinates(gps.latitude, gps.longitude)
-            : "??;
+            : "未取得";
         }
         if (displayCoordinateTwd) {
           if (!gps) {
-            displayCoordinateTwd.textContent = "X嚗?Y嚗?;
+            displayCoordinateTwd.textContent = "X：— Y：—";
           } else {
             const twd = convertToTwd97(gps.latitude, gps.longitude);
             displayCoordinateTwd.textContent = twd
-              ? `X嚗?{Math.round(twd[0])}?Y嚗?{Math.round(twd[1])}`
-              : "X嚗?Y嚗?;
+              ? `X：${Math.round(twd[0])} Y：${Math.round(twd[1])}`
+              : "X：— Y：—";
           }
         }
       };
@@ -413,7 +413,7 @@
           });
           return piexif.insert(exifBytes, dataUrl);
         } catch (error) {
-          console.warn("EXIF 撖怠憭望?", error);
+          console.warn("EXIF 寫入失敗", error);
           return dataUrl;
         }
       };
@@ -436,7 +436,7 @@
           const parsed = raw ? JSON.parse(raw) : {};
           return typeof parsed === "object" && parsed ? parsed : {};
         } catch (error) {
-          console.warn("霈?風?脰??仃??, error);
+          console.warn("讀取欄位歷史失敗", error);
           return {};
         }
       };
@@ -447,7 +447,7 @@
         try {
           localStorage.setItem(FIELD_HISTORY_STORAGE_KEY, JSON.stringify(fieldHistory));
         } catch (error) {
-          console.warn("?脣?甇瑕鞈?憭望?", error);
+          console.warn("儲存欄位歷史失敗", error);
         }
       };
 
@@ -572,7 +572,7 @@
               }
             },
             (error) => {
-              console.warn("摰?憭望?嚗瘜神?亙漣璅?, error);
+              console.warn("取得定位失敗，將略過座標", error);
               resolve(null);
             },
             { enableHighAccuracy: true, timeout: GEOLOCATION_TIMEOUT_MS, maximumAge: 0 }
@@ -586,7 +586,7 @@
         try {
           return await pendingCaptureCoordinatesPromise;
         } catch (error) {
-          console.warn("霈??雿?閮仃??, error);
+          console.warn("讀取暫存定位失敗", error);
           return null;
         } finally {
           pendingCaptureCoordinatesPromise = null;
@@ -789,7 +789,7 @@
           const buffer = await file.arrayBuffer();
           return readExifMetadataFromBuffer(buffer) || {};
         } catch (error) {
-          console.warn("EXIF 閫??憭望?", error);
+          console.warn("EXIF 解析失敗", error);
           return {};
         }
       };
@@ -800,7 +800,7 @@
         try {
           metadata = await extractExifMetadata(file);
         } catch (error) {
-          console.warn("霈??EXIF 鞈?憭望?", error);
+          console.warn("讀取 EXIF 失敗", error);
         }
         lastPhotoMetadata =
           metadata && (metadata.date || metadata.gps || metadata.orientation)
@@ -816,17 +816,17 @@
         if (window.piexif && dataUrl) {
           try {
             const exifObj = piexif.load(dataUrl);
-            if (exifObj["0th"]) {
-              delete exifObj["0th"][piexif.ImageIFD.Orientation];
-            }
-            lastPhotoExifBytes = extraGps ? null : piexif.dump(exifObj);
-          } catch (error) {
-            console.warn("EXIF 頛憭望?", error);
-            lastPhotoExifBytes = null;
+          if (exifObj["0th"]) {
+            delete exifObj["0th"][piexif.ImageIFD.Orientation];
           }
-        } else {
+          lastPhotoExifBytes = extraGps ? null : piexif.dump(exifObj);
+        } catch (error) {
+          console.warn("EXIF 解析失敗", error);
           lastPhotoExifBytes = null;
         }
+      } else {
+        lastPhotoExifBytes = null;
+      }
         if (lastPhotoMetadata?.orientation) {
           delete lastPhotoMetadata.orientation;
         }
@@ -843,9 +843,7 @@
         formInputs.testDate.value = resolvedDate;
         syncField("testDate");
         showToast(
-          usedExif
-            ? "撌脣??函?????憒?靽格?舀??矽?氬?
-            : "撌脣??冽????憒?靽格?舀??矽?氬?,
+          usedExif ? "已套用照片 EXIF 日期/座標。" : "已套用檔案時間作為日期。",
           "success"
         );
         updateCoordinateOverlay();
@@ -893,7 +891,7 @@
           whiteboardWrapper.dataset.userPositioned = "false";
           requestAnimationFrame(positionBoardAtBottomLeft);
         } catch (error) {
-          showToast("?抒?頛憭望?嚗???豢???);
+          showToast("照片載入失敗，請重新選擇。");
           return;
         }
         const captureCoordinates = await consumePendingCaptureCoordinates();
@@ -919,7 +917,7 @@
           boardOpacityInput.value = boardOpacity;
           updateBoardOpacity(boardOpacity);
         }
-        showToast("撌脣??券?閮剝??脯?, "success");
+        showToast("已套用預設配色。", "success");
       };
 
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -1048,7 +1046,7 @@
 
       function syncField(key) {
         const value = formInputs[key].value.trim();
-        displayTargets[key].textContent = value || "??;
+        displayTargets[key].textContent = value || "—";
         if (key === "testDate") {
           updateWatermarkDate();
         }
@@ -1104,10 +1102,10 @@
 
       const buildShareText = () => {
         const sections = [
-          { label: "瑼Ｘ雿蔭", value: displayTargets.inspectionLocation.textContent },
-          { label: "瑼Ｘ?交?", value: displayTargets.testDate.textContent },
+          { label: "檢查位置", value: displayTargets.inspectionLocation.textContent },
+          { label: "檢查日期", value: displayTargets.testDate.textContent },
         ];
-        return sections.map((item) => `${item.label}嚗?{item.value || "??}`).join("\n");
+        return sections.map((item) => `${item.label}：${item.value || "—"}`).join("\n");
       };
 
       const handleShareOrDownload = async (blob, filename) => {
@@ -1122,24 +1120,24 @@
           try {
             await navigator.share({
               files: [file],
-              title: "撌亦??賣?抒?",
+              title: "工程白板照片",
               text: shareText,
             });
-            showToast("撌脤???鈭恍?選?隢?摮蔣??, "success");
+            showToast("已開啟分享面板，請選擇儲存或傳送。", "success");
             return;
           } catch (error) {
             if (error.name !== "AbortError") {
-              showToast("?澈?Ｘ銝?剁?撠??頛蔣??);
+              showToast("分享不可用，將改為下載。");
             }
           }
         }
         downloadBlob(blob, filename);
-        showToast("撌脖?頛????舐?仿?摮?蝵柴?, "success");
+        showToast("已下載圖片，可選擇儲存位置。", "success");
       };
 
       const exportBoardImage = async () => {
         exportBtn.disabled = true;
-        exportBtn.textContent = "?臬銝凌?;
+        exportBtn.textContent = "匯出中…";
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
@@ -1161,12 +1159,12 @@
           await handleShareOrDownload(blob, filename);
         } catch (error) {
           console.error(error);
-          showToast("?臬憭望?嚗??岫銝甈～?);
+          showToast("匯出失敗，請再試一次。");
         } finally {
           toggleExportAppearance(false);
           toggleWhiteboardSolid(false);
           exportBtn.disabled = false;
-          exportBtn.textContent = "?臬?游撐??";
+          exportBtn.textContent = "匯出整張圖片";
         }
       };
 
@@ -1190,7 +1188,7 @@
 
       clearBoardBtn.addEventListener("click", () => {
         clearBoard();
-        showToast("?賣??撌脫??扎?, "success");
+        showToast("白板文字已清除。", "success");
       });
 
       boardScaleInput.addEventListener("input", (event) =>
@@ -1293,7 +1291,7 @@
           coordinateFormat = savedFormat;
         }
       } catch (error) {
-        console.warn("霈?漣璅撘仃??, error);
+        console.warn("讀取座標格式失敗", error);
       }
       updateCoordinateFormatButton();
       coordinateHistory = loadCoordinateHistory();
@@ -1303,7 +1301,7 @@
           exportSize = storedExportSize;
         }
       } catch (error) {
-        console.warn("霈?撓?箏偕撖詨仃??, error);
+        console.warn("讀取輸出尺寸失敗", error);
       }
       updateExportSizeButtons();
       let savedVisibility = true;
@@ -1313,7 +1311,7 @@
           savedVisibility = storedVisibility === "true";
         }
       } catch (error) {
-        console.warn("霈??踹閬??仃??, error);
+        console.warn("讀取白板可見狀態失敗", error);
       }
       setWhiteboardVisibility(savedVisibility);
       syncAllFields();
@@ -1333,10 +1331,10 @@
         const isHidden = advancedControls.hasAttribute("hidden");
         if (isHidden) {
           advancedControls.removeAttribute("hidden");
-          toggleAdvanced.textContent = "?梯??游?隤踵";
+          toggleAdvanced.textContent = "隱藏更多調整";
         } else {
           advancedControls.setAttribute("hidden", "true");
-          toggleAdvanced.textContent = "憿舐內?游?隤踵";
+          toggleAdvanced.textContent = "顯示更多調整";
         }
       });
       autoResizeTextarea(formInputs.testResult);
@@ -1347,5 +1345,3 @@
       formInputs.testDate.addEventListener("change", () =>
         syncField("testDate")
       );
-
-
