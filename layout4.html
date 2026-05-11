@@ -371,8 +371,8 @@
       <input type="file" accept="image/*" class="hidden-input" id="uploadInput" />
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="vendor/piexif.min.js"></script>
+    <script src="vendor/html2canvas.min.js"></script>
     
     <script>
 const takePhotoBtn = document.getElementById("takePhotoBtn");
@@ -446,6 +446,7 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         COORDINATE_FORMATS.WGS84,
         COORDINATE_FORMATS.NONE,
       ];
+      const COORDINATE_HISTORY_LIMIT = 500;
       let coordinateFormat = COORDINATE_FORMATS.TWD97;
       const EXPORT_SIZE_SCALE = {
         small: 0.8,
@@ -1147,7 +1148,8 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
           const raw = localStorage.getItem(COORDINATE_HISTORY_STORAGE_KEY);
           if (!raw) return [];
           const parsed = JSON.parse(raw);
-          return Array.isArray(parsed) ? parsed : [];
+          if (!Array.isArray(parsed)) return [];
+          return parsed.slice(-COORDINATE_HISTORY_LIMIT);
         } catch (error) {
           console.warn("讀取座標紀錄失敗", error);
           return [];
@@ -1176,6 +1178,9 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
           record.twdY = Math.round(twd[1]);
         }
         coordinateHistory.push(record);
+        if (coordinateHistory.length > COORDINATE_HISTORY_LIMIT) {
+          coordinateHistory = coordinateHistory.slice(-COORDINATE_HISTORY_LIMIT);
+        }
         saveCoordinateHistory();
       };
 
@@ -2124,6 +2129,10 @@ ${placemarks}
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
+          if (typeof html2canvas !== "function") {
+            showToast("匯出元件未載入，請重新整理頁面後再試。");
+            return;
+          }
           const exportBg =
             (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
           const baseScale = window.devicePixelRatio || 1;
@@ -2338,5 +2347,6 @@ ${placemarks}
     </script>
   </body>
 </html>
+
 
 

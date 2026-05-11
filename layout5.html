@@ -879,8 +879,8 @@
       <input type="file" accept="image/*" class="hidden-input" id="uploadInput" />
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="vendor/piexif.min.js"></script>
+    <script src="vendor/html2canvas.min.js"></script>
     <script>
       const takePhotoBtn = document.getElementById("takePhotoBtn");
       const takePhotoDefaultText = takePhotoBtn.textContent;
@@ -1826,6 +1826,10 @@
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
+          if (typeof html2canvas !== "function") {
+            showToast("匯出元件未載入，請重新整理頁面後再試。");
+            return;
+          }
           const exportBg =
             (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
           const canvas = await html2canvas(captureArea, {
@@ -1983,4 +1987,5 @@
     </script>
   </body>
 </html>
+
 

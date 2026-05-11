@@ -63,6 +63,7 @@
         WGS84: "wgs84",
         TWD97: "97",
       };
+      const COORDINATE_HISTORY_LIMIT = 500;
       let coordinateFormat = COORDINATE_FORMATS.TWD97;
       const EXPORT_SIZE_SCALE = {
         small: 0.8,
@@ -224,7 +225,8 @@
           const raw = localStorage.getItem(COORDINATE_HISTORY_STORAGE_KEY);
           if (!raw) return [];
           const parsed = JSON.parse(raw);
-          return Array.isArray(parsed) ? parsed : [];
+          if (!Array.isArray(parsed)) return [];
+          return parsed.slice(-COORDINATE_HISTORY_LIMIT);
         } catch (error) {
           console.warn("讀取座標紀錄失敗", error);
           return [];
@@ -253,6 +255,9 @@
           record.twdY = Math.round(twd[1]);
         }
         coordinateHistory.push(record);
+        if (coordinateHistory.length > COORDINATE_HISTORY_LIMIT) {
+          coordinateHistory = coordinateHistory.slice(-COORDINATE_HISTORY_LIMIT);
+        }
         saveCoordinateHistory();
       };
 
@@ -1141,6 +1146,10 @@
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
+          if (typeof html2canvas !== "function") {
+            showToast("匯出元件未載入，請重新整理頁面後再試。");
+            return;
+          }
           const baseScale = window.devicePixelRatio || 1;
           const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
           const exportScale = baseScale * sizeMultiplier;
