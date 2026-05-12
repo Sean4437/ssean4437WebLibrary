@@ -194,7 +194,7 @@
       </button>
       <header>
         <h1 class="title">麗鄴工程電子白板</h1>
-        <p class="version-note">⚠ 已更新版本 <span id="appVersion">v2.38</span></p>
+        <p class="version-note">⚠ 已更新版本 <span id="appVersion">v2.41</span></p>
       </header>
 
       <div class="layout-switcher" role="tablist" aria-label="版面切換">
@@ -226,7 +226,7 @@
 
     <script src="version.js"></script>
     <script>
-      const appVersion = window.WHITEBOARD_VERSION || 'v2.38';
+      const appVersion = window.WHITEBOARD_VERSION || 'v2.41';
       const appVersionEl = document.getElementById('appVersion');
       if (appVersionEl) {
         appVersionEl.textContent = appVersion;
@@ -238,7 +238,11 @@
       const storageKey = 'whiteboard-preferred-layout';
       const DEFAULT_LAYOUT = 'layout4.html';
       const availableLayouts = new Map(Array.from(tabs, (tab) => [tab.dataset.layoutTarget, tab]));
-      let currentLayout = frame.getAttribute('src') || DEFAULT_LAYOUT;
+      const toVersionedLayoutUrl = (target) => {
+        const separator = target.includes('?') ? '&' : '?';
+        return `${target}${separator}v=${encodeURIComponent(appVersion)}`;
+      };
+      let currentLayout = null;
       let pendingLayout = null;
       let frameLoadHandler = null;
 
@@ -268,7 +272,7 @@
             frameLoadHandler = null;
           };
           frame.addEventListener('load', frameLoadHandler);
-          frame.src = target;
+          frame.src = toVersionedLayoutUrl(target);
         }
 
         try {
@@ -288,9 +292,9 @@
       } catch (error) {
         console.warn('讀取偏好失敗', error);
       }
-      if (savedLayout && savedLayout !== DEFAULT_LAYOUT) {
-        setActiveLayout(savedLayout);
-      }
+      const initialLayout =
+        savedLayout && availableLayouts.has(savedLayout) ? savedLayout : DEFAULT_LAYOUT;
+      setActiveLayout(initialLayout);
 
       document.getElementById('reloadPageBtn')?.addEventListener('click', () => {
         window.location.reload();

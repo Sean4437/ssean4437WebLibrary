@@ -596,9 +596,13 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         large: 1.5,
       };
       const EXPORT_RENDER_TIMEOUT_MS = 25000;
+      const EXPORT_RENDER_RETRY_TIMEOUT_MS = 15000;
       const EXPORT_SCALE_MAX = 1.8;
       const EXPORT_RETRY_SCALE = 1.0;
       const EXPORT_FINAL_RETRY_SCALE = 0.8;
+      const EXPORT_ULTRA_RETRY_SCALE = 0.62;
+      const EXPORT_MIN_SCALE = 0.45;
+      const EXPORT_MAX_TOTAL_PIXELS = 2_600_000;
       const EXPORT_TARGET_MAX_BYTES = 2_400_000;
       const EXPORT_JPEG_START_QUALITY = 0.9;
       const EXPORT_JPEG_MIN_QUALITY = 0.62;
@@ -2785,18 +2789,35 @@ ${placemarks}
             });
         });
 
-      const captureCanvasWithScale = async (scale) => {
+      const resolveSafeExportScale = (scale) => {
+        const stageWidth = captureArea?.clientWidth || captureArea?.offsetWidth || 0;
+        const stageHeight = captureArea?.clientHeight || captureArea?.offsetHeight || 0;
+        const baseScale = Number(scale) || 1;
+        if (!stageWidth || !stageHeight) {
+          return Math.max(EXPORT_MIN_SCALE, Math.min(baseScale, EXPORT_SCALE_MAX));
+        }
+        const currentPixels = stageWidth * stageHeight * baseScale * baseScale;
+        if (currentPixels <= EXPORT_MAX_TOTAL_PIXELS) {
+          return Math.max(EXPORT_MIN_SCALE, Math.min(baseScale, EXPORT_SCALE_MAX));
+        }
+        const ratio = Math.sqrt(EXPORT_MAX_TOTAL_PIXELS / currentPixels);
+        const adjusted = baseScale * ratio;
+        return Math.max(EXPORT_MIN_SCALE, Math.min(adjusted, EXPORT_SCALE_MAX));
+      };
+
+      const captureCanvasWithScale = async (scale, timeoutMs = EXPORT_RENDER_TIMEOUT_MS) => {
         const exportBg =
           (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
+        const safeScale = resolveSafeExportScale(scale);
         return withTimeout(
           html2canvas(captureArea, {
             backgroundColor: exportBg,
-            scale,
+            scale: safeScale,
             logging: false,
             imageTimeout: 10000,
             removeContainer: true,
           }),
-          EXPORT_RENDER_TIMEOUT_MS,
+          timeoutMs,
           "EXPORT_TIMEOUT"
         );
       };
@@ -2814,10 +2835,12 @@ ${placemarks}
           const baseScale = window.devicePixelRatio || 1;
           const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
           const exportScale = Math.min(baseScale * sizeMultiplier, EXPORT_SCALE_MAX);
+          const safeInitialScale = resolveSafeExportScale(exportScale);
           const candidateScales = [
-            exportScale,
+            safeInitialScale,
             EXPORT_RETRY_SCALE,
             EXPORT_FINAL_RETRY_SCALE,
+            EXPORT_ULTRA_RETRY_SCALE,
           ].filter(
             (scaleValue, index, list) =>
               Number.isFinite(scaleValue) &&
@@ -2827,9 +2850,12 @@ ${placemarks}
           let canvas = null;
           let blob = null;
           let lastError = null;
-          for (const scaleValue of candidateScales) {
+          for (let index = 0; index < candidateScales.length; index += 1) {
+            const scaleValue = candidateScales[index];
             try {
-              const nextCanvas = await captureCanvasWithScale(scaleValue);
+              const timeoutMs =
+                index === 0 ? EXPORT_RENDER_TIMEOUT_MS : EXPORT_RENDER_RETRY_TIMEOUT_MS;
+              const nextCanvas = await captureCanvasWithScale(scaleValue, timeoutMs);
               const nextBlob = await encodeCanvasAsJpeg(nextCanvas, {
                 maxBytes: EXPORT_TARGET_MAX_BYTES,
                 startQuality: EXPORT_JPEG_START_QUALITY,
@@ -2840,7 +2866,7 @@ ${placemarks}
               blob = nextBlob;
               if (
                 blob.size <= EXPORT_TARGET_MAX_BYTES ||
-                scaleValue === EXPORT_FINAL_RETRY_SCALE
+                scaleValue === EXPORT_ULTRA_RETRY_SCALE
               ) {
                 break;
               }
@@ -2894,7 +2920,7 @@ ${placemarks}
           if (error?.code === "MISSING_HTML2CANVAS") {
             showToast("匯出元件未載入，請重新整理頁面後再試。");
           } else if (error?.code === "EXPORT_TIMEOUT") {
-            showToast("匯出逾時，請改用小尺寸或減少白板內容後重試。");
+            showToast("匯出逾時，系統已自動降到最低倍率，請稍後再試。");
           } else if (
             error?.code === "CANVAS_ENCODE_FAILED" ||
             error?.code === "EXPORT_RENDER_FAILED"
@@ -2947,7 +2973,7 @@ ${placemarks}
           if (error?.code === "MISSING_HTML2CANVAS") {
             showToast("匯出元件未載入，請重新整理頁面後再試。");
           } else if (error?.code === "EXPORT_TIMEOUT") {
-            showToast("批次匯出逾時，建議改用小尺寸後再試。");
+            showToast("批次匯出逾時，系統已自動降到最低倍率，請稍後再試。");
           } else if (
             error?.code === "CANVAS_ENCODE_FAILED" ||
             error?.code === "EXPORT_RENDER_FAILED"
