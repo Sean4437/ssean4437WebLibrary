@@ -596,8 +596,13 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         large: 1.5,
       };
       const EXPORT_RENDER_TIMEOUT_MS = 25000;
-      const EXPORT_SCALE_MAX = 2.5;
-      const EXPORT_RETRY_SCALE = 1.2;
+      const EXPORT_SCALE_MAX = 1.8;
+      const EXPORT_RETRY_SCALE = 1.0;
+      const IMPORT_TARGET_LONG_EDGE = 1920;
+      const IMPORT_TARGET_MAX_BYTES = 1_200_000;
+      const IMPORT_JPEG_START_QUALITY = 0.85;
+      const IMPORT_JPEG_MIN_QUALITY = 0.72;
+      const IMPORT_RESIZE_PASSES = 4;
       let exportSize = "large";
       let coordinateHistory = [];
 
@@ -2071,34 +2076,97 @@ ${placemarks}
         return cleaned || fallback;
       };
 
+      const estimateDataUrlBytes = (dataUrl) => {
+        if (typeof dataUrl !== "string") return 0;
+        const commaIndex = dataUrl.indexOf(",");
+        const base64 = commaIndex >= 0 ? dataUrl.slice(commaIndex + 1) : dataUrl;
+        const padding = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
+        return Math.max(0, Math.floor((base64.length * 3) / 4) - padding);
+      };
+
       const normalizeImageDataUrl = async (dataUrl, options = {}) => {
-        const maxLongEdge = Number(options.maxLongEdge || 2400);
-        const quality = Number(options.quality || 0.9);
+        const maxLongEdge = Number(options.maxLongEdge || IMPORT_TARGET_LONG_EDGE);
+        const maxBytes = Number(options.maxBytes || IMPORT_TARGET_MAX_BYTES);
+        const startQuality = Number(options.startQuality || IMPORT_JPEG_START_QUALITY);
+        const minQuality = Number(options.minQuality || IMPORT_JPEG_MIN_QUALITY);
+        const resizePasses = Number(options.resizePasses || IMPORT_RESIZE_PASSES);
         if (!dataUrl || !Number.isFinite(maxLongEdge) || maxLongEdge <= 0) {
-          return dataUrl;
+          return { dataUrl, changed: false, estimatedBytes: estimateDataUrlBytes(dataUrl) };
         }
+
         const image = await new Promise((resolve, reject) => {
           const img = new Image();
           img.onload = () => resolve(img);
           img.onerror = () => reject(new Error("IMAGE_DECODE_FAILED"));
           img.src = dataUrl;
         });
-        const width = image.naturalWidth || image.width;
-        const height = image.naturalHeight || image.height;
-        const longEdge = Math.max(width, height);
-        if (!longEdge || longEdge <= maxLongEdge) {
-          return dataUrl;
+
+        const sourceWidth = image.naturalWidth || image.width;
+        const sourceHeight = image.naturalHeight || image.height;
+        if (!sourceWidth || !sourceHeight) {
+          return { dataUrl, changed: false, estimatedBytes: estimateDataUrlBytes(dataUrl) };
         }
-        const ratio = maxLongEdge / longEdge;
-        const targetWidth = Math.max(1, Math.round(width * ratio));
-        const targetHeight = Math.max(1, Math.round(height * ratio));
+
+        const sourceLongEdge = Math.max(sourceWidth, sourceHeight);
+        const initialRatio = sourceLongEdge > maxLongEdge ? maxLongEdge / sourceLongEdge : 1;
+        let targetWidth = Math.max(1, Math.round(sourceWidth * initialRatio));
+        let targetHeight = Math.max(1, Math.round(sourceHeight * initialRatio));
         const canvas = document.createElement("canvas");
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
         const ctx = canvas.getContext("2d");
-        if (!ctx) return dataUrl;
-        ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
-        return canvas.toDataURL("image/jpeg", quality);
+        if (!ctx) {
+          return { dataUrl, changed: false, estimatedBytes: estimateDataUrlBytes(dataUrl) };
+        }
+
+        const drawAndEncode = (width, height, quality) => {
+          canvas.width = width;
+          canvas.height = height;
+          ctx.clearRect(0, 0, width, height);
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(image, 0, 0, width, height);
+          return canvas.toDataURL("image/jpeg", quality);
+        };
+
+        let changed = initialRatio < 1 || !/^data:image\/jpe?g/i.test(dataUrl);
+        let quality = startQuality;
+        let optimizedDataUrl = drawAndEncode(targetWidth, targetHeight, quality);
+        let optimizedBytes = estimateDataUrlBytes(optimizedDataUrl);
+
+        for (let pass = 0; pass < resizePasses; pass += 1) {
+          while (optimizedBytes > maxBytes && quality > minQuality) {
+            quality = Math.max(minQuality, Number((quality - 0.05).toFixed(2)));
+            optimizedDataUrl = drawAndEncode(targetWidth, targetHeight, quality);
+            optimizedBytes = estimateDataUrlBytes(optimizedDataUrl);
+            changed = true;
+            if (quality === minQuality) break;
+          }
+          if (optimizedBytes <= maxBytes) break;
+          const nextWidth = Math.max(1, Math.round(targetWidth * 0.85));
+          const nextHeight = Math.max(1, Math.round(targetHeight * 0.85));
+          if (nextWidth === targetWidth && nextHeight === targetHeight) break;
+          targetWidth = nextWidth;
+          targetHeight = nextHeight;
+          quality = startQuality;
+          optimizedDataUrl = drawAndEncode(targetWidth, targetHeight, quality);
+          optimizedBytes = estimateDataUrlBytes(optimizedDataUrl);
+          changed = true;
+        }
+
+        const originalBytes = estimateDataUrlBytes(dataUrl);
+        const shouldKeepOriginal =
+          !changed &&
+          targetWidth === sourceWidth &&
+          targetHeight === sourceHeight &&
+          /^data:image\/jpe?g/i.test(dataUrl) &&
+          originalBytes <= maxBytes;
+        if (shouldKeepOriginal) {
+          return { dataUrl, changed: false, estimatedBytes: originalBytes };
+        }
+        return {
+          dataUrl: optimizedDataUrl,
+          changed: changed || optimizedBytes < originalBytes,
+          estimatedBytes: optimizedBytes,
+        };
       };
 
       const updateMultiModeUI = () => {
@@ -2247,11 +2315,21 @@ ${placemarks}
       const buildPhotoItemFromFile = async (file, captureCoordinates) => {
         const rawDataUrl = await readFileAsDataURL(file);
         let dataUrl = rawDataUrl;
+        let optimized = false;
         try {
-          dataUrl = await normalizeImageDataUrl(rawDataUrl, { maxLongEdge: 2400, quality: 0.9 });
+          const normalized = await normalizeImageDataUrl(rawDataUrl, {
+            maxLongEdge: IMPORT_TARGET_LONG_EDGE,
+            maxBytes: IMPORT_TARGET_MAX_BYTES,
+            startQuality: IMPORT_JPEG_START_QUALITY,
+            minQuality: IMPORT_JPEG_MIN_QUALITY,
+            resizePasses: IMPORT_RESIZE_PASSES,
+          });
+          dataUrl = normalized?.dataUrl || rawDataUrl;
+          optimized = Boolean(normalized?.changed);
         } catch (error) {
           console.warn("圖片縮放失敗，改用原始圖片", error);
           dataUrl = rawDataUrl;
+          optimized = false;
         }
         const metadataResult = await applyPhotoMetadata(file, dataUrl, captureCoordinates, {
           syncDate: false,
@@ -2273,6 +2351,7 @@ ${placemarks}
           exifBytes: metadataResult?.exifBytes || null,
           dateValue: resolvedDate,
           usedExif: Boolean(metadataResult?.usedExif),
+          optimized,
         };
       };
 
@@ -2282,10 +2361,14 @@ ${placemarks}
         const captureCoordinates = await consumePendingCaptureCoordinates();
         const loadedItems = [];
         let gpsCount = 0;
+        let optimizedCount = 0;
         for (const file of fileArray) {
           try {
             const item = await buildPhotoItemFromFile(file, captureCoordinates);
             loadedItems.push(item);
+            if (item.optimized) {
+              optimizedCount += 1;
+            }
             const hasGps =
               item.metadata &&
               typeof item.metadata.gps?.latitude === "number" &&
@@ -2310,7 +2393,8 @@ ${placemarks}
             gpsCount > 0
               ? `已加入 ${loadedItems.length} 張照片，取得 ${gpsCount} 筆座標。`
               : `已加入 ${loadedItems.length} 張照片，但沒有可用座標。`;
-          showToast(message, gpsCount > 0 ? "success" : undefined);
+          const optimizedSuffix = optimizedCount > 0 ? ` 已自動優化 ${optimizedCount} 張尺寸。` : "";
+          showToast(`${message}${optimizedSuffix}`, gpsCount > 0 || optimizedCount > 0 ? "success" : undefined);
           return;
         }
         if (loadedItems.length > 1) {
@@ -2322,8 +2406,12 @@ ${placemarks}
         const current = photoItems[0];
         showToast(
           current.usedExif
-            ? "已載入照片並套用拍攝日期。"
-            : "已載入照片，可手動調整日期與白板。",
+            ? current.optimized
+              ? "已載入照片並自動優化尺寸，套用拍攝日期。"
+              : "已載入照片並套用拍攝日期。"
+            : current.optimized
+              ? "已載入照片並自動優化尺寸，可手動調整日期與白板。"
+              : "已載入照片，可手動調整日期與白板。",
           "success"
         );
       };
