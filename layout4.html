@@ -598,6 +598,13 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const EXPORT_RENDER_TIMEOUT_MS = 25000;
       const EXPORT_SCALE_MAX = 1.8;
       const EXPORT_RETRY_SCALE = 1.0;
+      const EXPORT_FINAL_RETRY_SCALE = 0.8;
+      const EXPORT_TARGET_MAX_BYTES = 2_400_000;
+      const EXPORT_JPEG_START_QUALITY = 0.9;
+      const EXPORT_JPEG_MIN_QUALITY = 0.62;
+      const EXPORT_JPEG_QUALITY_STEP = 0.07;
+      const EXPORT_EXIF_MAX_BLOB_BYTES = 2_000_000;
+      const SHARE_BYPASS_MAX_BYTES = 2_600_000;
       const IMPORT_TARGET_LONG_EDGE = 1920;
       const IMPORT_TARGET_MAX_BYTES = 1_200_000;
       const IMPORT_JPEG_START_QUALITY = 0.85;
@@ -1596,6 +1603,68 @@ ${placemarks}
           array[i] = binary.charCodeAt(i);
         }
         return new Blob([array], { type: mime });
+      };
+
+      const blobToDataUrl = (blob) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result === "string" && reader.result) {
+              resolve(reader.result);
+              return;
+            }
+            reject(new Error("BLOB_READ_FAILED"));
+          };
+          reader.onerror = () => reject(new Error("BLOB_READ_FAILED"));
+          reader.readAsDataURL(blob);
+        });
+
+      const canvasToBlob = (canvas, quality = 0.92) =>
+        new Promise((resolve, reject) => {
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+                return;
+              }
+              const err = new Error("CANVAS_ENCODE_FAILED");
+              err.code = "CANVAS_ENCODE_FAILED";
+              reject(err);
+            },
+            "image/jpeg",
+            quality
+          );
+        });
+
+      const encodeCanvasAsJpeg = async (canvas, options = {}) => {
+        const maxBytes = Number(options.maxBytes || EXPORT_TARGET_MAX_BYTES);
+        const minQuality = Number(options.minQuality || EXPORT_JPEG_MIN_QUALITY);
+        const qualityStep = Number(options.qualityStep || EXPORT_JPEG_QUALITY_STEP);
+        let quality = Number(options.startQuality || EXPORT_JPEG_START_QUALITY);
+        let blob = await canvasToBlob(canvas, quality);
+        while (blob.size > maxBytes && quality > minQuality) {
+          quality = Math.max(minQuality, Number((quality - qualityStep).toFixed(2)));
+          blob = await canvasToBlob(canvas, quality);
+          if (quality === minQuality) break;
+        }
+        return blob;
+      };
+
+      const attachExifToBlob = async (blob) => {
+        if (!window.piexif || !blob || blob.size > EXPORT_EXIF_MAX_BLOB_BYTES) {
+          return blob;
+        }
+        try {
+          const sourceDataUrl = await blobToDataUrl(blob);
+          const withExifDataUrl = applyExifToDataUrl(sourceDataUrl);
+          if (!withExifDataUrl || withExifDataUrl === sourceDataUrl) {
+            return blob;
+          }
+          return dataUrlToBlob(withExifDataUrl);
+        } catch (error) {
+          console.warn("EXIF blob 寫入失敗", error);
+          return blob;
+        }
       };
 
       const readFieldHistoryStore = () => {
@@ -2653,6 +2722,11 @@ ${placemarks}
         const file = new File([blob], filename, { type: "image/jpeg" });
         const shareText = buildShareText();
         const isTopLevelWindow = window.top === window.self;
+        if (blob.size > SHARE_BYPASS_MAX_BYTES) {
+          downloadBlob(blob, filename);
+          showToast("圖片較大，已改為直接下載以避免分享失敗。", "success");
+          return;
+        }
         if (
           isTopLevelWindow &&
           isMobileDevice &&
@@ -2718,6 +2792,9 @@ ${placemarks}
           html2canvas(captureArea, {
             backgroundColor: exportBg,
             scale,
+            logging: false,
+            imageTimeout: 10000,
+            removeContainer: true,
           }),
           EXPORT_RENDER_TIMEOUT_MS,
           "EXPORT_TIMEOUT"
@@ -2737,21 +2814,58 @@ ${placemarks}
           const baseScale = window.devicePixelRatio || 1;
           const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
           const exportScale = Math.min(baseScale * sizeMultiplier, EXPORT_SCALE_MAX);
-          let canvas;
-          try {
-            canvas = await captureCanvasWithScale(exportScale);
-          } catch (error) {
-            const shouldRetry =
-              error?.code === "EXPORT_TIMEOUT" || error?.name === "AbortError" || error?.name === "SecurityError";
-            if (!shouldRetry) {
-              throw error;
+          const candidateScales = [
+            exportScale,
+            EXPORT_RETRY_SCALE,
+            EXPORT_FINAL_RETRY_SCALE,
+          ].filter(
+            (scaleValue, index, list) =>
+              Number.isFinite(scaleValue) &&
+              scaleValue > 0 &&
+              list.findIndex((item) => item === scaleValue) === index
+          );
+          let canvas = null;
+          let blob = null;
+          let lastError = null;
+          for (const scaleValue of candidateScales) {
+            try {
+              const nextCanvas = await captureCanvasWithScale(scaleValue);
+              const nextBlob = await encodeCanvasAsJpeg(nextCanvas, {
+                maxBytes: EXPORT_TARGET_MAX_BYTES,
+                startQuality: EXPORT_JPEG_START_QUALITY,
+                minQuality: EXPORT_JPEG_MIN_QUALITY,
+                qualityStep: EXPORT_JPEG_QUALITY_STEP,
+              });
+              canvas = nextCanvas;
+              blob = nextBlob;
+              if (
+                blob.size <= EXPORT_TARGET_MAX_BYTES ||
+                scaleValue === EXPORT_FINAL_RETRY_SCALE
+              ) {
+                break;
+              }
+            } catch (error) {
+              lastError = error;
+              const shouldRetry =
+                error?.code === "EXPORT_TIMEOUT" ||
+                error?.name === "AbortError" ||
+                error?.name === "SecurityError" ||
+                error?.code === "CANVAS_ENCODE_FAILED";
+              if (!shouldRetry) {
+                throw error;
+              }
             }
-            canvas = await captureCanvasWithScale(EXPORT_RETRY_SCALE);
           }
+          if (!canvas || !blob) {
+            if (lastError) {
+              throw lastError;
+            }
+            const err = new Error("EXPORT_RENDER_FAILED");
+            err.code = "EXPORT_RENDER_FAILED";
+            throw err;
+          }
+          blob = await attachExifToBlob(blob);
           const isPortrait = canvas.height >= canvas.width;
-          let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-          dataUrl = applyExifToDataUrl(dataUrl);
-          const blob = dataUrlToBlob(dataUrl);
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
           const baseName = sanitizeFileBaseName(options.filenameBase || "whiteboard", "whiteboard");
           const filename = `${baseName}_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
@@ -2781,6 +2895,11 @@ ${placemarks}
             showToast("匯出元件未載入，請重新整理頁面後再試。");
           } else if (error?.code === "EXPORT_TIMEOUT") {
             showToast("匯出逾時，請改用小尺寸或減少白板內容後重試。");
+          } else if (
+            error?.code === "CANVAS_ENCODE_FAILED" ||
+            error?.code === "EXPORT_RENDER_FAILED"
+          ) {
+            showToast("圖片轉檔失敗，系統已嘗試自動縮小，請再試一次。");
           } else {
             showToast("匯出失敗，請再試一次。");
           }
@@ -2829,6 +2948,11 @@ ${placemarks}
             showToast("匯出元件未載入，請重新整理頁面後再試。");
           } else if (error?.code === "EXPORT_TIMEOUT") {
             showToast("批次匯出逾時，建議改用小尺寸後再試。");
+          } else if (
+            error?.code === "CANVAS_ENCODE_FAILED" ||
+            error?.code === "EXPORT_RENDER_FAILED"
+          ) {
+            showToast("批次轉檔失敗，系統已嘗試自動縮小，請再試一次。");
           } else {
             showToast("批次匯出失敗，請再試一次。");
           }
