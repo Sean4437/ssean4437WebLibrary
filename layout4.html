@@ -594,6 +594,9 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         medium: 1,
         large: 1.5,
       };
+      const EXPORT_RENDER_TIMEOUT_MS = 25000;
+      const EXPORT_SCALE_MAX = 2.5;
+      const EXPORT_RETRY_SCALE = 1.2;
       let exportSize = "large";
       let coordinateHistory = [];
 
@@ -2559,6 +2562,37 @@ ${placemarks}
         });
       };
 
+      const withTimeout = (promise, timeoutMs, code = "TIMEOUT") =>
+        new Promise((resolve, reject) => {
+          const timer = setTimeout(() => {
+            const err = new Error(code);
+            err.code = code;
+            reject(err);
+          }, timeoutMs);
+          promise
+            .then((value) => {
+              clearTimeout(timer);
+              resolve(value);
+            })
+            .catch((error) => {
+              clearTimeout(timer);
+              reject(error);
+            });
+        });
+
+      const captureCanvasWithScale = async (scale) => {
+        const exportBg =
+          (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
+        return withTimeout(
+          html2canvas(captureArea, {
+            backgroundColor: exportBg,
+            scale,
+          }),
+          EXPORT_RENDER_TIMEOUT_MS,
+          "EXPORT_TIMEOUT"
+        );
+      };
+
       const renderExportBlob = async (options = {}) => {
         if (typeof html2canvas !== "function") {
           const err = new Error("MISSING_HTML2CANVAS");
@@ -2569,15 +2603,20 @@ ${placemarks}
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
-          const exportBg =
-            (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
           const baseScale = window.devicePixelRatio || 1;
           const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
-          const exportScale = baseScale * sizeMultiplier;
-          const canvas = await html2canvas(captureArea, {
-            backgroundColor: exportBg,
-            scale: exportScale,
-          });
+          const exportScale = Math.min(baseScale * sizeMultiplier, EXPORT_SCALE_MAX);
+          let canvas;
+          try {
+            canvas = await captureCanvasWithScale(exportScale);
+          } catch (error) {
+            const shouldRetry =
+              error?.code === "EXPORT_TIMEOUT" || error?.name === "AbortError" || error?.name === "SecurityError";
+            if (!shouldRetry) {
+              throw error;
+            }
+            canvas = await captureCanvasWithScale(EXPORT_RETRY_SCALE);
+          }
           const isPortrait = canvas.height >= canvas.width;
           let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
           dataUrl = applyExifToDataUrl(dataUrl);
@@ -2595,6 +2634,9 @@ ${placemarks}
       const exportBoardImage = async () => {
         exportBtn.disabled = true;
         exportBtn.textContent = "匯出中…";
+        if (exportAllBtn && isMultiMode) {
+          exportAllBtn.disabled = true;
+        }
         try {
           const baseName =
             hasCurrentPhoto() && photoItems[activePhotoIndex]
@@ -2606,12 +2648,17 @@ ${placemarks}
           console.error(error);
           if (error?.code === "MISSING_HTML2CANVAS") {
             showToast("匯出元件未載入，請重新整理頁面後再試。");
+          } else if (error?.code === "EXPORT_TIMEOUT") {
+            showToast("匯出逾時，請改用小尺寸或減少白板內容後重試。");
           } else {
             showToast("匯出失敗，請再試一次。");
           }
         } finally {
           exportBtn.disabled = false;
           exportBtn.textContent = "匯出整張圖片";
+          if (exportAllBtn && isMultiMode) {
+            exportAllBtn.disabled = !photoItems.length;
+          }
         }
       };
 
@@ -2633,7 +2680,11 @@ ${placemarks}
         try {
           for (let i = 0; i < photoItems.length; i += 1) {
             const item = photoItems[i];
+            if (exportAllBtn) {
+              exportAllBtn.textContent = `批次匯出中… ${i + 1}/${photoItems.length}`;
+            }
             setActivePhoto(i, { announce: false, keepPosition: true });
+            await new Promise((resolve) => setTimeout(resolve, 0));
             const { blob, filename } = await renderExportBlob({
               filenameBase: `whiteboard_${String(i + 1).padStart(2, "0")}_${item.baseName}`,
             });
@@ -2645,6 +2696,8 @@ ${placemarks}
           console.error(error);
           if (error?.code === "MISSING_HTML2CANVAS") {
             showToast("匯出元件未載入，請重新整理頁面後再試。");
+          } else if (error?.code === "EXPORT_TIMEOUT") {
+            showToast("批次匯出逾時，建議改用小尺寸後再試。");
           } else {
             showToast("批次匯出失敗，請再試一次。");
           }
