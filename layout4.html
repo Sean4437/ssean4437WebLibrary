@@ -2564,7 +2564,9 @@ ${placemarks}
       const handleShareOrDownload = async (blob, filename) => {
         const file = new File([blob], filename, { type: "image/jpeg" });
         const shareText = buildShareText();
+        const isTopLevelWindow = window.top === window.self;
         if (
+          isTopLevelWindow &&
           isMobileDevice &&
           navigator.canShare &&
           navigator.canShare({ files: [file] }) &&
