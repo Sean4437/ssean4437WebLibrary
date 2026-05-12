@@ -137,6 +137,102 @@
         color: #64748b;
         border-color: rgba(71, 85, 105, 0.5);
       }
+      .mode-chip {
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(59, 130, 246, 0.15);
+        color: #e2e8f0;
+        font-size: 0.82rem;
+        padding: 0.25rem 0.75rem;
+        cursor: pointer;
+        transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      }
+      .mode-chip.is-active {
+        background: rgba(16, 185, 129, 0.22);
+        border-color: rgba(16, 185, 129, 0.55);
+        color: #ecfeff;
+      }
+      .photo-list-panel {
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(15, 23, 42, 0.45);
+        padding: 0.65rem 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+      }
+      .photo-list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .photo-list-count {
+        font-size: 0.84rem;
+        color: #cbd5e1;
+      }
+      .photo-list-actions {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+      .photo-list-actions .ghost-btn {
+        margin: 0;
+        padding: 0.28rem 0.72rem;
+        font-size: 0.8rem;
+      }
+      .photo-list {
+        display: flex;
+        gap: 0.45rem;
+        overflow-x: auto;
+        padding-bottom: 0.2rem;
+      }
+      .photo-item-btn {
+        border: 2px solid rgba(148, 163, 184, 0.28);
+        background: rgba(15, 23, 42, 0.7);
+        border-radius: 12px;
+        color: #cbd5e1;
+        min-width: 84px;
+        padding: 0.3rem;
+        cursor: pointer;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+      }
+      .photo-item-btn.is-active {
+        border-color: rgba(59, 130, 246, 0.85);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.45);
+      }
+      .photo-item-thumb {
+        width: 72px;
+        height: 72px;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+      .photo-item-index {
+        font-size: 0.74rem;
+        letter-spacing: 0.04em;
+        max-width: 72px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .action-bar {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .action-btn[hidden] {
+        display: none;
+      }
+      @media (max-width: 640px) {
+        .action-bar {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .action-btn--wide {
+          grid-column: 1 / -1;
+        }
+      }
     </style>
   </head>
   <body>
@@ -341,6 +437,8 @@
       <div class="controls">
         <button class="btn" id="takePhotoBtn">拍照</button>
         <button class="btn btn-secondary" id="uploadPhotoBtn">上傳照片</button>
+        <button class="mode-chip" id="multiModeBtn" type="button" aria-pressed="false">多張模式：關</button>
+        <button class="mode-chip" id="displayModeBtn" type="button">顯示：完整白板</button>
       </div>
 
       <div class="stage" id="captureArea">
@@ -359,16 +457,28 @@
         <div class="photo-watermark photo-watermark--top-right" id="photoCoordinate" hidden>座標未取得</div>
         <div class="photo-watermark" id="photoWatermark">日期未設定</div>
       </div>
+      <div class="photo-list-panel" id="photoListPanel" hidden>
+        <div class="photo-list-header">
+          <span class="photo-list-count" id="photoListCount">0 張照片</span>
+          <div class="photo-list-actions">
+            <button type="button" class="ghost-btn" id="prevPhotoBtn">上一張</button>
+            <button type="button" class="ghost-btn" id="nextPhotoBtn">下一張</button>
+            <button type="button" class="ghost-btn ghost-button--danger" id="clearPhotoListBtn">清空照片</button>
+          </div>
+        </div>
+        <div class="photo-list" id="photoList"></div>
+      </div>
 
       <div class="action-bar">
         <button class="action-btn secondary" id="clearBoardBtn">清除白板</button>
         <button class="action-btn primary" id="exportBtn">匯出整張圖片</button>
+        <button class="action-btn secondary action-btn--wide" id="exportAllBtn" hidden>批次匯出全部</button>
       </div>
 
   <p id="toastMessage" class="toast-message" role="status" aria-live="polite"></p>
 
       <input type="file" accept="image/*" capture="environment" class="hidden-input" id="takePhotoInput" />
-      <input type="file" accept="image/*" class="hidden-input" id="uploadInput" />
+      <input type="file" accept="image/*" class="hidden-input" id="uploadInput" multiple />
     </div>
 
     <script src="vendor/piexif.min.js"></script>
@@ -410,9 +520,18 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const colorPresetButtons = document.querySelectorAll("[data-color-preset]");
       const clearBoardBtn = document.getElementById("clearBoardBtn");
       const exportBtn = document.getElementById("exportBtn");
+      const exportAllBtn = document.getElementById("exportAllBtn");
       const toastMessage = document.getElementById("toastMessage");
       const photoWatermark = document.getElementById("photoWatermark");
       const photoCoordinate = document.getElementById("photoCoordinate");
+      const multiModeBtn = document.getElementById("multiModeBtn");
+      const displayModeBtn = document.getElementById("displayModeBtn");
+      const photoListPanel = document.getElementById("photoListPanel");
+      const photoListCount = document.getElementById("photoListCount");
+      const photoList = document.getElementById("photoList");
+      const prevPhotoBtn = document.getElementById("prevPhotoBtn");
+      const nextPhotoBtn = document.getElementById("nextPhotoBtn");
+      const clearPhotoListBtn = document.getElementById("clearPhotoListBtn");
       whiteboardWrapper.dataset.userPositioned = "false";
       const advancedControls = document.getElementById("advancedControls");
       const toggleAdvanced = document.getElementById("toggleAdvanced");
@@ -424,6 +543,10 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       let lastPhotoMetadata = null;
       let lastPhotoExifBytes = null;
       let pendingCaptureCoordinatesPromise = null;
+      let isMultiMode = false;
+      let photoItems = [];
+      let activePhotoIndex = -1;
+      let photoSequence = 0;
 
       const layoutIdentifier =
         document.body.dataset.layoutId ||
@@ -436,6 +559,7 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const EXPORT_SIZE_STORAGE_KEY = buildStorageKey("whiteboard_export_size");
       const COORDINATE_HISTORY_STORAGE_KEY = buildStorageKey("whiteboard_coordinate_history");
       const COORDINATE_FORMAT_STORAGE_KEY = buildStorageKey("whiteboard_coordinate_format");
+      const DISPLAY_MODE_STORAGE_KEY = buildStorageKey("whiteboard_display_mode");
       const COORDINATE_FORMATS = {
         WGS84: "wgs84",
         TWD97: "twd97",
@@ -448,6 +572,23 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       ];
       const COORDINATE_HISTORY_LIMIT = 500;
       let coordinateFormat = COORDINATE_FORMATS.TWD97;
+      const DISPLAY_MODES = {
+        FULL: "full",
+        META_ONLY: "meta_only",
+        NONE: "none",
+      };
+      const DISPLAY_MODE_SEQUENCE = [
+        DISPLAY_MODES.FULL,
+        DISPLAY_MODES.META_ONLY,
+        DISPLAY_MODES.NONE,
+      ];
+      const DISPLAY_MODE_LABEL_MAP = {
+        [DISPLAY_MODES.FULL]: "顯示：完整白板",
+        [DISPLAY_MODES.META_ONLY]: "顯示：只顯示日期+座標",
+        [DISPLAY_MODES.NONE]: "顯示：全部隱藏",
+      };
+      let displayMode = DISPLAY_MODES.FULL;
+      let boardVisibilityPreference = true;
       const EXPORT_SIZE_SCALE = {
         small: 0.8,
         medium: 1,
@@ -1099,14 +1240,79 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         boardVisibilityLabel.textContent = visible ? "白板開" : "白板關";
       };
 
-      const setWhiteboardVisibility = (visible) => {
+      const setWhiteboardVisibility = (visible, options = {}) => {
+        const persist = options.persist !== false;
         if (!whiteboardWrapper) return;
         whiteboardWrapper.hidden = !visible;
         updateBoardVisibilityButton(visible);
+        if (persist) {
+          try {
+            localStorage.setItem(WHITEBOARD_VISIBILITY_STORAGE_KEY, String(Boolean(visible)));
+          } catch (error) {
+            console.warn("儲存白板可見狀態失敗", error);
+          }
+        }
+      };
+
+      const clonePhotoMetadata = (metadata) => {
+        if (!metadata || typeof metadata !== "object") return null;
+        const gps = metadata.gps
+          ? {
+              latitude: metadata.gps.latitude,
+              longitude: metadata.gps.longitude,
+            }
+          : null;
+        return {
+          date: metadata.date || null,
+          gps,
+        };
+      };
+
+      const hasCurrentPhoto = () => activePhotoIndex >= 0 && activePhotoIndex < photoItems.length;
+
+      const updateDisplayModeButton = () => {
+        if (!displayModeBtn) return;
+        displayModeBtn.textContent = DISPLAY_MODE_LABEL_MAP[displayMode] || DISPLAY_MODE_LABEL_MAP[DISPLAY_MODES.FULL];
+      };
+
+      const applyDisplayMode = () => {
+        const hasPhoto = !photoImage.hidden && !!photoImage.src;
+        if (displayMode === DISPLAY_MODES.FULL) {
+          setWhiteboardVisibility(boardVisibilityPreference, { persist: false });
+          if (boardVisibilityButton) boardVisibilityButton.disabled = false;
+          if (photoWatermark) {
+            photoWatermark.hidden = !hasPhoto;
+          }
+          updateCoordinateOverlay();
+          return;
+        }
+        setWhiteboardVisibility(false, { persist: false });
+        if (boardVisibilityButton) boardVisibilityButton.disabled = true;
+        if (displayMode === DISPLAY_MODES.META_ONLY) {
+          if (photoWatermark) {
+            photoWatermark.hidden = !hasPhoto;
+          }
+          updateCoordinateOverlay();
+          return;
+        }
+        if (photoWatermark) {
+          photoWatermark.hidden = true;
+        }
+        if (photoCoordinate) {
+          photoCoordinate.hidden = true;
+          photoCoordinate.textContent = "";
+        }
+      };
+
+      const setDisplayMode = (mode) => {
+        if (!Object.values(DISPLAY_MODES).includes(mode)) return;
+        displayMode = mode;
+        updateDisplayModeButton();
+        applyDisplayMode();
         try {
-          localStorage.setItem(WHITEBOARD_VISIBILITY_STORAGE_KEY, String(Boolean(visible)));
+          localStorage.setItem(DISPLAY_MODE_STORAGE_KEY, mode);
         } catch (error) {
-          console.warn("儲存白板可見狀態失敗", error);
+          console.warn("儲存顯示模式失敗", error);
         }
       };
 
@@ -1303,6 +1509,7 @@ ${placemarks}
         }
         updateCoordinateFormatButton();
         updateCoordinateOverlay();
+        applyDisplayMode();
       };
 
       const decimalToDmsRational = (value) => {
@@ -1743,8 +1950,12 @@ ${placemarks}
         }
       };
 
-      const applyPhotoMetadata = async (file, dataUrl, extraGps) => {
-        if (!file) return;
+      const applyPhotoMetadata = async (file, dataUrl, extraGps, options = {}) => {
+        if (!file) return null;
+        const syncDate = options.syncDate !== false;
+        const showDateToast = options.showDateToast !== false;
+        const recordHistoryEntry = options.recordHistoryEntry !== false;
+        const updateOverlay = options.updateOverlay !== false;
         let metadata = {};
         try {
           metadata = await extractExifMetadata(file);
@@ -1789,16 +2000,31 @@ ${placemarks}
               : formatDateInputValue(new Date());
         }
 
-        formInputs.testDate.value = resolvedDate;
-        syncField("testDate");
-        showToast(
-          usedExif
-            ? "已套用照片拍攝日期，如需修改可手動調整。"
-            : "已套用拍攝日期，如需修改可手動調整。",
-          "success"
-        );
-        updateCoordinateOverlay();
-        recordCoordinateHistory();
+        if (syncDate) {
+          formInputs.testDate.value = resolvedDate;
+          syncField("testDate");
+        }
+        if (showDateToast) {
+          showToast(
+            usedExif
+              ? "已套用照片拍攝日期，如需修改可手動調整。"
+              : "已套用拍攝日期，如需修改可手動調整。",
+            "success"
+          );
+        }
+        if (updateOverlay) {
+          updateCoordinateOverlay();
+          applyDisplayMode();
+        }
+        if (recordHistoryEntry) {
+          recordCoordinateHistory();
+        }
+        return {
+          metadata: clonePhotoMetadata(lastPhotoMetadata),
+          exifBytes: lastPhotoExifBytes || null,
+          resolvedDate,
+          usedExif,
+        };
       };
 
       const autoResizeTextarea = (textarea) => {
@@ -1829,49 +2055,233 @@ ${placemarks}
         requestAnimationFrame(positionBoardAtBottomLeft);
       };
 
+      const sanitizeFileBaseName = (name, fallback = "photo") => {
+        const source = (name || fallback).replace(/\.[^.]+$/, "");
+        const cleaned = source
+          .replace(/[^a-zA-Z0-9_\-\u4e00-\u9fff]+/g, "_")
+          .replace(/_+/g, "_")
+          .replace(/^_+|_+$/g, "");
+        return cleaned || fallback;
+      };
+
+      const updateMultiModeUI = () => {
+        if (multiModeBtn) {
+          multiModeBtn.dataset.multiMode = isMultiMode ? "true" : "false";
+          multiModeBtn.setAttribute("aria-pressed", isMultiMode ? "true" : "false");
+          multiModeBtn.classList.toggle("is-active", isMultiMode);
+          multiModeBtn.textContent = isMultiMode ? "多張模式：開" : "多張模式：關";
+        }
+        if (uploadInput) {
+          uploadInput.multiple = isMultiMode;
+        }
+        if (uploadPhotoBtn) {
+          uploadPhotoBtn.textContent = isMultiMode ? "上傳多張照片" : "上傳照片";
+        }
+        if (exportAllBtn) {
+          exportAllBtn.hidden = !isMultiMode;
+          exportAllBtn.disabled = !isMultiMode || photoItems.length === 0;
+        }
+      };
+
+      const renderPhotoList = () => {
+        if (!photoListPanel || !photoList || !photoListCount) return;
+        const hasItems = photoItems.length > 0;
+        photoListPanel.hidden = !isMultiMode || !hasItems;
+        photoListCount.textContent = `${photoItems.length} 張照片`;
+        if (!hasItems) {
+          photoList.innerHTML = "";
+          prevPhotoBtn.disabled = true;
+          nextPhotoBtn.disabled = true;
+          clearPhotoListBtn.disabled = true;
+          if (exportAllBtn && isMultiMode) {
+            exportAllBtn.disabled = true;
+          }
+          return;
+        }
+        prevPhotoBtn.disabled = photoItems.length <= 1;
+        nextPhotoBtn.disabled = photoItems.length <= 1;
+        clearPhotoListBtn.disabled = false;
+        if (exportAllBtn && isMultiMode) {
+          exportAllBtn.disabled = false;
+        }
+        photoList.innerHTML = "";
+        photoItems.forEach((item, index) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "photo-item-btn";
+          if (index === activePhotoIndex) {
+            button.classList.add("is-active");
+          }
+          button.title = item.name || `photo_${index + 1}.jpg`;
+          button.setAttribute("aria-label", `第 ${index + 1} 張照片`);
+          button.addEventListener("click", () => {
+            setActivePhoto(index);
+          });
+          const img = document.createElement("img");
+          img.className = "photo-item-thumb";
+          img.loading = "lazy";
+          img.decoding = "async";
+          img.src = item.dataUrl;
+          img.alt = `照片 ${index + 1}`;
+          const label = document.createElement("span");
+          label.className = "photo-item-index";
+          label.textContent = `${index + 1}. ${item.baseName}`;
+          button.appendChild(img);
+          button.appendChild(label);
+          photoList.appendChild(button);
+        });
+      };
+
+      const setActivePhoto = (index, options = {}) => {
+        if (index < 0 || index >= photoItems.length) return;
+        const announce = options.announce !== false;
+        const keepPosition = options.keepPosition === true;
+        const item = photoItems[index];
+        activePhotoIndex = index;
+        photoImage.src = item.dataUrl;
+        photoImage.hidden = false;
+        placeholder.style.display = "none";
+        lastPhotoMetadata = clonePhotoMetadata(item.metadata);
+        lastPhotoExifBytes = item.exifBytes || null;
+        formInputs.testDate.value = item.dateValue || "";
+        syncField("testDate");
+        updateCoordinateOverlay();
+        applyDisplayMode();
+        if (!keepPosition) {
+          whiteboardWrapper.dataset.userPositioned = "false";
+          requestAnimationFrame(positionBoardAtBottomLeft);
+        }
+        updateStageAspect();
+        renderPhotoList();
+        if (announce) {
+          showToast(`已切換到第 ${index + 1} 張照片。`, "success");
+        }
+      };
+
+      const clearPhotoCollection = (toast = true) => {
+        photoItems = [];
+        activePhotoIndex = -1;
+        photoImage.removeAttribute("src");
+        photoImage.hidden = true;
+        placeholder.style.display = "flex";
+        lastPhotoMetadata = null;
+        lastPhotoExifBytes = null;
+        updateCoordinateOverlay();
+        applyDisplayMode();
+        updateStageAspect();
+        renderPhotoList();
+        if (exportAllBtn) {
+          exportAllBtn.disabled = true;
+        }
+        if (toast) {
+          showToast("照片清單已清空。", "success");
+        }
+      };
+
+      const setMultiMode = (enabled) => {
+        const next = Boolean(enabled);
+        if (next === isMultiMode) return;
+        if (!next && photoItems.length > 1) {
+          const keepItem = hasCurrentPhoto() ? photoItems[activePhotoIndex] : photoItems[photoItems.length - 1];
+          photoItems = keepItem ? [keepItem] : [];
+          activePhotoIndex = keepItem ? 0 : -1;
+          if (keepItem) {
+            setActivePhoto(0, { announce: false, keepPosition: true });
+          }
+        }
+        isMultiMode = next;
+        updateMultiModeUI();
+        renderPhotoList();
+        if (isMultiMode) {
+          showToast("已啟用多張模式，可一次匯入多張照片。", "success");
+        } else {
+          showToast("已切回單張模式。", "success");
+        }
+      };
+
+      const shiftActivePhoto = (step) => {
+        if (photoItems.length <= 1) return;
+        const total = photoItems.length;
+        const base = hasCurrentPhoto() ? activePhotoIndex : 0;
+        const nextIndex = (base + step + total) % total;
+        setActivePhoto(nextIndex);
+      };
+
+      const buildPhotoItemFromFile = async (file, captureCoordinates) => {
+        const dataUrl = await readFileAsDataURL(file);
+        const metadataResult = await applyPhotoMetadata(file, dataUrl, captureCoordinates, {
+          syncDate: false,
+          showDateToast: false,
+          updateOverlay: false,
+        });
+        const resolvedDate =
+          metadataResult?.resolvedDate ||
+          (file.lastModified && Number.isFinite(file.lastModified)
+            ? formatDateInputValue(new Date(file.lastModified))
+            : formatDateInputValue(new Date()));
+        const id = ++photoSequence;
+        return {
+          id,
+          name: file.name || `photo_${id}.jpg`,
+          baseName: sanitizeFileBaseName(file.name, `photo_${id}`),
+          dataUrl,
+          metadata: clonePhotoMetadata(metadataResult?.metadata),
+          exifBytes: metadataResult?.exifBytes || null,
+          dateValue: resolvedDate,
+          usedExif: Boolean(metadataResult?.usedExif),
+        };
+      };
+
       const handlePhotoFiles = async (files) => {
         const fileArray = Array.from(files || []).filter(Boolean);
         if (!fileArray.length) return;
         const captureCoordinates = await consumePendingCaptureCoordinates();
-        let processedCount = 0;
+        const loadedItems = [];
         let gpsCount = 0;
-        let successCount = 0;
         for (const file of fileArray) {
-          let dataUrl = null;
           try {
-            dataUrl = await readFileAsDataURL(file);
+            const item = await buildPhotoItemFromFile(file, captureCoordinates);
+            loadedItems.push(item);
+            const hasGps =
+              item.metadata &&
+              typeof item.metadata.gps?.latitude === "number" &&
+              typeof item.metadata.gps?.longitude === "number";
+            if (hasGps) {
+              gpsCount += 1;
+            }
           } catch (error) {
             console.warn("讀取照片失敗", error);
-            continue;
-          }
-          successCount += 1;
-          processedCount += 1;
-          photoImage.src = dataUrl;
-          photoImage.hidden = false;
-          placeholder.style.display = "none";
-          updateStageAspect();
-          whiteboardWrapper.dataset.userPositioned = "false";
-          requestAnimationFrame(positionBoardAtBottomLeft);
-          await applyPhotoMetadata(file, dataUrl, captureCoordinates);
-          const hasGps =
-            lastPhotoMetadata &&
-            typeof lastPhotoMetadata.gps?.latitude === "number" &&
-            typeof lastPhotoMetadata.gps.longitude === "number";
-          if (hasGps) {
-            gpsCount += 1;
           }
         }
-        if (!successCount) {
+        if (!loadedItems.length) {
           showToast("無法讀取任何照片，請重新選擇。");
           return;
         }
-        if (processedCount > 1) {
+        if (isMultiMode) {
+          const startIndex = photoItems.length;
+          photoItems = photoItems.concat(loadedItems);
+          updateMultiModeUI();
+          setActivePhoto(startIndex, { announce: false });
           const message =
             gpsCount > 0
-              ? `已處理 ${processedCount} 張照片，取得 ${gpsCount} 筆座標。`
-              : `已處理 ${processedCount} 張照片，但沒有可用座標。`;
+              ? `已加入 ${loadedItems.length} 張照片，取得 ${gpsCount} 筆座標。`
+              : `已加入 ${loadedItems.length} 張照片，但沒有可用座標。`;
           showToast(message, gpsCount > 0 ? "success" : undefined);
+          return;
         }
+        if (loadedItems.length > 1) {
+          showToast("單張模式只保留最後一張，若要管理全部請先開啟多張模式。");
+        }
+        photoItems = [loadedItems[loadedItems.length - 1]];
+        updateMultiModeUI();
+        setActivePhoto(0, { announce: false });
+        const current = photoItems[0];
+        showToast(
+          current.usedExif
+            ? "已載入照片並套用拍攝日期。"
+            : "已載入照片，可手動調整日期與白板。",
+          "success"
+        );
       };
 
       const applyColorPreset = (button) => {
@@ -2037,13 +2447,24 @@ ${placemarks}
 
       const syncAllFields = () => Object.keys(formInputs).forEach(syncField);
 
-      const clearBoard = () => {
+      const clearBoard = (options = {}) => {
+        const resetPhotoMetadata = options.resetPhotoMetadata === true;
         Object.values(formInputs).forEach((input) => (input.value = ""));
         formInputs.testDate.valueAsDate = new Date();
         syncAllFields();
-        lastPhotoMetadata = null;
-        lastPhotoExifBytes = null;
+        if (hasCurrentPhoto()) {
+          photoItems[activePhotoIndex].dateValue = formInputs.testDate.value;
+        }
+        if (resetPhotoMetadata) {
+          lastPhotoMetadata = null;
+          lastPhotoExifBytes = null;
+        } else if (hasCurrentPhoto()) {
+          const active = photoItems[activePhotoIndex];
+          lastPhotoMetadata = clonePhotoMetadata(active.metadata);
+          lastPhotoExifBytes = active.exifBytes || null;
+        }
         updateCoordinateOverlay();
+        applyDisplayMode();
       };
 
       const updateBoardColor = (color) => {
@@ -2123,16 +2544,31 @@ ${placemarks}
         showToast("已下載圖片，可直接選擇儲存位置。", "success");
       };
 
-      const exportBoardImage = async () => {
-        exportBtn.disabled = true;
-        exportBtn.textContent = "匯出中…";
+      const waitForPhotoReady = async () => {
+        if (!photoImage.hidden && photoImage.complete && photoImage.naturalWidth) return;
+        await new Promise((resolve) => {
+          const handle = () => {
+            photoImage.removeEventListener("load", handle);
+            resolve();
+          };
+          photoImage.addEventListener("load", handle);
+          setTimeout(() => {
+            photoImage.removeEventListener("load", handle);
+            resolve();
+          }, 3000);
+        });
+      };
+
+      const renderExportBlob = async (options = {}) => {
+        if (typeof html2canvas !== "function") {
+          const err = new Error("MISSING_HTML2CANVAS");
+          err.code = "MISSING_HTML2CANVAS";
+          throw err;
+        }
+        await waitForPhotoReady();
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
-          if (typeof html2canvas !== "function") {
-            showToast("匯出元件未載入，請重新整理頁面後再試。");
-            return;
-          }
           const exportBg =
             (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
           const baseScale = window.devicePixelRatio || 1;
@@ -2143,20 +2579,85 @@ ${placemarks}
             scale: exportScale,
           });
           const isPortrait = canvas.height >= canvas.width;
-            let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-            dataUrl = applyExifToDataUrl(dataUrl);
+          let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+          dataUrl = applyExifToDataUrl(dataUrl);
           const blob = dataUrlToBlob(dataUrl);
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
-          const filename = `whiteboard_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
-          await handleShareOrDownload(blob, filename);
-        } catch (error) {
-          console.error(error);
-          showToast("匯出失敗，請再試一次。");
+          const baseName = sanitizeFileBaseName(options.filenameBase || "whiteboard", "whiteboard");
+          const filename = `${baseName}_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
+          return { blob, filename };
         } finally {
           toggleExportAppearance(false);
           toggleWhiteboardSolid(false);
+        }
+      };
+
+      const exportBoardImage = async () => {
+        exportBtn.disabled = true;
+        exportBtn.textContent = "匯出中…";
+        try {
+          const baseName =
+            hasCurrentPhoto() && photoItems[activePhotoIndex]
+              ? `whiteboard_${photoItems[activePhotoIndex].baseName}`
+              : "whiteboard";
+          const { blob, filename } = await renderExportBlob({ filenameBase: baseName });
+          await handleShareOrDownload(blob, filename);
+        } catch (error) {
+          console.error(error);
+          if (error?.code === "MISSING_HTML2CANVAS") {
+            showToast("匯出元件未載入，請重新整理頁面後再試。");
+          } else {
+            showToast("匯出失敗，請再試一次。");
+          }
+        } finally {
           exportBtn.disabled = false;
           exportBtn.textContent = "匯出整張圖片";
+        }
+      };
+
+      const exportAllBoardImages = async () => {
+        if (!isMultiMode) {
+          showToast("請先切換到多張模式。");
+          return;
+        }
+        if (!photoItems.length) {
+          showToast("目前沒有可批次匯出的照片。");
+          return;
+        }
+        exportBtn.disabled = true;
+        if (exportAllBtn) {
+          exportAllBtn.disabled = true;
+          exportAllBtn.textContent = "批次匯出中…";
+        }
+        const previousIndex = hasCurrentPhoto() ? activePhotoIndex : 0;
+        try {
+          for (let i = 0; i < photoItems.length; i += 1) {
+            const item = photoItems[i];
+            setActivePhoto(i, { announce: false, keepPosition: true });
+            const { blob, filename } = await renderExportBlob({
+              filenameBase: `whiteboard_${String(i + 1).padStart(2, "0")}_${item.baseName}`,
+            });
+            downloadBlob(blob, filename);
+            await new Promise((resolve) => setTimeout(resolve, 120));
+          }
+          showToast(`已完成 ${photoItems.length} 張批次匯出。`, "success");
+        } catch (error) {
+          console.error(error);
+          if (error?.code === "MISSING_HTML2CANVAS") {
+            showToast("匯出元件未載入，請重新整理頁面後再試。");
+          } else {
+            showToast("批次匯出失敗，請再試一次。");
+          }
+        } finally {
+          const resumeIndex = Math.min(previousIndex, Math.max(0, photoItems.length - 1));
+          if (photoItems.length) {
+            setActivePhoto(resumeIndex, { announce: false, keepPosition: true });
+          }
+          exportBtn.disabled = false;
+          if (exportAllBtn) {
+            exportAllBtn.textContent = "批次匯出全部";
+            exportAllBtn.disabled = !photoItems.length;
+          }
         }
       };
 
@@ -2165,8 +2666,23 @@ ${placemarks}
         takePhotoInput.click();
       });
       uploadPhotoBtn.addEventListener("click", () => uploadInput.click());
-      takePhotoInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
-      uploadInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
+      takePhotoInput.addEventListener("change", async (event) => {
+        await handlePhotoFiles(event.target.files);
+        event.target.value = "";
+      });
+      uploadInput.addEventListener("change", async (event) => {
+        await handlePhotoFiles(event.target.files);
+        event.target.value = "";
+      });
+      multiModeBtn?.addEventListener("click", () => setMultiMode(!isMultiMode));
+      displayModeBtn?.addEventListener("click", () => {
+        const currentIndex = DISPLAY_MODE_SEQUENCE.indexOf(displayMode);
+        const nextIndex = (currentIndex + 1) % DISPLAY_MODE_SEQUENCE.length;
+        setDisplayMode(DISPLAY_MODE_SEQUENCE[nextIndex]);
+      });
+      prevPhotoBtn?.addEventListener("click", () => shiftActivePhoto(-1));
+      nextPhotoBtn?.addEventListener("click", () => shiftActivePhoto(1));
+      clearPhotoListBtn?.addEventListener("click", () => clearPhotoCollection(true));
 
       whiteboardWrapper.addEventListener("pointerdown", startDrag);
       window.addEventListener("pointermove", dragMove, { passive: false });
@@ -2209,7 +2725,12 @@ ${placemarks}
       );
       boardVisibilityButton.addEventListener("click", () => {
         const nextState = boardVisibilityButton.dataset.boardVisible !== "true";
-        setWhiteboardVisibility(nextState);
+        boardVisibilityPreference = nextState;
+        if (displayMode === DISPLAY_MODES.FULL) {
+          setWhiteboardVisibility(nextState);
+        } else {
+          updateBoardVisibilityButton(nextState);
+        }
       });
       colorPresetButtons.forEach((button) =>
         button.addEventListener("click", () => applyColorPreset(button))
@@ -2252,6 +2773,10 @@ ${placemarks}
             autoResizeTextarea(formInputs.testResult);
           }
           syncField(field);
+          if (field === "testDate" && hasCurrentPhoto()) {
+            photoItems[activePhotoIndex].dateValue = formInputs.testDate.value;
+            applyDisplayMode();
+          }
         });
         if (autoHistoryFields.includes(field)) {
           input.addEventListener("blur", () => saveFieldHistory(field, input.value));
@@ -2259,6 +2784,7 @@ ${placemarks}
       });
 
       exportBtn.addEventListener("click", exportBoardImage);
+      exportAllBtn?.addEventListener("click", exportAllBoardImages);
       window.addEventListener("resize", updateStageAspect);
       photoImage.addEventListener("load", updateStageAspect);
 
@@ -2305,7 +2831,19 @@ ${placemarks}
       } catch (error) {
         console.warn("讀取白板可見狀態失敗", error);
       }
-      setWhiteboardVisibility(savedVisibility);
+      boardVisibilityPreference = savedVisibility;
+      setWhiteboardVisibility(savedVisibility, { persist: false });
+      try {
+        const storedDisplayMode = localStorage.getItem(DISPLAY_MODE_STORAGE_KEY);
+        if (Object.values(DISPLAY_MODES).includes(storedDisplayMode)) {
+          displayMode = storedDisplayMode;
+        }
+      } catch (error) {
+        console.warn("讀取顯示模式失敗", error);
+      }
+      updateMultiModeUI();
+      updateDisplayModeButton();
+      renderPhotoList();
       syncAllFields();
       updateBoardScale(boardScaleInput.value);
       updateFontScale(fontScaleInput.value);
@@ -2317,6 +2855,7 @@ ${placemarks}
       updateLineColor(lineColorInput.value);
       updateWatermarkDate();
       updateCoordinateOverlay();
+      applyDisplayMode();
       enableFieldDragReorder();
       applyFieldLabels();
       REORDERABLE_FIELD_KEYS.forEach(renderLabelHistorySelect);
