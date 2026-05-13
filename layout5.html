@@ -397,8 +397,8 @@
             <span>輸出尺寸</span>
             <div class="size-toggle-group" role="group" aria-label="輸出尺寸選擇">
               <button type="button" class="size-toggle" data-export-size="small">小</button>
-              <button type="button" class="size-toggle" data-export-size="medium">中</button>
-              <button type="button" class="size-toggle is-active" data-export-size="large">大</button>
+              <button type="button" class="size-toggle is-active" data-export-size="medium">中</button>
+              <button type="button" class="size-toggle" data-export-size="large">大</button>
             </div>
           </label>
           <label class="panel-control">
@@ -608,6 +608,10 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const EXPORT_JPEG_MIN_QUALITY = 0.62;
       const EXPORT_JPEG_QUALITY_STEP = 0.07;
       const EXPORT_EXIF_MAX_BLOB_BYTES = 2_000_000;
+      const EXPORT_FAST_MAX_SCALE_MOBILE = 1.15;
+      const EXPORT_FAST_MAX_SCALE_DESKTOP = 1.5;
+      const EXPORT_KEEP_EXIF = false;
+      const EXPORT_WAIT_IMAGE_TIMEOUT_MS = 1200;
       const EXPORT_FALLBACK_BOARD_TIMEOUT_MS = 12000;
       const EXPORT_MANUAL_LONG_EDGE = {
         small: 1280,
@@ -619,7 +623,7 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const IMPORT_JPEG_START_QUALITY = 0.85;
       const IMPORT_JPEG_MIN_QUALITY = 0.72;
       const IMPORT_RESIZE_PASSES = 4;
-      let exportSize = "large";
+      let exportSize = "medium";
       let coordinateHistory = [];
 
       const formInputs = {
@@ -2973,7 +2977,7 @@ ${placemarks}
           setTimeout(() => {
             photoImage.removeEventListener("load", handle);
             resolve();
-          }, 3000);
+          }, EXPORT_WAIT_IMAGE_TIMEOUT_MS);
         });
       };
 
@@ -3074,17 +3078,25 @@ ${placemarks}
         try {
           const baseScale = window.devicePixelRatio || 1;
           const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
-          const exportScale = baseScale * sizeMultiplier;
-          const exportBg =
-            (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
-          const canvas = await html2canvas(captureArea, {
-            backgroundColor: exportBg,
-            scale: exportScale,
-          });
+          const requestedScale = baseScale * sizeMultiplier;
+          const speedScaleCap = isMobileDevice
+            ? EXPORT_FAST_MAX_SCALE_MOBILE
+            : EXPORT_FAST_MAX_SCALE_DESKTOP;
+          const exportScale = Math.min(requestedScale, speedScaleCap);
+          const canvas = await html2canvas(
+            captureArea,
+            buildHtml2CanvasOptions(exportScale)
+          );
           const isPortrait = canvas.height >= canvas.width;
-          let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-          dataUrl = applyExifToDataUrl(dataUrl);
-          const blob = dataUrlToBlob(dataUrl);
+          let blob = await encodeCanvasAsJpeg(canvas, {
+            maxBytes: EXPORT_TARGET_MAX_BYTES,
+            startQuality: EXPORT_JPEG_START_QUALITY,
+            minQuality: EXPORT_JPEG_MIN_QUALITY,
+            qualityStep: EXPORT_JPEG_QUALITY_STEP,
+          });
+          if (EXPORT_KEEP_EXIF) {
+            blob = await attachExifToBlob(blob);
+          }
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
           const baseName = sanitizeFileBaseName(options.filenameBase || "whiteboard", "whiteboard");
           const filename = `${baseName}_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
