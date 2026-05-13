@@ -595,7 +595,7 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         medium: 1,
         large: 1.5,
       };
-      const EXPORT_RENDER_TIMEOUT_MS = 22000;
+      const EXPORT_RENDER_TIMEOUT_MS = 6500;
       const EXPORT_RENDER_RETRY_TIMEOUT_MS = 12000;
       const EXPORT_SCALE_MAX = 1.8;
       const EXPORT_RETRY_SCALE = 1.0;
@@ -611,8 +611,9 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const EXPORT_FAST_MAX_SCALE_MOBILE = 1.15;
       const EXPORT_FAST_MAX_SCALE_DESKTOP = 1.5;
       const EXPORT_KEEP_EXIF = false;
+      const EXPORT_PREFER_MANUAL_PIPELINE = true;
       const EXPORT_WAIT_IMAGE_TIMEOUT_MS = 1200;
-      const EXPORT_FALLBACK_BOARD_TIMEOUT_MS = 12000;
+      const EXPORT_FALLBACK_BOARD_TIMEOUT_MS = 1800;
       const EXPORT_MANUAL_LONG_EDGE = {
         small: 1280,
         medium: 1600,
@@ -1781,7 +1782,7 @@ ${placemarks}
         return withTimeout(
           html2canvas(whiteboard, {
             backgroundColor: null,
-            scale: 1.5,
+            scale: 1,
             logging: false,
             imageTimeout: 0,
             removeContainer: true,
@@ -1880,7 +1881,9 @@ ${placemarks}
           minQuality: EXPORT_JPEG_MIN_QUALITY,
           qualityStep: EXPORT_JPEG_QUALITY_STEP,
         });
-        blob = await attachExifToBlob(blob);
+        if (EXPORT_KEEP_EXIF) {
+          blob = await attachExifToBlob(blob);
+        }
         const isPortrait = output.height >= output.width;
         const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
         const baseName = sanitizeFileBaseName(options.filenameBase || "whiteboard", "whiteboard");
@@ -3061,12 +3064,56 @@ ${placemarks}
         );
       };
 
-      const renderExportBlob = async (options = {}) => {
+      const shouldFallbackToManual = (error) => {
+        const code = String(error?.code || error?.name || "").toUpperCase();
+        if (
+          code === "EXPORT_TIMEOUT" ||
+          code === "TIMEOUT" ||
+          code === "ABORTERROR" ||
+          code === "SECURITYERROR"
+        ) {
+          return true;
+        }
+        const message = String(error?.message || "").toLowerCase();
+        return (
+          message.includes("timeout") ||
+          message.includes("timed out") ||
+          message.includes("security") ||
+          message.includes("tainted")
+        );
+      };
+
+      const renderExportBlobByHtml2Canvas = async (options = {}) => {
         if (typeof html2canvas !== "function") {
           const err = new Error("MISSING_HTML2CANVAS");
           err.code = "MISSING_HTML2CANVAS";
           throw err;
         }
+        const baseScale = window.devicePixelRatio || 1;
+        const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
+        const requestedScale = baseScale * sizeMultiplier;
+        const speedScaleCap = isMobileDevice
+          ? EXPORT_FAST_MAX_SCALE_MOBILE
+          : EXPORT_FAST_MAX_SCALE_DESKTOP;
+        const exportScale = Math.min(requestedScale, speedScaleCap);
+        const canvas = await captureCanvasWithScale(exportScale, EXPORT_RENDER_TIMEOUT_MS);
+        const isPortrait = canvas.height >= canvas.width;
+        let blob = await encodeCanvasAsJpeg(canvas, {
+          maxBytes: EXPORT_TARGET_MAX_BYTES,
+          startQuality: EXPORT_JPEG_START_QUALITY,
+          minQuality: EXPORT_JPEG_MIN_QUALITY,
+          qualityStep: EXPORT_JPEG_QUALITY_STEP,
+        });
+        if (EXPORT_KEEP_EXIF) {
+          blob = await attachExifToBlob(blob);
+        }
+        const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
+        const baseName = sanitizeFileBaseName(options.filenameBase || "whiteboard", "whiteboard");
+        const filename = `${baseName}_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
+        return { blob, filename };
+      };
+
+      const renderExportBlob = async (options = {}) => {
         await waitForPhotoReady();
         if (photoImage.hidden || !photoImage.naturalWidth) {
           const err = new Error("NO_PHOTO_FOR_EXPORT");
@@ -3076,31 +3123,26 @@ ${placemarks}
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
-          const baseScale = window.devicePixelRatio || 1;
-          const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
-          const requestedScale = baseScale * sizeMultiplier;
-          const speedScaleCap = isMobileDevice
-            ? EXPORT_FAST_MAX_SCALE_MOBILE
-            : EXPORT_FAST_MAX_SCALE_DESKTOP;
-          const exportScale = Math.min(requestedScale, speedScaleCap);
-          const canvas = await html2canvas(
-            captureArea,
-            buildHtml2CanvasOptions(exportScale)
-          );
-          const isPortrait = canvas.height >= canvas.width;
-          let blob = await encodeCanvasAsJpeg(canvas, {
-            maxBytes: EXPORT_TARGET_MAX_BYTES,
-            startQuality: EXPORT_JPEG_START_QUALITY,
-            minQuality: EXPORT_JPEG_MIN_QUALITY,
-            qualityStep: EXPORT_JPEG_QUALITY_STEP,
-          });
-          if (EXPORT_KEEP_EXIF) {
-            blob = await attachExifToBlob(blob);
+          if (EXPORT_PREFER_MANUAL_PIPELINE) {
+            try {
+              return await renderExportBlobManual(options);
+            } catch (manualError) {
+              if (manualError?.code === "NO_PHOTO_FOR_EXPORT") {
+                throw manualError;
+              }
+              console.warn("手動畫布合成失敗，改用 html2canvas 匯出", manualError);
+              return await renderExportBlobByHtml2Canvas(options);
+            }
           }
-          const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
-          const baseName = sanitizeFileBaseName(options.filenameBase || "whiteboard", "whiteboard");
-          const filename = `${baseName}_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
-          return { blob, filename };
+          try {
+            return await renderExportBlobByHtml2Canvas(options);
+          } catch (error) {
+            if (!shouldFallbackToManual(error)) {
+              throw error;
+            }
+            console.warn("html2canvas 匯出失敗，改用手動畫布合成", error);
+            return await renderExportBlobManual(options);
+          }
         } finally {
           toggleExportAppearance(false);
           toggleWhiteboardSolid(false);
