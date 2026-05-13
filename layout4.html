@@ -437,7 +437,6 @@
       <div class="controls">
         <button class="btn" id="takePhotoBtn">拍照</button>
         <button class="btn btn-secondary" id="uploadPhotoBtn">上傳照片</button>
-        <button class="mode-chip" id="multiModeBtn" type="button" aria-pressed="false">多張模式：關</button>
         <button class="mode-chip" id="displayModeBtn" type="button">顯示：完整白板</button>
       </div>
 
@@ -457,28 +456,15 @@
         <div class="photo-watermark photo-watermark--top-right" id="photoCoordinate" hidden>座標未取得</div>
         <div class="photo-watermark" id="photoWatermark">日期未設定</div>
       </div>
-      <div class="photo-list-panel" id="photoListPanel" hidden>
-        <div class="photo-list-header">
-          <span class="photo-list-count" id="photoListCount">0 張照片</span>
-          <div class="photo-list-actions">
-            <button type="button" class="ghost-btn" id="prevPhotoBtn">上一張</button>
-            <button type="button" class="ghost-btn" id="nextPhotoBtn">下一張</button>
-            <button type="button" class="ghost-btn ghost-button--danger" id="clearPhotoListBtn">清空照片</button>
-          </div>
-        </div>
-        <div class="photo-list" id="photoList"></div>
-      </div>
-
       <div class="action-bar">
         <button class="action-btn secondary" id="clearBoardBtn">清除白板</button>
         <button class="action-btn primary" id="exportBtn">匯出整張圖片</button>
-        <button class="action-btn secondary action-btn--wide" id="exportAllBtn" hidden>批次匯出全部</button>
       </div>
 
   <p id="toastMessage" class="toast-message" role="status" aria-live="polite"></p>
 
       <input type="file" accept="image/*" capture="environment" class="hidden-input" id="takePhotoInput" />
-      <input type="file" accept="image/*" class="hidden-input" id="uploadInput" multiple />
+      <input type="file" accept="image/*" class="hidden-input" id="uploadInput" />
     </div>
 
     <script src="vendor/piexif.min.js"></script>
@@ -609,7 +595,6 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const EXPORT_JPEG_QUALITY_STEP = 0.07;
       const EXPORT_EXIF_MAX_BLOB_BYTES = 2_000_000;
       const SHARE_BYPASS_MAX_BYTES = 2_600_000;
-      const EXPORT_FALLBACK_BOARD_TIMEOUT_MS = 12000;
       const EXPORT_MANUAL_LONG_EDGE = {
         small: 1280,
         medium: 1600,
@@ -1773,36 +1758,53 @@ ${placemarks}
         ctx.restore();
       };
 
-      const captureWhiteboardCanvas = async () => {
-        if (typeof html2canvas !== "function" || !whiteboard) return null;
-        return withTimeout(
-          html2canvas(whiteboard, {
-            backgroundColor: null,
-            scale: 1.5,
-            logging: false,
-            imageTimeout: 0,
-            removeContainer: true,
-          }),
-          EXPORT_FALLBACK_BOARD_TIMEOUT_MS,
-          "BOARD_CAPTURE_TIMEOUT"
-        );
+      const wrapTextByWidth = (ctx, text, maxWidth) => {
+        const sourceLines = String(text || "").split(/\r?\n/);
+        const wrapped = [];
+        sourceLines.forEach((segment) => {
+          const chars = Array.from(segment || "");
+          if (!chars.length) {
+            wrapped.push("");
+            return;
+          }
+          let current = "";
+          chars.forEach((ch) => {
+            const next = current + ch;
+            if (current && ctx.measureText(next).width > maxWidth) {
+              wrapped.push(current);
+              current = ch;
+            } else {
+              current = next;
+            }
+          });
+          wrapped.push(current);
+        });
+        return wrapped.length ? wrapped : [""];
       };
 
-      const drawWhiteboardOverlay = async (ctx, stageRect, outputWidth, outputHeight) => {
+      const resolveBoardVisualStyles = () => {
+        const rootStyle = window.getComputedStyle(document.documentElement);
+        const boardStyle = window.getComputedStyle(whiteboard);
+        return {
+          fill: rootStyle.getPropertyValue("--board-fill").trim() || "#f8fafc",
+          text: rootStyle.getPropertyValue("--text-color").trim() || "#0f172a",
+          line: rootStyle.getPropertyValue("--line-color").trim() || "#000000",
+          opacity: clampNumber(
+            Number.parseFloat(boardStyle.opacity || "1") || 1,
+            0.2,
+            1
+          ),
+          baseFontSize: Number.parseFloat(boardStyle.fontSize || "16") || 16,
+        };
+      };
+
+      const drawWhiteboardOverlay = (ctx, stageRect, outputWidth, outputHeight) => {
         if (!whiteboardWrapper || !whiteboard || whiteboardWrapper.hidden) return;
-        let boardCanvas = null;
-        try {
-          boardCanvas = await captureWhiteboardCanvas();
-        } catch (error) {
-          console.warn("白板疊圖渲染失敗，略過白板疊圖", error);
-          return;
-        }
-        if (!boardCanvas) return;
         const style = window.getComputedStyle(whiteboardWrapper);
         const centerXPercent = parsePercent(style.left);
         const centerYPercent = parsePercent(style.top);
         const wrapperRect = whiteboardWrapper.getBoundingClientRect();
-        const fallbackCenter = mapRectToOutput(
+        const mappedWrapper = mapRectToOutput(
           wrapperRect,
           stageRect,
           outputWidth,
@@ -1811,27 +1813,111 @@ ${placemarks}
         const centerX =
           centerXPercent !== null
             ? clampNumber(centerXPercent, 0, 1) * outputWidth
-            : fallbackCenter.x + fallbackCenter.width / 2;
+            : mappedWrapper.x + mappedWrapper.width / 2;
         const centerY =
           centerYPercent !== null
             ? clampNumber(centerYPercent, 0, 1) * outputHeight
-            : fallbackCenter.y + fallbackCenter.height / 2;
+            : mappedWrapper.y + mappedWrapper.height / 2;
         const scale = Number.parseFloat(style.getPropertyValue("--board-scale")) || 1;
         const rotationValue =
           window.getComputedStyle(document.documentElement).getPropertyValue("--board-rotation") ||
           "0deg";
         const rotationDeg = Number.parseFloat(rotationValue) || 0;
-        const baseWidth = whiteboard.offsetWidth || boardCanvas.width || 1;
-        const baseHeight = whiteboard.offsetHeight || boardCanvas.height || 1;
+        const baseWidth = whiteboard.offsetWidth || 350;
+        const baseHeight = whiteboard.offsetHeight || 260;
         const unitScaleX = outputWidth / Math.max(1, stageRect.width);
         const unitScaleY = outputHeight / Math.max(1, stageRect.height);
         const drawWidth = baseWidth * scale * unitScaleX;
         const drawHeight = baseHeight * scale * unitScaleY;
+        const scaleToOutput = drawWidth / Math.max(1, baseWidth);
         const rotationRad = (rotationDeg * Math.PI) / 180;
+        const visual = resolveBoardVisualStyles();
+        const fieldKeys = fieldOrder.filter(
+          (key) => DEFAULT_FIELD_LABELS[key] && isFieldVisible(key)
+        );
+
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.rotate(rotationRad);
-        ctx.drawImage(boardCanvas, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+
+        const left = -drawWidth / 2;
+        const top = -drawHeight / 2;
+        ctx.globalAlpha = visual.opacity;
+        ctx.fillStyle = visual.fill;
+        ctx.fillRect(left, top, drawWidth, drawHeight);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = visual.line;
+        ctx.lineWidth = Math.max(1, drawWidth * 0.011);
+        ctx.strokeRect(left, top, drawWidth, drawHeight);
+
+        const innerPadding = Math.max(4, baseWidth * 0.012 * scaleToOutput);
+        const contentLeft = left + innerPadding;
+        const contentTop = top + innerPadding;
+        const contentWidth = drawWidth - innerPadding * 2;
+        const contentBottom = top + drawHeight - innerPadding;
+        const labelColumnWidth = Math.max(contentWidth * 0.2, visual.baseFontSize * 4.8 * scaleToOutput);
+        const valueLeft = contentLeft + labelColumnWidth + innerPadding * 0.6;
+        const valueWidth = Math.max(40, contentLeft + contentWidth - valueLeft);
+        const baseFont = Math.max(12, visual.baseFontSize * scaleToOutput);
+        const labelFontSize = Math.max(11, baseFont * 0.9);
+        const valueFontSize = Math.max(11, baseFont * 0.96);
+        const lineHeight = Math.max(16, valueFontSize * 1.24);
+        const rowPaddingY = Math.max(2, lineHeight * 0.26);
+        let cursorY = contentTop;
+
+        fieldKeys.forEach((key, index) => {
+          if (cursorY >= contentBottom) return;
+          const labelText = `${fieldLabels[key] || DEFAULT_FIELD_LABELS[key]}：`;
+          const valueText = getFieldDisplayValue(key);
+          const isNotes = key === "testResult";
+
+          ctx.fillStyle = visual.text;
+          ctx.textBaseline = "top";
+          ctx.textAlign = "left";
+          ctx.font = `700 ${labelFontSize}px "Noto Sans TC", sans-serif`;
+
+          let rowHeight = lineHeight + rowPaddingY * 2;
+          if (isNotes) {
+            ctx.font = `600 ${valueFontSize}px "Noto Sans TC", sans-serif`;
+            const wrappedLines = wrapTextByWidth(ctx, valueText || "—", valueWidth);
+            const notesLineHeight = Math.max(15, valueFontSize * 1.2);
+            const remaining = Math.max(notesLineHeight, contentBottom - cursorY - rowPaddingY * 2);
+            const maxLines = Math.max(1, Math.floor(remaining / notesLineHeight));
+            const lines = wrappedLines.slice(0, maxLines);
+            rowHeight = Math.max(
+              lineHeight * 2.4,
+              lines.length * notesLineHeight + rowPaddingY * 2
+            );
+            if (cursorY + rowHeight > contentBottom) {
+              rowHeight = Math.max(lineHeight + rowPaddingY, contentBottom - cursorY);
+            }
+            ctx.font = `700 ${labelFontSize}px "Noto Sans TC", sans-serif`;
+            ctx.fillText(labelText, contentLeft, cursorY + rowPaddingY);
+            ctx.font = `600 ${valueFontSize}px "Noto Sans TC", sans-serif`;
+            lines.forEach((line, lineIndex) => {
+              const yy = cursorY + rowPaddingY + lineIndex * notesLineHeight;
+              if (yy + notesLineHeight <= contentBottom + 1) {
+                ctx.fillText(line || " ", valueLeft, yy);
+              }
+            });
+          } else {
+            const yy = cursorY + rowPaddingY;
+            ctx.fillText(labelText, contentLeft, yy);
+            ctx.font = `600 ${valueFontSize}px "Noto Sans TC", sans-serif`;
+            ctx.fillText(valueText || "—", valueLeft, yy);
+          }
+
+          cursorY += rowHeight;
+          if (index < fieldKeys.length - 1 && cursorY < contentBottom) {
+            ctx.beginPath();
+            ctx.strokeStyle = visual.line;
+            ctx.lineWidth = Math.max(1, drawWidth * 0.003);
+            ctx.moveTo(contentLeft, cursorY);
+            ctx.lineTo(contentLeft + contentWidth, cursorY);
+            ctx.stroke();
+          }
+        });
+
         ctx.restore();
       };
 
@@ -1862,7 +1948,7 @@ ${placemarks}
         ctx.fillStyle = exportBg;
         ctx.fillRect(0, 0, output.width, output.height);
         ctx.drawImage(photoImage, 0, 0, output.width, output.height);
-        await drawWhiteboardOverlay(ctx, stageRect, output.width, output.height);
+        drawWhiteboardOverlay(ctx, stageRect, output.width, output.height);
         drawTextOverlayFromElement(ctx, photoCoordinate, stageRect, output.width, output.height, {
           align: "right",
           vertical: "top",
@@ -3066,90 +3152,11 @@ ${placemarks}
       };
 
       const renderExportBlob = async (options = {}) => {
-        if (typeof html2canvas !== "function") {
-          const err = new Error("MISSING_HTML2CANVAS");
-          err.code = "MISSING_HTML2CANVAS";
-          throw err;
-        }
         await waitForPhotoReady();
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
-          const baseScale = window.devicePixelRatio || 1;
-          const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
-          const exportScale = Math.min(baseScale * sizeMultiplier, EXPORT_SCALE_MAX);
-          const safeInitialScale = resolveSafeExportScale(exportScale);
-          const candidateScales = [
-            safeInitialScale,
-            EXPORT_RETRY_SCALE,
-            EXPORT_FINAL_RETRY_SCALE,
-            EXPORT_ULTRA_RETRY_SCALE,
-          ].filter(
-            (scaleValue, index, list) =>
-              Number.isFinite(scaleValue) &&
-              scaleValue > 0 &&
-              list.findIndex((item) => item === scaleValue) === index
-          );
-          let canvas = null;
-          let blob = null;
-          let lastError = null;
-          for (let index = 0; index < candidateScales.length; index += 1) {
-            const scaleValue = candidateScales[index];
-            try {
-              const timeoutMs =
-                index === 0 ? EXPORT_RENDER_TIMEOUT_MS : EXPORT_RENDER_RETRY_TIMEOUT_MS;
-              const nextCanvas = await captureCanvasWithScale(scaleValue, timeoutMs);
-              const nextBlob = await encodeCanvasAsJpeg(nextCanvas, {
-                maxBytes: EXPORT_TARGET_MAX_BYTES,
-                startQuality: EXPORT_JPEG_START_QUALITY,
-                minQuality: EXPORT_JPEG_MIN_QUALITY,
-                qualityStep: EXPORT_JPEG_QUALITY_STEP,
-              });
-              canvas = nextCanvas;
-              blob = nextBlob;
-              if (
-                blob.size <= EXPORT_TARGET_MAX_BYTES ||
-                scaleValue === EXPORT_ULTRA_RETRY_SCALE
-              ) {
-                break;
-              }
-            } catch (error) {
-              lastError = error;
-              if (error?.code === "EXPORT_TIMEOUT") {
-                break;
-              }
-              const shouldRetry =
-                error?.code === "EXPORT_TIMEOUT" ||
-                error?.name === "AbortError" ||
-                error?.name === "SecurityError" ||
-                error?.code === "CANVAS_ENCODE_FAILED";
-              if (!shouldRetry) {
-                throw error;
-              }
-            }
-          }
-          if (!canvas || !blob) {
-            const shouldFallbackToManual =
-              !lastError ||
-              lastError?.code === "EXPORT_TIMEOUT" ||
-              lastError?.code === "CANVAS_ENCODE_FAILED" ||
-              lastError?.code === "EXPORT_RENDER_FAILED";
-            if (shouldFallbackToManual) {
-              return renderExportBlobManual(options);
-            }
-            if (lastError) {
-              throw lastError;
-            }
-            const err = new Error("EXPORT_RENDER_FAILED");
-            err.code = "EXPORT_RENDER_FAILED";
-            throw err;
-          }
-          blob = await attachExifToBlob(blob);
-          const isPortrait = canvas.height >= canvas.width;
-          const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
-          const baseName = sanitizeFileBaseName(options.filenameBase || "whiteboard", "whiteboard");
-          const filename = `${baseName}_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
-          return { blob, filename };
+          return await renderExportBlobManual(options);
         } finally {
           toggleExportAppearance(false);
           toggleWhiteboardSolid(false);
@@ -3171,13 +3178,11 @@ ${placemarks}
           await handleShareOrDownload(blob, filename);
         } catch (error) {
           console.error(error);
-          if (error?.code === "MISSING_HTML2CANVAS") {
-            showToast("匯出元件未載入，請重新整理頁面後再試。");
-          } else if (error?.code === "EXPORT_TIMEOUT") {
-            showToast("匯出逾時，系統已自動降到最低倍率，請稍後再試。");
+          if (error?.code === "NO_PHOTO_FOR_EXPORT") {
+            showToast("請先拍照或上傳照片再匯出。");
           } else if (
             error?.code === "CANVAS_ENCODE_FAILED" ||
-            error?.code === "EXPORT_RENDER_FAILED"
+            error?.code === "CANVAS_CONTEXT_FAILED"
           ) {
             showToast("圖片轉檔失敗，系統已嘗試自動縮小，請再試一次。");
           } else {

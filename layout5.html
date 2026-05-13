@@ -7,670 +7,254 @@
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
     <title>麗鄴電子白板-布局5</title>
+    <link rel="stylesheet" href="main.css" />
     <style>
-      :root {
-        --board-fill: #f8fafc;
-        --text-color: #0f172a;
-        --line-color: #000000;
-        --board-rotation: 0deg;
-        --camera-frame-width: 100vw;
-        --camera-frame-height: 100vh;
-        font-family: "Noto Sans TC", "Segoe UI", system-ui, -apple-system,
-          BlinkMacSystemFont, sans-serif;
-        line-height: 1.45;
-        color: #0f172a;
-        background: #0f172a;
+      .photo-watermark {
+        font-size: calc(1rem * var(--whiteboard-overlay-scale, 1));
       }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        padding: 1.25rem;
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 150px);
-        background: radial-gradient(circle, #1e293b, #0f172a);
-        display: flex;
-        justify-content: center;
-      }
-
-      .app-shell {
-        width: min(560px, 100%);
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      h1 {
-        color: #f8fafc;
-        text-align: center;
-        margin: 0;
-        font-size: clamp(1.4rem, 5vw, 2.1rem);
-        letter-spacing: 0.08em;
-      }
-
-      .version-note {
-        text-align: center;
-        color: #facc15;
-        font-size: 0.95rem;
-        margin-top: 0.3rem;
-        font-weight: 600;
-      }
-
-      .panel {
-        background: rgba(15, 23, 42, 0.45);
-        border-radius: 20px;
-        padding: 1rem 1.1rem;
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        color: #e2e8f0;
-        backdrop-filter: blur(12px);
-      }
-
-      .panel h3 {
-        margin: 0 0 0.75rem;
-        font-size: 1.05rem;
-        letter-spacing: 0.05em;
-      }
-
-      .data-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 0.75rem;
-      }
-
-      .form-field {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-      }
-
-      .form-field label {
-        font-size: 0.9rem;
-      }
-
-      .form-field input,
-      .form-field textarea {
-        border-radius: 12px;
-        border: 1px solid rgba(226, 232, 240, 0.35);
-        background: rgba(15, 23, 42, 0.6);
-        color: #f8fafc;
-        font: inherit;
-        padding: 0.55rem 0.7rem;
-      }
-
-      .form-field textarea {
-        min-height: 90px;
-        resize: none;
-        overflow: hidden;
-      }
-
-      .panel-hint {
-        margin-top: 0.4rem;
-        font-size: 0.83rem;
-        color: #cbd5f5;
-      }
-
-      .panel-actions {
-        margin-top: 0.8rem;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 0.75rem;
-        align-items: center;
-      }
-
-      .color-preset-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        grid-column: 1 / -1;
-      }
-
-      .color-swatch {
-        width: 46px;
-        height: 28px;
-        border-radius: 14px;
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        background: transparent;
-        position: relative;
-        cursor: pointer;
-        transition: transform 0.15s ease, border-color 0.2s ease;
-        padding: 0;
-      }
-
-      .color-swatch::before {
-        content: "";
-        position: absolute;
-        inset: 5px 8px 5px 8px;
-        border-radius: 10px;
-        background: var(--swatch-color, #fff);
-        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.25);
-      }
-
-      .color-swatch:hover,
-      .color-swatch:focus-visible {
-        border-color: #38bdf8;
-        outline: none;
-        transform: translateY(-1px);
-      }
-
-      .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-      }
-
-      .history-dropdown {
-        margin-top: 0.4rem;
-        border: 1px solid rgba(148, 163, 184, 0.4);
-        border-radius: 12px;
-        background: rgba(15, 23, 42, 0.9);
-        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.4);
-        max-height: 200px;
-        overflow-y: auto;
-        display: none;
-        flex-direction: column;
-        gap: 0.25rem;
-        padding: 0.4rem;
-      }
-
-      .history-dropdown.is-visible {
-        display: flex;
-      }
-
-      .history-dropdown button {
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        border-radius: 8px;
-        padding: 0.4rem 0.55rem;
-        background: rgba(15, 23, 42, 0.65);
-        color: #e2e8f0;
-        font: inherit;
-        text-align: left;
-        cursor: pointer;
-        transition: border-color 0.2s ease, background 0.2s ease;
-      }
-
-      .history-dropdown button:hover,
-      .history-dropdown button:focus-visible {
-        border-color: #38bdf8;
-        background: rgba(56, 189, 248, 0.2);
-        outline: none;
-      }
-
-      .toggle-advanced {
-        margin-top: 0.6rem;
-        width: 100%;
-      }
-
-      .advanced-controls {
-        margin-top: 0.5rem;
-        border-top: 1px dashed rgba(148, 163, 184, 0.4);
-        padding-top: 0.6rem;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 0.75rem;
-      }
-
-      .advanced-controls[hidden] {
-        display: none !important;
-      }
-
-      .panel-control {
+      .field-label-row {
         display: flex;
         align-items: center;
-        gap: 0.6rem;
-      }
-
-      .panel-control input[type="range"] {
-        flex: 1;
-      }
-
-      .ghost-btn {
-        border-radius: 999px;
-        border: 1px solid rgba(226, 232, 240, 0.45);
-        background: transparent;
-        color: #e2e8f0;
-        font-weight: 600;
-        padding: 0.6rem 1.25rem;
-        cursor: pointer;
-      }
-
-      #applyDataBtn {
-        background: linear-gradient(120deg, #38bdf8, #6366f1);
-        color: #0f172a;
-        border: none;
-        font-weight: 700;
-        box-shadow: 0 12px 24px rgba(56, 189, 248, 0.35);
-      }
-
-      .controls {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 0.75rem;
-      }
-
-      .btn {
-        border: none;
-        border-radius: 999px;
-        padding: 0.6rem 1.25rem;
-        font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
-        color: #fff;
-        background: linear-gradient(135deg, #2563eb, #3b82f6);
-        box-shadow: 0 10px 18px rgba(37, 99, 235, 0.3);
-      }
-
-      .btn-secondary {
-        background: transparent;
-        border: 2px solid #94a3b8;
-        color: #e2e8f0;
-        box-shadow: none;
-      }
-
-      .stage {
-        position: relative;
-        width: 100%;
-        border-radius: 0;
-        overflow: hidden;
-        background: transparent;
-        box-shadow: none;
-        border: none;
-        --stage-aspect: 56.25%;
-      }
-
-      .stage::before {
-        content: "";
-        display: block;
-        padding-top: var(--stage-aspect);
-      }
-
-      .stage-content {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: transparent;
-      }
-
-      .stage-content.exporting {
-        background: transparent;
-      }
-
-      .stage-content img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-      }
-
-      .stage-content video {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        border-radius: 0;
-        background: #000;
-      }
-
-      .camera-toolbar {
-        margin: 0.6rem 0 0.2rem;
-        display: flex;
         justify-content: space-between;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.35rem 0.75rem;
-        border-radius: 12px;
-        background: rgba(15, 23, 42, 0.35);
-        border: 1px solid rgba(148, 163, 184, 0.3);
-        color: #e2e8f0;
+        gap: 0.35rem;
+        position: relative;
       }
-
-      body.camera-mode {
-        overflow: hidden;
-      }
-
-      body.camera-mode {
-        padding: 0;
-        background: #000;
-        overflow: hidden;
-      }
-
-      body.camera-mode .app-shell {
-        width: 100%;
-        max-width: 100%;
-        padding: 0;
-        margin: 0;
-      }
-
-      body.camera-mode h1,
-      body.camera-mode .version-note {
-        visibility: hidden;
-      }
-
-      body.camera-mode .panel,
-      body.camera-mode .controls,
-      body.camera-mode .action-bar {
-        visibility: hidden;
-        pointer-events: none;
-      }
-
-      body.camera-mode .stage {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        width: var(--camera-frame-width, 100vw);
-        height: var(--camera-frame-height, 100vh);
-        transform: translate(-50%, -50%);
-        border-radius: 0;
-        background: #000;
-        z-index: 1000;
-      }
-
-      body.camera-mode .stage::before {
-        display: none;
-      }
-
-      body.camera-mode .stage-content {
-        position: absolute;
-        inset: 0;
-      }
-
-      body.camera-mode .whiteboard-wrapper {
-        pointer-events: auto;
-      }
-
-      body.camera-mode #photoWatermark {
-        z-index: 1010;
-      }
-
-      body.camera-mode .camera-toolbar {
-        position: fixed;
-        bottom: clamp(0.5rem, env(safe-area-inset-bottom, 0.5rem), 2rem);
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(720px, calc(100vw - 1.5rem));
-        z-index: 1100;
-      }
-
-      .camera-toolbar .camera-actions {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-      }
-
-      .camera-toolbar[hidden] {
-        display: none !important;
-      }
-
-      .camera-status {
-        font-size: 0.9rem;
+      .field-label-row label {
         flex: 1;
+        cursor: pointer;
+        transition: color 0.2s ease;
       }
-
-      .camera-font-control {
+      .field-label-row label:hover,
+      .field-label-row label:focus-visible {
+        color: #38bdf8;
+      }
+      .form-field[data-field-key] {
+        cursor: grab;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .form-field[data-field-key].is-dragging {
+        opacity: 0.65;
+        cursor: grabbing;
+        border: 1px dashed rgba(148, 163, 184, 0.6);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.45);
+      }
+      .inline-label-input {
+        flex: 1;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        background: rgba(15, 23, 42, 0.5);
+        color: #f8fafc;
+        font: inherit;
+        padding: 0.3rem 0.5rem;
+      }
+      .label-context-menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        min-width: 160px;
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        background: rgba(15, 23, 42, 0.96);
+        box-shadow: 0 20px 40px rgba(2, 6, 23, 0.6);
+        padding: 0.4rem;
         display: flex;
         flex-direction: column;
         gap: 0.2rem;
-        min-width: 160px;
-        font-size: 0.85rem;
+        z-index: 2200;
       }
-
-      .camera-font-control input[type="range"] {
-        width: 160px;
-      }
-
-      .camera-frame {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        width: var(--camera-frame-width, 90vw);
-        height: var(--camera-frame-height, 60vh);
-        transform: translate(-50%, -50%);
-        border: 2px solid rgba(248, 250, 252, 0.9);
-        border-radius: 24px;
-        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
-        pointer-events: none;
-        z-index: 1015;
-        display: none;
-      }
-
-      body.camera-mode .camera-frame {
-        display: block;
-      }
-
-      .stage-placeholder {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.35rem;
-        text-align: center;
-        color: #cbd5f5;
-      }
-
-      .photo-watermark {
-        position: absolute;
-        right: clamp(0.35rem, 3vw, 0.85rem);
-        bottom: clamp(0.3rem, 2.5vw, 0.75rem);
-        color: #fbbf24;
-        font-size: clamp(
-          0.75rem,
-          calc(1rem * var(--whiteboard-overlay-scale, var(--whiteboard-font-scale, 1))),
-          2.2rem
-        );
-        letter-spacing: 0.18em;
-        font-weight: 800;
-        -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.9);
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
-        pointer-events: none;
-        z-index: 5;
-      }
-
-      .whiteboard-wrapper {
-        --board-scale: clamp(0.35, calc(25vw / 100), 0.45);
-        --board-width: min(350px, 75%);
-        position: absolute;
-        left: 50%;
-        top: 70%;
-        transform: translate(-50%, -50%) scale(var(--board-scale)) rotate(var(--board-rotation));
-        transform-origin: center;
-        width: var(--board-width);
-        touch-action: none;
-      }
-
-      .whiteboard {
-        width: 100%;
-        background: var(--board-fill);
-        border-radius: 0;
-        border: 4px solid var(--line-color);
-        padding: 0.25rem;
-        color: var(--text-color);
-        box-shadow: none;
-        font-weight: 700;
-        font-size: calc(1rem * var(--whiteboard-font-scale, 1));
-      }
-
-      .whiteboard.exporting {
-        box-shadow: none;
-      }
-
-      .whiteboard-content {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-      }
-
-      .board-row {
-        display: flex;
-        align-items: center;
-        gap: 0;
-      }
-
-      .board-row label {
-        flex: 0 0 72px;
-        font-size: 0.86rem;
-        letter-spacing: 0.03em;
-        color: var(--text-color);
-        margin: 0;
-        position: relative;
-        padding-right: 0.2rem;
-      }
-
-      .board-row label::after {
-        content: "：";
-        position: absolute;
-        right: 0;
-      }
-
-      .board-block label::after {
-        content: "：";
-      }
-
-      .board-value {
-        flex: 1;
-        min-height: 22px;
-        border: none;
-        border-radius: 0;
-        padding: 0 0.1rem;
+      .label-context-menu button {
+        border-radius: 10px;
+        border: 1px solid transparent;
         background: transparent;
-        font-size: 0.96rem;
-        font-weight: 600;
-        color: var(--text-color);
-        white-space: pre-wrap;
-      }
-
-      .board-block {
-        display: grid;
-        grid-template-columns: 72px 1fr;
-        gap: 0.1rem;
-        align-items: flex-start;
-      }
-
-      .board-block label {
-        font-size: 0.88rem;
-        letter-spacing: 0.04em;
-        color: var(--text-color);
-        position: relative;
-        padding-right: 0.2rem;
-      }
-
-      .board-block label::after {
-        content: "：";
-        position: absolute;
-        right: 0;
-      }
-
-      .board-notes {
-        min-height: calc(1.2rem * 3);
-        border: none;
-        border-radius: 0;
-        padding: 0.05rem 0.15rem;
-        background: transparent;
-        font-size: 1rem;
-        line-height: 1.2;
-        color: var(--text-color);
-        white-space: pre-wrap;
-      }
-
-      .signature-placeholder-box {
-        flex: 1;
-        min-height: 80px;
-        border: 1px dashed var(--line-color);
-        border-radius: 12px;
-        background: var(--board-fill);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-color);
-        font-size: 0.95rem;
-      }
-
-      .action-bar {
-        position: fixed;
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(520px, calc(100% - 1.5rem));
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
-        padding: 0.85rem 1rem;
-        border-radius: 24px;
-        background: rgba(15, 23, 42, 0.85);
-        box-shadow: 0 20px 35px rgba(0, 0, 0, 0.45);
-        backdrop-filter: blur(12px);
-      }
-
-      .action-btn {
-        border: none;
-        border-radius: 999px;
-        padding: 0.6rem 1.25rem;
-        font-weight: 700;
-        font-size: 1rem;
+        color: #e2e8f0;
+        font-size: 0.9rem;
+        padding: 0.25rem 0.5rem;
+        text-align: left;
         cursor: pointer;
       }
-
-      .action-btn.primary {
-        background: linear-gradient(135deg, #059669, #10b981);
-        color: #fff;
+      .label-context-menu button:hover,
+      .label-context-menu button:focus-visible {
+        border-color: rgba(59, 130, 246, 0.65);
+        background: rgba(59, 130, 246, 0.2);
       }
-
-      .action-btn.secondary {
-        background: rgba(255, 255, 255, 0.08);
-        color: #f8fafc;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+      .label-context-menu .menu-section-title {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        padding: 0.15rem 0.5rem;
       }
-
-      .toast-message {
-        position: fixed;
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(520px, calc(100% - 1.5rem));
-        padding: 0.75rem 1rem;
+      .label-menu-trigger {
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(15, 23, 42, 0.4);
+        color: #e2e8f0;
+        border-radius: 10px;
+        padding: 0.15rem 0.45rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease;
+      }
+      .label-menu-trigger:hover,
+      .label-menu-trigger:focus-visible {
+        border-color: rgba(59, 130, 246, 0.65);
+        background: rgba(59, 130, 246, 0.2);
+      }
+      .coordinate-toggle-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0;
+        border: none;
+        background: transparent;
+      }
+      .field-visibility-panel {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        margin-top: 0.2rem;
+      }
+      .field-visibility-title {
+        font-size: 0.82rem;
+        color: #94a3b8;
+        letter-spacing: 0.05em;
+      }
+      .field-visibility-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+      .field-visibility-toggle {
         border-radius: 16px;
-        background: rgba(15, 23, 42, 0.9);
-        color: #f8fafc;
-        text-align: center;
-        font-size: 0.95rem;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease, transform 0.3s ease;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(59, 130, 246, 0.15);
+        color: #e2e8f0;
+        font-size: 0.8rem;
+        padding: 0.2rem 0.75rem;
+        cursor: pointer;
+        transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
       }
-
-      .toast-message.visible {
-        opacity: 1;
-        transform: translateX(-50%) translateY(-8px);
+      .field-visibility-toggle.is-hidden {
+        background: transparent;
+        color: #64748b;
+        border-color: rgba(71, 85, 105, 0.5);
       }
-
-      .toast-message[data-variant="success"] {
-        background: rgba(34, 197, 94, 0.9);
-        color: #052e13;
+      .mode-chip {
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(59, 130, 246, 0.15);
+        color: #e2e8f0;
+        font-size: 0.82rem;
+        padding: 0.25rem 0.75rem;
+        cursor: pointer;
+        transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
       }
-
-      .hidden-input {
-        display: none !important;
+      .mode-chip.is-active {
+        background: rgba(16, 185, 129, 0.22);
+        border-color: rgba(16, 185, 129, 0.55);
+        color: #ecfeff;
+      }
+      .photo-list-panel {
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: rgba(15, 23, 42, 0.45);
+        padding: 0.65rem 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+      }
+      .photo-list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .photo-list-count {
+        font-size: 0.84rem;
+        color: #cbd5e1;
+      }
+      .photo-list-actions {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+      .photo-list-actions .ghost-btn {
+        margin: 0;
+        padding: 0.28rem 0.72rem;
+        font-size: 0.8rem;
+      }
+      .photo-list {
+        display: flex;
+        gap: 0.45rem;
+        overflow-x: auto;
+        padding-bottom: 0.2rem;
+      }
+      .photo-item-btn {
+        border: 2px solid rgba(148, 163, 184, 0.28);
+        background: rgba(15, 23, 42, 0.7);
+        border-radius: 12px;
+        color: #cbd5e1;
+        min-width: 84px;
+        padding: 0.3rem;
+        cursor: pointer;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+      }
+      .photo-item-btn.is-active {
+        border-color: rgba(59, 130, 246, 0.85);
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.45);
+      }
+      .photo-item-thumb {
+        width: 72px;
+        height: 72px;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+      .photo-item-index {
+        font-size: 0.74rem;
+        letter-spacing: 0.04em;
+        max-width: 72px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .action-bar {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .action-btn[hidden] {
+        display: none;
+      }
+      @media (max-width: 640px) {
+        .action-bar {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .action-btn--wide {
+          grid-column: 1 / -1;
+        }
       }
     </style>
   </head>
   <body>
     <div class="app-shell">
+      <div class="field-visibility-panel">
+        <span class="field-visibility-title">欄位顯示</span>
+        <div class="field-visibility-list">
+          <button type="button" class="field-visibility-toggle" data-field-visibility="projectName">工程名稱</button>
+          <button type="button" class="field-visibility-toggle" data-field-visibility="inspectionLocation">檢查位置</button>
+          <button type="button" class="field-visibility-toggle" data-field-visibility="testDate">檢查日期</button>
+          <button type="button" class="field-visibility-toggle" data-field-visibility="inspector">檢查人員</button>
+          <button type="button" class="field-visibility-toggle" data-field-visibility="testResult">檢查紀錄</button>
+        </div>
+      </div>
 
       <section class="panel">
         <h3>資料輸入面板</h3>
-        <div class="data-grid">
-          <div class="form-field">
-            <label for="inputProjectName">工程名稱</label>
+        <div class="data-grid" id="fieldOrderContainer">
+          <div class="form-field" data-field-key="projectName">
+            <div class="field-label-row">
+              <label for="inputProjectName" data-field-label="projectName">工程名稱</label>
+            </div>
             <input
               id="inputProjectName"
               type="text"
@@ -679,8 +263,10 @@
             />
             <div class="history-dropdown" id="projectNameHistoryDropdown"></div>
           </div>
-          <div class="form-field">
-            <label for="inputInspectionLocation">檢查位置</label>
+          <div class="form-field" data-field-key="inspectionLocation">
+            <div class="field-label-row">
+              <label for="inputInspectionLocation" data-field-label="inspectionLocation">檢查位置</label>
+            </div>
             <input
               id="inputInspectionLocation"
               type="text"
@@ -689,12 +275,16 @@
             />
             <div class="history-dropdown" id="inspectionLocationHistoryDropdown"></div>
           </div>
-          <div class="form-field">
-            <label for="inputTestDate">檢查日期</label>
+          <div class="form-field" data-field-key="testDate">
+            <div class="field-label-row">
+              <label for="inputTestDate" data-field-label="testDate">檢查日期</label>
+            </div>
             <input id="inputTestDate" type="date" />
           </div>
-          <div class="form-field">
-            <label for="inputInspector">檢查人員</label>
+          <div class="form-field" data-field-key="inspector">
+            <div class="field-label-row">
+              <label for="inputInspector" data-field-label="inspector">檢查人員</label>
+            </div>
             <input
               id="inputInspector"
               type="text"
@@ -703,8 +293,10 @@
             />
             <div class="history-dropdown" id="inspectorHistoryDropdown"></div>
           </div>
-          <div class="form-field" style="grid-column: 1 / -1">
-            <label for="inputTestResult">檢查紀錄</label>
+          <div class="form-field" data-field-key="testResult" style="grid-column: 1 / -1">
+            <div class="field-label-row">
+              <label for="inputTestResult" data-field-label="testResult">檢查紀錄</label>
+            </div>
             <textarea
               id="inputTestResult"
               placeholder="寫下檢查內容、測量結果等"
@@ -713,12 +305,11 @@
             <div class="history-dropdown" id="testResultHistoryDropdown"></div>
           </div>
         </div>
-        <div class="panel-hint">輸入完畢後按下「套用到白板」。</div>
         <div class="panel-actions">
           <label class="panel-control">
             <span>文字大小</span>
-            <input type="range" id="fontScale" min="80" max="300" value="150" />
-            <span id="fontScaleValue">150%</span>
+            <input type="range" id="fontScale" min="80" max="300" value="200" />
+            <span id="fontScaleValue">200%</span>
           </label>
           <label class="panel-control">
             <span>白板寬度</span>
@@ -778,8 +369,22 @@
             >
               <span class="sr-only">半透明白主題</span>
             </button>
+            <button
+              type="button"
+              class="color-swatch color-swatch--toggle"
+              id="toggleBoardButton"
+              aria-pressed="true"
+              data-board-visible="true"
+            >
+              <span class="sr-only">白板顯示開關</span>
+              <span id="boardVisibilityLabel">白板開</span>
+            </button>
+            <div class="coordinate-toggle-inline">
+              <button type="button" class="coordinate-toggle-btn" id="coordinateFormatButton">
+                <strong id="coordinateFormatText">97</strong>
+              </button>
+            </div>
           </div>
-          <button type="button" class="ghost-btn" id="applyDataBtn">套用到白板</button>
         </div>
         <button type="button" class="ghost-btn toggle-advanced" id="toggleAdvanced">顯示更多調整</button>
         <div class="panel-actions advanced-controls" id="advancedControls" hidden>
@@ -787,6 +392,22 @@
             <span>白板尺寸</span>
             <input type="range" id="boardScale" min="10" max="120" value="45" />
             <span id="boardScaleValue">45%</span>
+          </label>
+          <label class="panel-control">
+            <span>輸出尺寸</span>
+            <div class="size-toggle-group" role="group" aria-label="輸出尺寸選擇">
+              <button type="button" class="size-toggle" data-export-size="small">小</button>
+              <button type="button" class="size-toggle" data-export-size="medium">中</button>
+              <button type="button" class="size-toggle is-active" data-export-size="large">大</button>
+            </div>
+          </label>
+          <label class="panel-control">
+            <span>座標紀錄</span>
+            <div class="history-actions">
+              <button type="button" class="ghost-btn ghost-button--accent" id="downloadCoordinateHistory">下載紀錄</button>
+              <button type="button" class="ghost-btn ghost-button--accent" id="downloadCoordinateHistoryKml">下載 KML</button>
+              <button type="button" class="ghost-btn ghost-button--danger" id="clearCoordinateHistory">清除紀錄</button>
+            </div>
           </label>
           <label class="panel-control">
             <span>白板傾斜</span>
@@ -816,11 +437,12 @@
       <div class="controls">
         <button class="btn" id="takePhotoBtn">拍照</button>
         <button class="btn btn-secondary" id="uploadPhotoBtn">上傳照片</button>
+        <button class="mode-chip" id="multiModeBtn" type="button" aria-pressed="false">多張模式：關</button>
+        <button class="mode-chip" id="displayModeBtn" type="button">顯示：完整白板</button>
       </div>
 
       <div class="stage" id="captureArea">
         <div class="stage-content" id="photoLayer">
-          <video id="cameraPreview" playsinline muted autoplay hidden></video>
           <img id="photoImage" alt="拍攝預覽" hidden />
           <div class="stage-placeholder" id="placeholder">
             <strong>請拍照或上傳照片</strong>
@@ -829,76 +451,50 @@
         </div>
         <div class="whiteboard-wrapper" id="whiteboardWrapper">
           <div class="whiteboard" id="whiteboard">
-            <div class="whiteboard-content">
-              <div class="board-row">
-                <label>工程名稱</label>
-                <div class="board-value" id="displayProjectName">—</div>
-              </div>
-              <div class="board-row">
-                <label>檢查位置</label>
-                <div class="board-value" id="displayInspectionLocation">—</div>
-              </div>
-              <div class="board-block">
-                <label>檢查紀錄</label>
-                <div class="board-notes" id="displayTestResult">—</div>
-              </div>
-              <div class="board-row">
-                <label>檢查日期</label>
-                <div class="board-value" id="displayTestDate">—</div>
-              </div>
-              <div class="board-row">
-                <label>檢查人員</label>
-                <div class="board-value" id="displayInspector">—</div>
-              </div>
-            </div>
+            <div class="whiteboard-content" id="whiteboardFields"></div>
           </div>
         </div>
+        <div class="photo-watermark photo-watermark--top-right" id="photoCoordinate" hidden>座標未取得</div>
         <div class="photo-watermark" id="photoWatermark">日期未設定</div>
       </div>
-      <div class="camera-frame" id="cameraFrameGuide" hidden></div>
-      <div class="camera-toolbar" id="cameraToolbar" hidden>
-        <span class="camera-status" id="cameraStatus">相機已關閉</span>
-        <label class="camera-font-control">
-          <span>文字大小</span>
-          <input type="range" id="cameraFontScale" min="80" max="300" value="150" />
-          <span id="cameraFontScaleValue">150%</span>
-        </label>
-        <div class="camera-actions">
-          <button type="button" class="btn primary" id="captureFrameBtn" hidden>擷取畫面</button>
-          <button type="button" class="btn btn-secondary" id="stopCameraBtn">關閉相機</button>
+      <div class="photo-list-panel" id="photoListPanel" hidden>
+        <div class="photo-list-header">
+          <span class="photo-list-count" id="photoListCount">0 張照片</span>
+          <div class="photo-list-actions">
+            <button type="button" class="ghost-btn" id="prevPhotoBtn">上一張</button>
+            <button type="button" class="ghost-btn" id="nextPhotoBtn">下一張</button>
+            <button type="button" class="ghost-btn ghost-button--danger" id="clearPhotoListBtn">清空照片</button>
+          </div>
         </div>
+        <div class="photo-list" id="photoList"></div>
       </div>
 
       <div class="action-bar">
         <button class="action-btn secondary" id="clearBoardBtn">清除白板</button>
         <button class="action-btn primary" id="exportBtn">匯出整張圖片</button>
+        <button class="action-btn secondary action-btn--wide" id="exportAllBtn" hidden>批次匯出全部</button>
       </div>
 
-      <p id="toastMessage" class="toast-message" role="status" aria-live="polite"></p>
+  <p id="toastMessage" class="toast-message" role="status" aria-live="polite"></p>
 
-      <input type="file" accept="image/*" class="hidden-input" id="uploadInput" />
+      <input type="file" accept="image/*" capture="environment" class="hidden-input" id="takePhotoInput" />
+      <input type="file" accept="image/*" class="hidden-input" id="uploadInput" multiple />
     </div>
 
     <script src="vendor/piexif.min.js"></script>
     <script src="vendor/html2canvas.min.js"></script>
+    
     <script>
-      const takePhotoBtn = document.getElementById("takePhotoBtn");
-      const takePhotoDefaultText = takePhotoBtn.textContent;
+const takePhotoBtn = document.getElementById("takePhotoBtn");
       const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
+      const takePhotoInput = document.getElementById("takePhotoInput");
       const uploadInput = document.getElementById("uploadInput");
       const photoLayer = document.getElementById("photoLayer");
-      const cameraPreview = document.getElementById("cameraPreview");
-      const cameraToolbar = document.getElementById("cameraToolbar");
-      const cameraFrameGuide = document.getElementById("cameraFrameGuide");
-      const cameraStatus = document.getElementById("cameraStatus");
-      const cameraFontScaleInput = document.getElementById("cameraFontScale");
-      const cameraFontScaleValue = document.getElementById("cameraFontScaleValue");
-      const captureFrameBtn = document.getElementById("captureFrameBtn");
-      const stopCameraBtn = document.getElementById("stopCameraBtn");
       const photoImage = document.getElementById("photoImage");
       const placeholder = document.getElementById("placeholder");
       const whiteboardWrapper = document.getElementById("whiteboardWrapper");
       const whiteboard = document.getElementById("whiteboard");
+      const whiteboardFields = document.getElementById("whiteboardFields");
       const captureArea = document.getElementById("captureArea");
       const boardScaleInput = document.getElementById("boardScale");
       const boardScaleValue = document.getElementById("boardScaleValue");
@@ -913,12 +509,29 @@
       const boardOpacityValue = document.getElementById("boardOpacityValue");
       const textColorInput = document.getElementById("textColor");
       const lineColorInput = document.getElementById("lineColor");
+      const coordinateFormatButton = document.getElementById("coordinateFormatButton");
+      const coordinateFormatText = document.getElementById("coordinateFormatText");
+      const exportSizeButtons = document.querySelectorAll("[data-export-size]");
+      const downloadCoordinateHistoryBtn = document.getElementById("downloadCoordinateHistory");
+      const downloadCoordinateHistoryKmlBtn = document.getElementById("downloadCoordinateHistoryKml");
+      const clearCoordinateHistoryBtn = document.getElementById("clearCoordinateHistory");
+      const boardVisibilityButton = document.getElementById("toggleBoardButton");
+      const boardVisibilityLabel = document.getElementById("boardVisibilityLabel");
       const colorPresetButtons = document.querySelectorAll("[data-color-preset]");
-      const applyDataBtn = document.getElementById("applyDataBtn");
       const clearBoardBtn = document.getElementById("clearBoardBtn");
       const exportBtn = document.getElementById("exportBtn");
+      const exportAllBtn = document.getElementById("exportAllBtn");
       const toastMessage = document.getElementById("toastMessage");
       const photoWatermark = document.getElementById("photoWatermark");
+      const photoCoordinate = document.getElementById("photoCoordinate");
+      const multiModeBtn = document.getElementById("multiModeBtn");
+      const displayModeBtn = document.getElementById("displayModeBtn");
+      const photoListPanel = document.getElementById("photoListPanel");
+      const photoListCount = document.getElementById("photoListCount");
+      const photoList = document.getElementById("photoList");
+      const prevPhotoBtn = document.getElementById("prevPhotoBtn");
+      const nextPhotoBtn = document.getElementById("nextPhotoBtn");
+      const clearPhotoListBtn = document.getElementById("clearPhotoListBtn");
       whiteboardWrapper.dataset.userPositioned = "false";
       const advancedControls = document.getElementById("advancedControls");
       const toggleAdvanced = document.getElementById("toggleAdvanced");
@@ -926,24 +539,89 @@
       const isMobileDevice = /android|iphone|ipad|ipod|mobile/i.test(
         (navigator.userAgent || "").toLowerCase()
       );
+      const GEOLOCATION_TIMEOUT_MS = 15000;
       let lastPhotoMetadata = null;
       let lastPhotoExifBytes = null;
-      let cameraStream = null;
-      const cameraCaptureCanvas = document.createElement("canvas");
-      const setCameraMode = (active) => {
-        const isActive = Boolean(active);
-        document.body.classList.toggle("camera-mode", isActive);
-        cameraFrameGuide.hidden = !isActive;
-        if (isActive) {
-          updateStageAspect();
-        } else {
-          document.documentElement.style.removeProperty("--camera-frame-width");
-          document.documentElement.style.removeProperty("--camera-frame-height");
-        }
-      };
+      let pendingCaptureCoordinatesPromise = null;
+      let isMultiMode = false;
+      let photoItems = [];
+      let activePhotoIndex = -1;
+      let photoSequence = 0;
 
-      const FIELD_HISTORY_STORAGE_KEY = "whiteboard_field_history_v1";
+      const layoutIdentifier =
+        document.body.dataset.layoutId ||
+        (window.location.pathname.match(/layout(\d+)/)?.[1] && `layout${window.location.pathname.match(/layout(\d+)/)[1]}`) ||
+        "layout";
+      const buildStorageKey = (base) => `${base}_${layoutIdentifier}`;
+      const FIELD_HISTORY_STORAGE_KEY = buildStorageKey("whiteboard_field_history");
       const FIELD_HISTORY_LIMIT = 20;
+      const WHITEBOARD_VISIBILITY_STORAGE_KEY = buildStorageKey("whiteboard_visibility");
+      const EXPORT_SIZE_STORAGE_KEY = buildStorageKey("whiteboard_export_size");
+      const COORDINATE_HISTORY_STORAGE_KEY = buildStorageKey("whiteboard_coordinate_history");
+      const COORDINATE_FORMAT_STORAGE_KEY = buildStorageKey("whiteboard_coordinate_format");
+      const DISPLAY_MODE_STORAGE_KEY = buildStorageKey("whiteboard_display_mode");
+      const COORDINATE_FORMATS = {
+        WGS84: "wgs84",
+        TWD97: "twd97",
+        NONE: "none",
+      };
+      const COORDINATE_FORMAT_SEQUENCE = [
+        COORDINATE_FORMATS.TWD97,
+        COORDINATE_FORMATS.WGS84,
+        COORDINATE_FORMATS.NONE,
+      ];
+      const COORDINATE_HISTORY_LIMIT = 500;
+      const EXIF_INSERT_MAX_DATAURL_LENGTH = 12_000_000;
+      let coordinateFormat = COORDINATE_FORMATS.TWD97;
+      const DISPLAY_MODES = {
+        FULL: "full",
+        META_ONLY: "meta_only",
+        NONE: "none",
+      };
+      const DISPLAY_MODE_SEQUENCE = [
+        DISPLAY_MODES.FULL,
+        DISPLAY_MODES.META_ONLY,
+        DISPLAY_MODES.NONE,
+      ];
+      const DISPLAY_MODE_LABEL_MAP = {
+        [DISPLAY_MODES.FULL]: "顯示：完整白板",
+        [DISPLAY_MODES.META_ONLY]: "顯示：只顯示日期+座標",
+        [DISPLAY_MODES.NONE]: "顯示：全部隱藏",
+      };
+      let displayMode = DISPLAY_MODES.FULL;
+      let boardVisibilityPreference = true;
+      const EXPORT_SIZE_SCALE = {
+        small: 0.8,
+        medium: 1,
+        large: 1.5,
+      };
+      const EXPORT_RENDER_TIMEOUT_MS = 22000;
+      const EXPORT_RENDER_RETRY_TIMEOUT_MS = 12000;
+      const EXPORT_SCALE_MAX = 1.8;
+      const EXPORT_RETRY_SCALE = 1.0;
+      const EXPORT_FINAL_RETRY_SCALE = 0.8;
+      const EXPORT_ULTRA_RETRY_SCALE = 0.62;
+      const EXPORT_MIN_SCALE = 0.45;
+      const EXPORT_MAX_TOTAL_PIXELS = 2_600_000;
+      const EXPORT_TARGET_MAX_BYTES = 2_400_000;
+      const EXPORT_JPEG_START_QUALITY = 0.9;
+      const EXPORT_JPEG_MIN_QUALITY = 0.62;
+      const EXPORT_JPEG_QUALITY_STEP = 0.07;
+      const EXPORT_EXIF_MAX_BLOB_BYTES = 2_000_000;
+      const SHARE_BYPASS_MAX_BYTES = 2_600_000;
+      const EXPORT_FALLBACK_BOARD_TIMEOUT_MS = 12000;
+      const EXPORT_MANUAL_LONG_EDGE = {
+        small: 1280,
+        medium: 1600,
+        large: 1920,
+      };
+      const IMPORT_TARGET_LONG_EDGE = 1920;
+      const IMPORT_TARGET_MAX_BYTES = 1_200_000;
+      const IMPORT_JPEG_START_QUALITY = 0.85;
+      const IMPORT_JPEG_MIN_QUALITY = 0.72;
+      const IMPORT_RESIZE_PASSES = 4;
+      let exportSize = "large";
+      let coordinateHistory = [];
 
       const formInputs = {
         projectName: document.getElementById("inputProjectName"),
@@ -953,18 +631,547 @@
         inspector: document.getElementById("inputInspector"),
       };
 
-      const displayTargets = {
-        projectName: document.getElementById("displayProjectName"),
-        inspectionLocation: document.getElementById("displayInspectionLocation"),
-        testResult: document.getElementById("displayTestResult"),
-        testDate: document.getElementById("displayTestDate"),
-        inspector: document.getElementById("displayInspector"),
-      };
       const historyDropdowns = {
         projectName: document.getElementById("projectNameHistoryDropdown"),
         inspectionLocation: document.getElementById("inspectionLocationHistoryDropdown"),
         inspector: document.getElementById("inspectorHistoryDropdown"),
         testResult: document.getElementById("testResultHistoryDropdown"),
+      };
+
+      const formData = {
+        projectName: "",
+        inspectionLocation: "",
+        testResult: "",
+        testDate: "",
+        inspector: "",
+      };
+      const fieldOrderContainer = document.getElementById("fieldOrderContainer");
+      const FIELD_LABELS_STORAGE_KEY = buildStorageKey("whiteboard_field_labels");
+      const LABEL_HISTORY_STORAGE_KEY = buildStorageKey("whiteboard_label_history");
+      const FIELD_VISIBILITY_STORAGE_KEY = buildStorageKey("whiteboard_field_visibility");
+      const LABEL_HISTORY_LIMIT = 10;
+      const DEFAULT_FIELD_LABELS = {
+        projectName: "工程名稱",
+        inspectionLocation: "檢查位置",
+        testResult: "檢查紀錄",
+        testDate: "檢查日期",
+        inspector: "檢查人員",
+      };
+      const loadFieldLabels = () => {
+        try {
+          const raw = localStorage.getItem(FIELD_LABELS_STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object") {
+              return { ...DEFAULT_FIELD_LABELS, ...parsed };
+            }
+          }
+        } catch (error) {
+          console.warn("讀取欄位名稱失敗", error);
+        }
+        return { ...DEFAULT_FIELD_LABELS };
+      };
+      const saveFieldLabels = () => {
+        try {
+          localStorage.setItem(FIELD_LABELS_STORAGE_KEY, JSON.stringify(fieldLabels));
+        } catch (error) {
+          console.warn("儲存欄位名稱失敗", error);
+        }
+      };
+      const loadFieldVisibility = () => {
+        try {
+          const raw = localStorage.getItem(FIELD_VISIBILITY_STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object") {
+              return parsed;
+            }
+          }
+        } catch (error) {
+          console.warn("讀取欄位顯示狀態失敗", error);
+        }
+        return {};
+      };
+      const saveFieldVisibility = () => {
+        try {
+          localStorage.setItem(FIELD_VISIBILITY_STORAGE_KEY, JSON.stringify(fieldVisibility));
+        } catch (error) {
+          console.warn("儲存欄位顯示狀態失敗", error);
+        }
+      };
+      const loadLabelHistoryStore = () => {
+        try {
+          const raw = localStorage.getItem(LABEL_HISTORY_STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : null;
+          return parsed && typeof parsed === "object" ? parsed : {};
+        } catch (error) {
+          console.warn("讀取欄位名稱歷史失敗", error);
+          return {};
+        }
+      };
+
+      const saveLabelHistoryStore = () => {
+        try {
+          localStorage.setItem(LABEL_HISTORY_STORAGE_KEY, JSON.stringify(labelHistoryStore));
+        } catch (error) {
+          console.warn("儲存欄位名稱歷史失敗", error);
+        }
+      };
+
+      const recordLabelHistory = (key, value) => {
+        if (!key || !value) return;
+        const history = labelHistoryStore[key] || [];
+        const filtered = history.filter((item) => item !== value);
+        filtered.unshift(value);
+      labelHistoryStore[key] = filtered.slice(0, LABEL_HISTORY_LIMIT);
+      saveLabelHistoryStore();
+      renderLabelHistorySelect(key);
+    };
+
+      const isFieldVisible = (key) => fieldVisibility[key] !== false;
+
+      const updateFieldVisibilityButtons = () => {
+        document.querySelectorAll("[data-field-visibility]").forEach((button) => {
+          const key = button.dataset.fieldVisibility;
+          if (!DEFAULT_FIELD_LABELS[key]) return;
+          const label = fieldLabels[key] || DEFAULT_FIELD_LABELS[key];
+          const visible = isFieldVisible(key);
+          button.textContent = label;
+          button.classList.toggle("is-hidden", !visible);
+          button.setAttribute("aria-pressed", visible ? "true" : "false");
+        });
+      };
+
+      const applyFieldVisibility = () => {
+        REORDERABLE_FIELD_KEYS.forEach((key) => {
+          const element = fieldElements[key];
+          if (!element) return;
+          const visible = isFieldVisible(key);
+          element.style.display = visible ? "" : "none";
+        });
+        updateFieldVisibilityButtons();
+        renderWhiteboardFields();
+      };
+
+      const setFieldVisibility = (key, visible) => {
+        if (!DEFAULT_FIELD_LABELS[key]) return;
+        fieldVisibility[key] = Boolean(visible);
+        saveFieldVisibility();
+        applyFieldVisibility();
+      };
+
+      const toggleFieldVisibility = (key) => {
+        setFieldVisibility(key, !isFieldVisible(key));
+      };
+
+      let fieldLabels = loadFieldLabels();
+      let fieldVisibility = loadFieldVisibility();
+      let labelHistoryStore = loadLabelHistoryStore();
+      const labelHistoryTriggers = {};
+      let activeLabelMenuKey = null;
+      let labelHistoryMenu = null;
+
+      const ensureLabelHistoryMenu = () => {
+        if (labelHistoryMenu && document.body.contains(labelHistoryMenu)) {
+          return labelHistoryMenu;
+        }
+        labelHistoryMenu = document.createElement("div");
+        labelHistoryMenu.className = "label-context-menu";
+        labelHistoryMenu.hidden = true;
+        labelHistoryMenu.addEventListener("pointerdown", (event) => event.stopPropagation());
+        document.body.appendChild(labelHistoryMenu);
+        return labelHistoryMenu;
+      };
+
+      const renderLabelHistoryMenu = (key) => {
+        const menu = ensureLabelHistoryMenu();
+        menu.innerHTML = "";
+        const title = document.createElement("div");
+        title.className = "menu-section-title";
+        title.textContent = "歷史標籤";
+        menu.appendChild(title);
+        const history = labelHistoryStore[key] || [];
+        history.forEach((labelText) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = labelText;
+          button.addEventListener("click", () => {
+            commitFieldLabelValue(key, labelText);
+            closeLabelHistoryMenu();
+          });
+          menu.appendChild(button);
+        });
+        const resetButton = document.createElement("button");
+        resetButton.type = "button";
+        resetButton.textContent = "恢復預設";
+        resetButton.addEventListener("click", () => {
+          commitFieldLabelValue(key, DEFAULT_FIELD_LABELS[key], { recordHistory: true });
+          closeLabelHistoryMenu();
+        });
+        menu.appendChild(resetButton);
+        return menu;
+      };
+
+      const positionLabelHistoryMenu = (trigger) => {
+        const menu = ensureLabelHistoryMenu();
+        menu.style.visibility = "hidden";
+        menu.hidden = false;
+        menu.style.top = "0px";
+        menu.style.left = "0px";
+        const menuRect = menu.getBoundingClientRect();
+        const triggerRect = trigger.getBoundingClientRect();
+        const margin = 8;
+        let top = triggerRect.bottom + margin;
+        let left = triggerRect.right - menuRect.width;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        if (left + menuRect.width > viewportWidth - margin) {
+          left = viewportWidth - margin - menuRect.width;
+        }
+        if (left < margin) left = margin;
+        if (top + menuRect.height > viewportHeight - margin) {
+          top = triggerRect.top - margin - menuRect.height;
+        }
+        if (top < margin) top = margin;
+        menu.style.top = `${top}px`;
+        menu.style.left = `${left}px`;
+        menu.style.visibility = "visible";
+      };
+
+      const openLabelHistoryMenu = (key) => {
+        const trigger = labelHistoryTriggers[key];
+        if (!trigger) return;
+        const history = labelHistoryStore[key] || [];
+        if (!history.length) return;
+        renderLabelHistoryMenu(key);
+        positionLabelHistoryMenu(trigger);
+        activeLabelMenuKey = key;
+        trigger.setAttribute("aria-expanded", "true");
+        setFieldDragEnabled(key, false);
+        trigger.dataset.menuOpen = "true";
+      };
+
+      const closeLabelHistoryMenu = (key = activeLabelMenuKey) => {
+        if (!key) return;
+        const trigger = labelHistoryTriggers[key];
+        if (trigger) {
+          trigger.setAttribute("aria-expanded", "false");
+          trigger.dataset.menuOpen = "false";
+        }
+        setFieldDragEnabled(key, true);
+        if (activeLabelMenuKey === key) {
+          activeLabelMenuKey = null;
+        }
+        if (labelHistoryMenu) {
+          labelHistoryMenu.remove();
+          labelHistoryMenu = null;
+        }
+      };
+
+      const toggleLabelHistoryMenu = (key) => {
+        if (activeLabelMenuKey === key) {
+          closeLabelHistoryMenu();
+        } else {
+          closeLabelHistoryMenu();
+          openLabelHistoryMenu(key);
+        }
+      };
+
+      document.addEventListener(
+        "pointerdown",
+        (event) => {
+          if (!activeLabelMenuKey) return;
+          if (labelHistoryMenu?.contains(event.target)) return;
+          if (event.target.closest(".label-menu-trigger")) return;
+          closeLabelHistoryMenu();
+        },
+        true
+      );
+
+      const commitFieldLabelValue = (key, value, { recordHistory = true } = {}) => {
+        if (!DEFAULT_FIELD_LABELS[key]) return;
+        const nextValue = (value || "").trim() || DEFAULT_FIELD_LABELS[key];
+        fieldLabels[key] = nextValue;
+        if (recordHistory) {
+          recordLabelHistory(key, nextValue);
+        }
+        saveFieldLabels();
+        applyFieldLabels();
+        renderWhiteboardFields();
+        closeLabelHistoryMenu(key);
+      };
+
+      const renderLabelHistorySelect = (key) => {
+        const fieldElement = fieldElements[key];
+        const row = fieldElement?.querySelector(".field-label-row");
+        const history = labelHistoryStore[key] || [];
+        const trigger = labelHistoryTriggers[key];
+
+        if (!row || !history.length) {
+          if (trigger) {
+            trigger.remove();
+            delete labelHistoryTriggers[key];
+          }
+          if (activeLabelMenuKey === key) {
+            closeLabelHistoryMenu();
+          }
+          return;
+        }
+
+        if (!trigger) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "label-menu-trigger";
+          button.setAttribute("aria-label", "套用歷史標籤");
+          button.setAttribute("aria-expanded", "false");
+          button.innerHTML = "⋯";
+          button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            toggleLabelHistoryMenu(key);
+          });
+          row.appendChild(button);
+          labelHistoryTriggers[key] = button;
+        } else {
+          trigger.setAttribute("aria-expanded", "false");
+        }
+      };
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && activeLabelMenuKey) {
+          closeLabelHistoryMenu();
+        }
+      });
+      document.querySelectorAll("[data-field-visibility]").forEach((button) => {
+        const key = button.dataset.fieldVisibility;
+        button.addEventListener("click", () => toggleFieldVisibility(key));
+      });
+      const applyFieldLabels = () => {
+        Object.keys(DEFAULT_FIELD_LABELS).forEach((key) => {
+          const labelText = fieldLabels[key] || DEFAULT_FIELD_LABELS[key];
+          const labelElement = document.querySelector(`[data-field-label="${key}"]`);
+          if (labelElement) {
+            labelElement.textContent = labelText;
+          }
+        });
+        updateFieldVisibilityButtons();
+      };
+      const REORDERABLE_FIELD_KEYS = Object.keys(DEFAULT_FIELD_LABELS);
+      const FIELD_ORDER_STORAGE_KEY = buildStorageKey("whiteboard_field_order");
+
+      const loadFieldOrder = () => {
+        try {
+          const raw = localStorage.getItem(FIELD_ORDER_STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              const sanitized = parsed.filter((key) => REORDERABLE_FIELD_KEYS.includes(key));
+              const missing = REORDERABLE_FIELD_KEYS.filter((key) => !sanitized.includes(key));
+              return sanitized.concat(missing);
+            }
+          }
+        } catch (error) {
+          console.warn("讀取欄位順序失敗", error);
+        }
+        return [...REORDERABLE_FIELD_KEYS];
+      };
+
+      const saveFieldOrder = () => {
+        try {
+          localStorage.setItem(FIELD_ORDER_STORAGE_KEY, JSON.stringify(fieldOrder));
+        } catch (error) {
+          console.warn("儲存欄位順序失敗", error);
+        }
+      };
+
+      let fieldOrder = loadFieldOrder();
+
+      const fieldElements = REORDERABLE_FIELD_KEYS.reduce((acc, key) => {
+        const element = document.querySelector(`[data-field-key="${key}"]`);
+        if (element) acc[key] = element;
+        return acc;
+      }, {});
+      const setFieldDragEnabled = (key, enabled) => {
+        const element = fieldElements[key];
+        if (!element) return;
+        element.draggable = Boolean(enabled);
+        element.dataset.dragDisabled = enabled ? "false" : "true";
+      };
+      const applyFieldOrderToDOM = () => {
+        if (!fieldOrderContainer) return;
+        fieldOrder.forEach((key) => {
+          const element = fieldElements[key];
+          if (element) {
+            fieldOrderContainer.appendChild(element);
+          }
+        });
+      };
+
+      let labelHistoryStoreInitialized = false;
+      const ensureLabelHistoryDefaults = () => {
+        if (labelHistoryStoreInitialized) return;
+        let changed = false;
+        REORDERABLE_FIELD_KEYS.forEach((key) => {
+          if (!Array.isArray(labelHistoryStore[key]) || !labelHistoryStore[key].length) {
+            labelHistoryStore[key] = [fieldLabels[key] || DEFAULT_FIELD_LABELS[key]];
+            changed = true;
+          }
+        });
+        if (changed) {
+          saveLabelHistoryStore();
+        }
+        labelHistoryStoreInitialized = true;
+      };
+      ensureLabelHistoryDefaults();
+
+      let draggingFieldKey = null;
+
+      const rebuildFieldOrderFromDOM = () => {
+        if (!fieldOrderContainer) return;
+        const orderedKeys = Array.from(
+          fieldOrderContainer.querySelectorAll("[data-field-key]")
+        )
+          .map((node) => node.dataset.fieldKey)
+          .filter((key) => REORDERABLE_FIELD_KEYS.includes(key));
+        if (!orderedKeys.length) return;
+        fieldOrder = orderedKeys;
+        saveFieldOrder();
+        renderWhiteboardFields();
+      };
+
+      const handleDragStart = (event) => {
+        const key = event.currentTarget?.dataset.fieldKey;
+        if (!key) return;
+        if (event.currentTarget?.dataset.dragDisabled === "true") {
+          event.preventDefault();
+          return;
+        }
+        draggingFieldKey = key;
+        event.currentTarget.classList.add("is-dragging");
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", key);
+        }
+      };
+
+      const handleDragEnd = (event) => {
+        event.currentTarget.classList.remove("is-dragging");
+        draggingFieldKey = null;
+        rebuildFieldOrderFromDOM();
+      };
+
+      const handleDragOverField = (event) => {
+        if (!draggingFieldKey) return;
+        event.preventDefault();
+        const target = event.currentTarget;
+        const targetKey = target.dataset.fieldKey;
+        if (!targetKey || targetKey === draggingFieldKey) return;
+        const draggingElement = fieldElements[draggingFieldKey];
+        if (!draggingElement) return;
+        const bounding = target.getBoundingClientRect();
+        const shouldInsertBefore = event.clientY < bounding.top + bounding.height / 2;
+        if (shouldInsertBefore) {
+          fieldOrderContainer.insertBefore(draggingElement, target);
+        } else {
+          fieldOrderContainer.insertBefore(draggingElement, target.nextSibling);
+        }
+      };
+
+      const enableFieldDragReorder = () => {
+        Object.values(fieldElements).forEach((element) => {
+          if (!element) return;
+          setFieldDragEnabled(element.dataset.fieldKey, true);
+          element.addEventListener("dragstart", handleDragStart);
+          element.addEventListener("dragend", handleDragEnd);
+          element.addEventListener("dragover", handleDragOverField);
+        });
+        fieldOrderContainer?.addEventListener("dragover", (event) => {
+          if (!draggingFieldKey) return;
+          const target = event.target.closest("[data-field-key]");
+          if (!target) {
+            event.preventDefault();
+            const draggingElement = fieldElements[draggingFieldKey];
+            if (draggingElement && draggingElement.parentNode !== fieldOrderContainer) {
+              fieldOrderContainer.appendChild(draggingElement);
+            }
+          }
+        });
+        fieldOrderContainer?.addEventListener("drop", (event) => {
+          event.preventDefault();
+          draggingFieldKey = null;
+          rebuildFieldOrderFromDOM();
+        });
+      };
+
+      const startInlineLabelEdit = (key) => {
+        if (!DEFAULT_FIELD_LABELS[key]) return;
+        const label = document.querySelector(`[data-field-label="${key}"]`);
+        if (!label || label.dataset.editing === "true") return;
+        label.dataset.editing = "true";
+        const current = fieldLabels[key] || DEFAULT_FIELD_LABELS[key];
+        const input = document.createElement("input");
+        input.type = "text";
+        input.className = "inline-label-input";
+        input.value = current;
+        const finish = (commit) => {
+          if (label.dataset.editing !== "true") return;
+          label.dataset.editing = "false";
+          if (input.parentNode) {
+            input.parentNode.removeChild(input);
+          }
+          label.style.display = "";
+          if (commit) {
+            commitFieldLabelValue(key, input.value);
+          } else {
+            label.textContent = fieldLabels[key] || DEFAULT_FIELD_LABELS[key];
+          }
+        };
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            finish(true);
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            finish(false);
+          }
+        });
+        input.addEventListener("blur", () => finish(true));
+        label.style.display = "none";
+        label.parentNode.insertBefore(input, label.nextSibling);
+        requestAnimationFrame(() => {
+          input.focus();
+          input.select();
+        });
+      };
+
+      document.querySelectorAll("[data-field-label]").forEach((label) => {
+        label.addEventListener("click", () => startInlineLabelEdit(label.dataset.fieldLabel));
+      });
+
+      const getFieldDisplayValue = (key) => {
+        if (key === 'testDate') {
+          return formatWatermarkDate(formInputs.testDate?.value || '') || '—';
+        }
+        const text = (formData[key] || '').trim();
+        return text || '—';
+      };
+
+      const renderWhiteboardFields = () => {
+        if (!whiteboardFields) return;
+        whiteboardFields.innerHTML = '';
+        fieldOrder.forEach((key) => {
+          if (!DEFAULT_FIELD_LABELS[key]) return;
+          if (!isFieldVisible(key)) return;
+          const isNotes = key === 'testResult';
+          const wrapper = document.createElement('div');
+          wrapper.className = isNotes ? 'board-block' : 'board-row';
+          const label = document.createElement('label');
+          label.textContent = fieldLabels[key] || DEFAULT_FIELD_LABELS[key];
+          const value = document.createElement('div');
+          value.className = isNotes ? 'board-notes' : 'board-value';
+          value.textContent = getFieldDisplayValue(key);
+          wrapper.appendChild(label);
+          wrapper.appendChild(value);
+          whiteboardFields.appendChild(wrapper);
+        });
       };
 
       const formatWatermarkDate = (value) => {
@@ -977,6 +1184,358 @@
       const updateWatermarkDate = () => {
         if (!photoWatermark) return;
         photoWatermark.textContent = formatWatermarkDate(formInputs.testDate.value);
+      };
+
+      const formatDecimalCoordinates = (latitude, longitude) => {
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+        return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+      };
+
+      const degToRad = (value) => (value * Math.PI) / 180;
+
+      const convertToTwd97 = (latitude, longitude) => {
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+        try {
+          const a = 6378137.0;
+          const f = 1 / 298.257222101;
+          const b = a * (1 - f);
+          const e2 = (a * a - b * b) / (a * a);
+          const ePrime2 = (a * a - b * b) / (b * b);
+          const k0 = 0.9999;
+          const lon0 = degToRad(121);
+          const x0 = 250000;
+          const y0 = 0;
+          const latRad = degToRad(latitude);
+          const lonRad = degToRad(longitude);
+          const sinLat = Math.sin(latRad);
+          const cosLat = Math.cos(latRad);
+          const tanLat = Math.tan(latRad);
+          const N = a / Math.sqrt(1 - e2 * sinLat * sinLat);
+          const T = tanLat * tanLat;
+          const C = ePrime2 * cosLat * cosLat;
+          const A = (lonRad - lon0) * cosLat;
+          const e4 = e2 * e2;
+          const e6 = e4 * e2;
+          const M =
+            a *
+            ((1 - e2 / 4 - (3 * e4) / 64 - (5 * e6) / 256) * latRad -
+              ((3 * e2) / 8 + (3 * e4) / 32 + (45 * e6) / 1024) * Math.sin(2 * latRad) +
+              ((15 * e4) / 256 + (45 * e6) / 1024) * Math.sin(4 * latRad) -
+              ((35 * e6) / 3072) * Math.sin(6 * latRad));
+
+          const x =
+            x0 +
+            k0 *
+              N *
+              (A +
+                ((1 - T + C) * Math.pow(A, 3)) / 6 +
+                ((5 - 18 * T + T * T + 72 * C - 58 * ePrime2) * Math.pow(A, 5)) / 120);
+
+          const y =
+            y0 +
+            k0 *
+              (M +
+                N *
+                  tanLat *
+                  (Math.pow(A, 2) / 2 +
+                    ((5 - T + 9 * C + 4 * C * C) * Math.pow(A, 4)) / 24 +
+                    ((61 - 58 * T + T * T + 600 * C - 330 * ePrime2) * Math.pow(A, 6)) / 720));
+          return [x, y];
+        } catch (error) {
+          console.warn("TWD97 轉換失敗", error);
+          return null;
+        }
+      };
+
+      const formatTwdText = (x, y) => {
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+        return `X:${Math.round(x)} Y:${Math.round(y)}`;
+      };
+      const escapeXml = (value = "") =>
+        String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&apos;");
+
+      const updateBoardVisibilityButton = (visible) => {
+        if (!boardVisibilityButton || !boardVisibilityLabel) return;
+        boardVisibilityButton.dataset.boardVisible = String(visible);
+        boardVisibilityButton.setAttribute("aria-pressed", visible ? "true" : "false");
+        boardVisibilityLabel.textContent = visible ? "白板開" : "白板關";
+      };
+
+      const setWhiteboardVisibility = (visible, options = {}) => {
+        const persist = options.persist !== false;
+        if (!whiteboardWrapper) return;
+        whiteboardWrapper.hidden = !visible;
+        updateBoardVisibilityButton(visible);
+        if (persist) {
+          try {
+            localStorage.setItem(WHITEBOARD_VISIBILITY_STORAGE_KEY, String(Boolean(visible)));
+          } catch (error) {
+            console.warn("儲存白板可見狀態失敗", error);
+          }
+        }
+      };
+
+      const clonePhotoMetadata = (metadata) => {
+        if (!metadata || typeof metadata !== "object") return null;
+        const gps = metadata.gps
+          ? {
+              latitude: metadata.gps.latitude,
+              longitude: metadata.gps.longitude,
+            }
+          : null;
+        return {
+          date: metadata.date || null,
+          gps,
+        };
+      };
+
+      const hasCurrentPhoto = () => activePhotoIndex >= 0 && activePhotoIndex < photoItems.length;
+
+      const updateDisplayModeButton = () => {
+        if (!displayModeBtn) return;
+        displayModeBtn.textContent = DISPLAY_MODE_LABEL_MAP[displayMode] || DISPLAY_MODE_LABEL_MAP[DISPLAY_MODES.FULL];
+      };
+
+      const applyDisplayMode = () => {
+        const hasPhoto = !photoImage.hidden && !!photoImage.src;
+        if (displayMode === DISPLAY_MODES.FULL) {
+          setWhiteboardVisibility(boardVisibilityPreference, { persist: false });
+          if (boardVisibilityButton) boardVisibilityButton.disabled = false;
+          if (photoWatermark) {
+            photoWatermark.hidden = !hasPhoto;
+          }
+          updateCoordinateOverlay();
+          return;
+        }
+        setWhiteboardVisibility(false, { persist: false });
+        if (boardVisibilityButton) boardVisibilityButton.disabled = true;
+        if (displayMode === DISPLAY_MODES.META_ONLY) {
+          if (photoWatermark) {
+            photoWatermark.hidden = !hasPhoto;
+          }
+          updateCoordinateOverlay();
+          return;
+        }
+        if (photoWatermark) {
+          photoWatermark.hidden = true;
+        }
+        if (photoCoordinate) {
+          photoCoordinate.hidden = true;
+          photoCoordinate.textContent = "";
+        }
+      };
+
+      const setDisplayMode = (mode) => {
+        if (!Object.values(DISPLAY_MODES).includes(mode)) return;
+        displayMode = mode;
+        updateDisplayModeButton();
+        applyDisplayMode();
+        try {
+          localStorage.setItem(DISPLAY_MODE_STORAGE_KEY, mode);
+        } catch (error) {
+          console.warn("儲存顯示模式失敗", error);
+        }
+      };
+
+      const formatLabelMap = {
+        [COORDINATE_FORMATS.TWD97]: "97",
+        [COORDINATE_FORMATS.WGS84]: "WGS",
+        [COORDINATE_FORMATS.NONE]: "無",
+      };
+      const updateCoordinateFormatButton = () => {
+        if (!coordinateFormatButton) return;
+        const label = formatLabelMap[coordinateFormat] || "97";
+        coordinateFormatButton.setAttribute("aria-label", `座標顯示：${label}`);
+        if (coordinateFormatText) {
+          coordinateFormatText.textContent = label;
+        }
+      };
+
+      const updateExportSizeButtons = () => {
+        exportSizeButtons.forEach((button) => {
+          const isActive = button.dataset.exportSize === exportSize;
+          button.classList.toggle("is-active", isActive);
+          button.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
+      };
+
+      const setExportSize = (size) => {
+        if (!EXPORT_SIZE_SCALE[size]) return;
+        exportSize = size;
+        updateExportSizeButtons();
+        try {
+          localStorage.setItem(EXPORT_SIZE_STORAGE_KEY, size);
+        } catch (error) {
+          console.warn("儲存輸出尺寸失敗", error);
+        }
+      };
+
+      const loadCoordinateHistory = () => {
+        try {
+          const raw = localStorage.getItem(COORDINATE_HISTORY_STORAGE_KEY);
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return [];
+          return parsed.slice(-COORDINATE_HISTORY_LIMIT);
+        } catch (error) {
+          console.warn("讀取座標紀錄失敗", error);
+          return [];
+        }
+      };
+
+      const saveCoordinateHistory = () => {
+        try {
+          localStorage.setItem(COORDINATE_HISTORY_STORAGE_KEY, JSON.stringify(coordinateHistory));
+        } catch (error) {
+          console.warn("儲存座標紀錄失敗", error);
+        }
+      };
+
+      const recordCoordinateHistory = () => {
+        const gps = lastPhotoMetadata?.gps;
+        if (!gps || typeof gps.latitude !== "number" || typeof gps.longitude !== "number") return;
+        const twd = convertToTwd97(gps.latitude, gps.longitude);
+        const record = {
+          timestamp: new Date().toISOString(),
+          latitude: Number(gps.latitude.toFixed(6)),
+          longitude: Number(gps.longitude.toFixed(6)),
+        };
+        if (twd) {
+          record.twdX = Math.round(twd[0]);
+          record.twdY = Math.round(twd[1]);
+        }
+        coordinateHistory.push(record);
+        if (coordinateHistory.length > COORDINATE_HISTORY_LIMIT) {
+          coordinateHistory = coordinateHistory.slice(-COORDINATE_HISTORY_LIMIT);
+        }
+        saveCoordinateHistory();
+      };
+
+      const clearCoordinateHistory = () => {
+        coordinateHistory = [];
+        saveCoordinateHistory();
+        showToast("座標紀錄已清除。", "success");
+      };
+
+      const downloadCoordinateHistory = () => {
+        if (!coordinateHistory.length) {
+          showToast("目前沒有座標紀錄。");
+          return;
+        }
+        const rows = [
+          ["timestamp", "latitude", "longitude", "twdX", "twdY"].join(","),
+          ...coordinateHistory.map((item) =>
+            [
+              item.timestamp,
+              item.latitude ?? "",
+              item.longitude ?? "",
+              item.twdX ?? "",
+              item.twdY ?? "",
+            ].join(",")
+          ),
+        ];
+        const csv = rows.join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `coordinate_history_${new Date().toISOString().split("T")[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+      };
+      const downloadCoordinateHistoryKml = () => {
+        const entries = (coordinateHistory || []).filter(
+          (item) =>
+            typeof item.latitude === "number" &&
+            !Number.isNaN(item.latitude) &&
+            typeof item.longitude === "number" &&
+            !Number.isNaN(item.longitude)
+        );
+        if (!entries.length) {
+          showToast("目前沒有可匯出的座標。");
+          return;
+        }
+        const placemarks = entries
+          .map((item, index) => {
+            const name = escapeXml(item.timestamp || `紀錄 ${index + 1}`);
+            const descriptionParts = [];
+            if (typeof item.twdX === "number" && typeof item.twdY === "number") {
+              descriptionParts.push(`TWD97 X：${item.twdX} Y：${item.twdY}`);
+            }
+            const description = descriptionParts.length ? `<description>${escapeXml(descriptionParts.join("\n"))}</description>` : "";
+            return `    <Placemark>
+      <name>${name}</name>
+${description ? `      ${description}\n` : ""}      <Point>
+        <coordinates>${item.longitude},${item.latitude},0</coordinates>
+      </Point>
+    </Placemark>`;
+          })
+          .join("\n");
+        const kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+${placemarks}
+  </Document>
+</kml>`;
+        const blob = new Blob([kml], { type: "application/vnd.google-earth.kml+xml" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `coordinate_history_${new Date().toISOString().split("T")[0]}.kml`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+      };
+
+      const resolveCoordinateText = () => {
+        if (coordinateFormat === COORDINATE_FORMATS.NONE) return null;
+        const gps = lastPhotoMetadata?.gps;
+        if (!gps || typeof gps.latitude !== "number" || typeof gps.longitude !== "number") {
+          return null;
+        }
+        if (coordinateFormat === COORDINATE_FORMATS.TWD97) {
+          const twd = convertToTwd97(gps.latitude, gps.longitude);
+          const twdText = twd ? formatTwdText(twd[0], twd[1]) : null;
+          if (twdText) return twdText;
+        }
+        return formatDecimalCoordinates(gps.latitude, gps.longitude);
+      };
+
+      const updateCoordinateOverlay = () => {
+        const text = resolveCoordinateText();
+        if (!photoCoordinate) {
+          renderWhiteboardFields();
+          return;
+        }
+        if (!text) {
+          photoCoordinate.hidden = true;
+          photoCoordinate.textContent = "";
+        } else {
+          photoCoordinate.hidden = false;
+          photoCoordinate.textContent = text;
+        }
+        renderWhiteboardFields();
+      };
+
+      const setCoordinateFormat = (value) => {
+        if (!Object.values(COORDINATE_FORMATS).includes(value)) return;
+        coordinateFormat = value;
+        try {
+          localStorage.setItem(COORDINATE_FORMAT_STORAGE_KEY, value);
+        } catch (error) {
+          console.warn("儲存座標格式失敗", error);
+        }
+        updateCoordinateFormatButton();
+        updateCoordinateOverlay();
+        applyDisplayMode();
       };
 
       const decimalToDmsRational = (value) => {
@@ -998,6 +1557,9 @@
 
       const applyExifToDataUrl = (dataUrl) => {
         if (!window.piexif) return dataUrl;
+        if (typeof dataUrl === "string" && dataUrl.length > EXIF_INSERT_MAX_DATAURL_LENGTH) {
+          return dataUrl;
+        }
         try {
           if (lastPhotoExifBytes) {
             return piexif.insert(lastPhotoExifBytes, dataUrl);
@@ -1014,16 +1576,19 @@
           }
           if (lastPhotoMetadata.gps) {
             const { latitude, longitude } = lastPhotoMetadata.gps;
-            gps[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
-            gps[piexif.GPSIFD.GPSLatitude] = decimalToDmsRational(latitude);
-            gps[piexif.GPSIFD.GPSLongitudeRef] = longitude >= 0 ? "E" : "W";
-            gps[piexif.GPSIFD.GPSLongitude] = decimalToDmsRational(longitude);
+            if (
+              typeof latitude === "number" &&
+              !Number.isNaN(latitude) &&
+              typeof longitude === "number" &&
+              !Number.isNaN(longitude)
+            ) {
+              gps[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
+              gps[piexif.GPSIFD.GPSLatitude] = decimalToDmsRational(latitude);
+              gps[piexif.GPSIFD.GPSLongitudeRef] = longitude >= 0 ? "E" : "W";
+              gps[piexif.GPSIFD.GPSLongitude] = decimalToDmsRational(longitude);
+            }
           }
-          if (
-            !Object.keys(zeroth).length &&
-            !Object.keys(exif).length &&
-            !Object.keys(gps).length
-          ) {
+          if (!Object.keys(zeroth).length && !Object.keys(exif).length && !Object.keys(gps).length) {
             return dataUrl;
           }
           const exifBytes = piexif.dump({
@@ -1048,6 +1613,276 @@
           array[i] = binary.charCodeAt(i);
         }
         return new Blob([array], { type: mime });
+      };
+
+      const blobToDataUrl = (blob) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result === "string" && reader.result) {
+              resolve(reader.result);
+              return;
+            }
+            reject(new Error("BLOB_READ_FAILED"));
+          };
+          reader.onerror = () => reject(new Error("BLOB_READ_FAILED"));
+          reader.readAsDataURL(blob);
+        });
+
+      const canvasToBlob = (canvas, quality = 0.92) =>
+        new Promise((resolve, reject) => {
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+                return;
+              }
+              const err = new Error("CANVAS_ENCODE_FAILED");
+              err.code = "CANVAS_ENCODE_FAILED";
+              reject(err);
+            },
+            "image/jpeg",
+            quality
+          );
+        });
+
+      const encodeCanvasAsJpeg = async (canvas, options = {}) => {
+        const maxBytes = Number(options.maxBytes || EXPORT_TARGET_MAX_BYTES);
+        const minQuality = Number(options.minQuality || EXPORT_JPEG_MIN_QUALITY);
+        const qualityStep = Number(options.qualityStep || EXPORT_JPEG_QUALITY_STEP);
+        let quality = Number(options.startQuality || EXPORT_JPEG_START_QUALITY);
+        let blob = await canvasToBlob(canvas, quality);
+        while (blob.size > maxBytes && quality > minQuality) {
+          quality = Math.max(minQuality, Number((quality - qualityStep).toFixed(2)));
+          blob = await canvasToBlob(canvas, quality);
+          if (quality === minQuality) break;
+        }
+        return blob;
+      };
+
+      const attachExifToBlob = async (blob) => {
+        if (!window.piexif || !blob || blob.size > EXPORT_EXIF_MAX_BLOB_BYTES) {
+          return blob;
+        }
+        try {
+          const sourceDataUrl = await blobToDataUrl(blob);
+          const withExifDataUrl = applyExifToDataUrl(sourceDataUrl);
+          if (!withExifDataUrl || withExifDataUrl === sourceDataUrl) {
+            return blob;
+          }
+          return dataUrlToBlob(withExifDataUrl);
+        } catch (error) {
+          console.warn("EXIF blob 寫入失敗", error);
+          return blob;
+        }
+      };
+
+      const parsePercent = (value) => {
+        if (typeof value !== "string") return null;
+        const trimmed = value.trim();
+        if (!trimmed.endsWith("%")) return null;
+        const parsed = Number.parseFloat(trimmed.slice(0, -1));
+        return Number.isFinite(parsed) ? parsed / 100 : null;
+      };
+
+      const clampNumber = (value, min, max) => Math.min(max, Math.max(min, value));
+
+      const resolveManualOutputDimensions = () => {
+        const sourceWidth =
+          photoImage.naturalWidth || photoImage.width || captureArea.clientWidth || 1;
+        const sourceHeight =
+          photoImage.naturalHeight || photoImage.height || captureArea.clientHeight || 1;
+        const sourceLongEdge = Math.max(sourceWidth, sourceHeight);
+        const targetLongEdge =
+          EXPORT_MANUAL_LONG_EDGE[exportSize] || EXPORT_MANUAL_LONG_EDGE.medium;
+        const ratio =
+          sourceLongEdge > targetLongEdge ? targetLongEdge / sourceLongEdge : 1;
+        return {
+          width: Math.max(1, Math.round(sourceWidth * ratio)),
+          height: Math.max(1, Math.round(sourceHeight * ratio)),
+        };
+      };
+
+      const mapRectToOutput = (rect, stageRect, outputWidth, outputHeight) => {
+        const stageWidth = stageRect.width || 1;
+        const stageHeight = stageRect.height || 1;
+        const x = ((rect.left - stageRect.left) / stageWidth) * outputWidth;
+        const y = ((rect.top - stageRect.top) / stageHeight) * outputHeight;
+        const width = (rect.width / stageWidth) * outputWidth;
+        const height = (rect.height / stageHeight) * outputHeight;
+        return {
+          x,
+          y,
+          width,
+          height,
+          right: x + width,
+          bottom: y + height,
+        };
+      };
+
+      const drawTextOverlayFromElement = (
+        ctx,
+        element,
+        stageRect,
+        outputWidth,
+        outputHeight,
+        options = {}
+      ) => {
+        if (!element || element.hidden) return;
+        const text = (element.textContent || "").trim();
+        if (!text) return;
+        const rect = element.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const mapped = mapRectToOutput(rect, stageRect, outputWidth, outputHeight);
+        const style = window.getComputedStyle(element);
+        const domFontSize = Number.parseFloat(style.fontSize || "16");
+        const fontSize = Math.max(
+          12,
+          (Number.isFinite(domFontSize) ? domFontSize : 16) *
+            (outputHeight / Math.max(1, stageRect.height))
+        );
+        const weight = style.fontWeight || "700";
+        const family = style.fontFamily || "sans-serif";
+        const lineHeight = fontSize * 1.15;
+        const lines = text.split(/\n+/).filter(Boolean);
+        if (!lines.length) return;
+        const align = options.align || "right";
+        const vertical = options.vertical || "bottom";
+        const x =
+          align === "left"
+            ? mapped.x
+            : align === "center"
+              ? mapped.x + mapped.width / 2
+              : mapped.right;
+        let y = vertical === "top" ? mapped.y : mapped.bottom;
+        if (vertical !== "top") {
+          y -= lineHeight * Math.max(0, lines.length - 1);
+        }
+        ctx.save();
+        ctx.font = `${weight} ${fontSize}px ${family}`;
+        ctx.fillStyle = style.color || "#fbbf24";
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.9)";
+        ctx.lineWidth = Math.max(1, fontSize * 0.08);
+        ctx.textAlign = align;
+        ctx.textBaseline = "top";
+        lines.forEach((line, index) => {
+          const yy = y + index * lineHeight;
+          ctx.strokeText(line, x, yy);
+          ctx.fillText(line, x, yy);
+        });
+        ctx.restore();
+      };
+
+      const captureWhiteboardCanvas = async () => {
+        if (typeof html2canvas !== "function" || !whiteboard) return null;
+        return withTimeout(
+          html2canvas(whiteboard, {
+            backgroundColor: null,
+            scale: 1.5,
+            logging: false,
+            imageTimeout: 0,
+            removeContainer: true,
+          }),
+          EXPORT_FALLBACK_BOARD_TIMEOUT_MS,
+          "BOARD_CAPTURE_TIMEOUT"
+        );
+      };
+
+      const drawWhiteboardOverlay = async (ctx, stageRect, outputWidth, outputHeight) => {
+        if (!whiteboardWrapper || !whiteboard || whiteboardWrapper.hidden) return;
+        let boardCanvas = null;
+        try {
+          boardCanvas = await captureWhiteboardCanvas();
+        } catch (error) {
+          console.warn("白板疊圖渲染失敗，略過白板疊圖", error);
+          return;
+        }
+        if (!boardCanvas) return;
+        const style = window.getComputedStyle(whiteboardWrapper);
+        const centerXPercent = parsePercent(style.left);
+        const centerYPercent = parsePercent(style.top);
+        const wrapperRect = whiteboardWrapper.getBoundingClientRect();
+        const fallbackCenter = mapRectToOutput(
+          wrapperRect,
+          stageRect,
+          outputWidth,
+          outputHeight
+        );
+        const centerX =
+          centerXPercent !== null
+            ? clampNumber(centerXPercent, 0, 1) * outputWidth
+            : fallbackCenter.x + fallbackCenter.width / 2;
+        const centerY =
+          centerYPercent !== null
+            ? clampNumber(centerYPercent, 0, 1) * outputHeight
+            : fallbackCenter.y + fallbackCenter.height / 2;
+        const scale = Number.parseFloat(style.getPropertyValue("--board-scale")) || 1;
+        const rotationValue =
+          window.getComputedStyle(document.documentElement).getPropertyValue("--board-rotation") ||
+          "0deg";
+        const rotationDeg = Number.parseFloat(rotationValue) || 0;
+        const baseWidth = whiteboard.offsetWidth || boardCanvas.width || 1;
+        const baseHeight = whiteboard.offsetHeight || boardCanvas.height || 1;
+        const unitScaleX = outputWidth / Math.max(1, stageRect.width);
+        const unitScaleY = outputHeight / Math.max(1, stageRect.height);
+        const drawWidth = baseWidth * scale * unitScaleX;
+        const drawHeight = baseHeight * scale * unitScaleY;
+        const rotationRad = (rotationDeg * Math.PI) / 180;
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(rotationRad);
+        ctx.drawImage(boardCanvas, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+        ctx.restore();
+      };
+
+      const renderExportBlobManual = async (options = {}) => {
+        if (!photoImage || photoImage.hidden || !photoImage.naturalWidth) {
+          const err = new Error("NO_PHOTO_FOR_EXPORT");
+          err.code = "NO_PHOTO_FOR_EXPORT";
+          throw err;
+        }
+        const stageRect = captureArea.getBoundingClientRect();
+        if (!stageRect.width || !stageRect.height) {
+          const err = new Error("INVALID_STAGE_SIZE");
+          err.code = "INVALID_STAGE_SIZE";
+          throw err;
+        }
+        const output = resolveManualOutputDimensions();
+        const canvas = document.createElement("canvas");
+        canvas.width = output.width;
+        canvas.height = output.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          const err = new Error("CANVAS_CONTEXT_FAILED");
+          err.code = "CANVAS_CONTEXT_FAILED";
+          throw err;
+        }
+        const exportBg =
+          (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
+        ctx.fillStyle = exportBg;
+        ctx.fillRect(0, 0, output.width, output.height);
+        ctx.drawImage(photoImage, 0, 0, output.width, output.height);
+        await drawWhiteboardOverlay(ctx, stageRect, output.width, output.height);
+        drawTextOverlayFromElement(ctx, photoCoordinate, stageRect, output.width, output.height, {
+          align: "right",
+          vertical: "top",
+        });
+        drawTextOverlayFromElement(ctx, photoWatermark, stageRect, output.width, output.height, {
+          align: "right",
+          vertical: "bottom",
+        });
+        let blob = await encodeCanvasAsJpeg(canvas, {
+          maxBytes: EXPORT_TARGET_MAX_BYTES,
+          startQuality: EXPORT_JPEG_START_QUALITY,
+          minQuality: EXPORT_JPEG_MIN_QUALITY,
+          qualityStep: EXPORT_JPEG_QUALITY_STEP,
+        });
+        blob = await attachExifToBlob(blob);
+        const isPortrait = output.height >= output.width;
+        const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
+        const baseName = sanitizeFileBaseName(options.filenameBase || "whiteboard", "whiteboard");
+        const filename = `${baseName}_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
+        return { blob, filename };
       };
 
       const readFieldHistoryStore = () => {
@@ -1171,6 +2006,48 @@
           reader.readAsDataURL(file);
         });
 
+      const requestCaptureCoordinates = () => {
+        if (!navigator.geolocation) {
+          pendingCaptureCoordinatesPromise = Promise.resolve(null);
+          return pendingCaptureCoordinatesPromise;
+        }
+        pendingCaptureCoordinatesPromise = new Promise((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude } = position.coords || {};
+              if (
+                typeof latitude === "number" &&
+                !Number.isNaN(latitude) &&
+                typeof longitude === "number" &&
+                !Number.isNaN(longitude)
+              ) {
+                resolve({ latitude, longitude });
+              } else {
+                resolve(null);
+              }
+            },
+            (error) => {
+              console.warn("定位失敗，無法寫入座標。", error);
+              resolve(null);
+            },
+            { enableHighAccuracy: true, timeout: GEOLOCATION_TIMEOUT_MS, maximumAge: 0 }
+          );
+        });
+        return pendingCaptureCoordinatesPromise;
+      };
+
+      const consumePendingCaptureCoordinates = async () => {
+        if (!pendingCaptureCoordinatesPromise) return null;
+        try {
+          return await pendingCaptureCoordinatesPromise;
+        } catch (error) {
+          console.warn("讀取定位資訊失敗", error);
+          return null;
+        } finally {
+          pendingCaptureCoordinatesPromise = null;
+        }
+      };
+
       const asciiFromView = (view, start, length) => {
         let chars = "";
         for (let i = 0; i < length && start + i < view.byteLength; i += 1) {
@@ -1291,6 +2168,14 @@
             parseIfdForMetadata(view, pointer, base, little, metadata);
             continue;
           }
+          if (tag === 0x8825) {
+            const pointer = base + view.getUint32(rawValueOffset, little);
+            const gps = parseGpsIfd(view, pointer, base, little);
+            if (gps) {
+              metadata.gps = gps;
+            }
+            continue;
+          }
           if (tag === 0x0112 && type === 3 && count >= 1) {
             const orientation =
               valueSize > 2
@@ -1298,14 +2183,6 @@
                 : view.getUint16(rawValueOffset, little);
             if (orientation) {
               metadata.orientation = orientation;
-            }
-            continue;
-          }
-          if (tag === 0x8825) {
-            const pointer = base + view.getUint32(rawValueOffset, little);
-            const gps = parseGpsIfd(view, pointer, base, little);
-            if (gps) {
-              metadata.gps = gps;
             }
             continue;
           }
@@ -1353,6 +2230,7 @@
             return {
               date: metadata.primaryDate || metadata.fallbackDate || null,
               gps: metadata.gps || null,
+              orientation: metadata.orientation || null,
             };
           }
           offset += 2 + length;
@@ -1371,8 +2249,12 @@
         }
       };
 
-      const applyPhotoMetadata = async (file, dataUrl) => {
-        if (!file) return;
+      const applyPhotoMetadata = async (file, dataUrl, extraGps, options = {}) => {
+        if (!file) return null;
+        const syncDate = options.syncDate !== false;
+        const showDateToast = options.showDateToast !== false;
+        const recordHistoryEntry = options.recordHistoryEntry !== false;
+        const updateOverlay = options.updateOverlay !== false;
         let metadata = {};
         try {
           metadata = await extractExifMetadata(file);
@@ -1383,13 +2265,20 @@
           metadata && (metadata.date || metadata.gps || metadata.orientation)
             ? { ...metadata }
             : null;
+        if (extraGps && typeof extraGps.latitude === "number" && typeof extraGps.longitude === "number") {
+          lastPhotoMetadata = lastPhotoMetadata || {};
+          lastPhotoMetadata.gps = {
+            latitude: extraGps.latitude,
+            longitude: extraGps.longitude,
+          };
+        }
         if (window.piexif && dataUrl) {
           try {
             const exifObj = piexif.load(dataUrl);
             if (exifObj["0th"]) {
               delete exifObj["0th"][piexif.ImageIFD.Orientation];
             }
-            lastPhotoExifBytes = piexif.dump(exifObj);
+            lastPhotoExifBytes = extraGps ? null : piexif.dump(exifObj);
           } catch (error) {
             console.warn("EXIF 載入失敗", error);
             lastPhotoExifBytes = null;
@@ -1410,14 +2299,31 @@
               : formatDateInputValue(new Date());
         }
 
-        formInputs.testDate.value = resolvedDate;
-        syncField("testDate");
-        showToast(
-          usedExif
-            ? "已套用照片拍攝日期，如需修改可手動調整。"
-            : "已套用拍攝日期，如需修改可手動調整。",
-          "success"
-        );
+        if (syncDate) {
+          formInputs.testDate.value = resolvedDate;
+          syncField("testDate");
+        }
+        if (showDateToast) {
+          showToast(
+            usedExif
+              ? "已套用照片拍攝日期，如需修改可手動調整。"
+              : "已套用拍攝日期，如需修改可手動調整。",
+            "success"
+          );
+        }
+        if (updateOverlay) {
+          updateCoordinateOverlay();
+          applyDisplayMode();
+        }
+        if (recordHistoryEntry) {
+          recordCoordinateHistory();
+        }
+        return {
+          metadata: clonePhotoMetadata(lastPhotoMetadata),
+          exifBytes: lastPhotoExifBytes || null,
+          resolvedDate,
+          usedExif,
+        };
       };
 
       const autoResizeTextarea = (textarea) => {
@@ -1437,152 +2343,364 @@
         );
       };
 
-      const updateCameraFrameBounds = (ratio) => {
-        if (!document.body.classList.contains("camera-mode") || !ratio) return;
-        const toolbarHeight = cameraToolbar.offsetHeight || 0;
-        const margin = 24;
-        const maxWidth = Math.max(240, window.innerWidth - margin * 2);
-        const maxHeight = Math.max(200, window.innerHeight - toolbarHeight - margin * 2);
-        let frameWidth = maxWidth;
-        let frameHeight = frameWidth * ratio;
-        if (frameHeight > maxHeight) {
-          frameHeight = maxHeight;
-          frameWidth = frameHeight / ratio;
-        }
-        document.documentElement.style.setProperty("--camera-frame-width", `${frameWidth}px`);
-        document.documentElement.style.setProperty("--camera-frame-height", `${frameHeight}px`);
-      };
-
       const updateStageAspect = () => {
-        let ratio = null;
-        if (!photoImage.hidden && photoImage.naturalWidth) {
-          ratio = photoImage.naturalHeight / photoImage.naturalWidth;
-        } else if (!cameraPreview.hidden && cameraPreview.videoWidth) {
-          ratio = cameraPreview.videoHeight / cameraPreview.videoWidth;
-        }
-        if (ratio) {
-          captureArea.style.setProperty("--stage-aspect", `${ratio * 100}%`);
-          updateCameraFrameBounds(ratio);
-        } else {
+        if (photoImage.hidden || !photoImage.naturalWidth) {
           captureArea.style.setProperty("--stage-aspect", "56.25%");
+          requestAnimationFrame(positionBoardAtBottomLeft);
+          return;
         }
+        const ratio = (photoImage.naturalHeight / photoImage.naturalWidth) * 100;
+        captureArea.style.setProperty("--stage-aspect", `${ratio}%`);
         requestAnimationFrame(positionBoardAtBottomLeft);
       };
 
-      const stopCameraPreview = (restorePlaceholder = false) => {
-        if (cameraStream) {
-          cameraStream.getTracks().forEach((track) => track.stop());
-          cameraStream = null;
-        }
-      cameraPreview.srcObject = null;
-        cameraPreview.hidden = true;
-        cameraToolbar.hidden = true;
-        stopCameraBtn.disabled = false;
-        takePhotoBtn.disabled = false;
-        takePhotoBtn.textContent = takePhotoDefaultText;
-        setCameraMode(false);
-        takePhotoBtn.disabled = false;
-        captureFrameBtn.hidden = true;
-        captureFrameBtn.disabled = true;
-      if (restorePlaceholder && photoImage.hidden) {
-        placeholder.style.display = "flex";
-      }
-      updateStageAspect();
+      const sanitizeFileBaseName = (name, fallback = "photo") => {
+        const source = (name || fallback).replace(/\.[^.]+$/, "");
+        const cleaned = source
+          .replace(/[^a-zA-Z0-9_\-\u4e00-\u9fff]+/g, "_")
+          .replace(/_+/g, "_")
+          .replace(/^_+|_+$/g, "");
+        return cleaned || fallback;
       };
 
-      const startCameraPreview = async () => {
-        if (!navigator.mediaDevices?.getUserMedia) {
-          showToast("此裝置不支援即時相機預覽，請改用上傳照片。");
+      const estimateDataUrlBytes = (dataUrl) => {
+        if (typeof dataUrl !== "string") return 0;
+        const commaIndex = dataUrl.indexOf(",");
+        const base64 = commaIndex >= 0 ? dataUrl.slice(commaIndex + 1) : dataUrl;
+        const padding = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
+        return Math.max(0, Math.floor((base64.length * 3) / 4) - padding);
+      };
+
+      const normalizeImageDataUrl = async (dataUrl, options = {}) => {
+        const maxLongEdge = Number(options.maxLongEdge || IMPORT_TARGET_LONG_EDGE);
+        const maxBytes = Number(options.maxBytes || IMPORT_TARGET_MAX_BYTES);
+        const startQuality = Number(options.startQuality || IMPORT_JPEG_START_QUALITY);
+        const minQuality = Number(options.minQuality || IMPORT_JPEG_MIN_QUALITY);
+        const resizePasses = Number(options.resizePasses || IMPORT_RESIZE_PASSES);
+        if (!dataUrl || !Number.isFinite(maxLongEdge) || maxLongEdge <= 0) {
+          return { dataUrl, changed: false, estimatedBytes: estimateDataUrlBytes(dataUrl) };
+        }
+
+        const image = await new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error("IMAGE_DECODE_FAILED"));
+          img.src = dataUrl;
+        });
+
+        const sourceWidth = image.naturalWidth || image.width;
+        const sourceHeight = image.naturalHeight || image.height;
+        if (!sourceWidth || !sourceHeight) {
+          return { dataUrl, changed: false, estimatedBytes: estimateDataUrlBytes(dataUrl) };
+        }
+
+        const sourceLongEdge = Math.max(sourceWidth, sourceHeight);
+        const initialRatio = sourceLongEdge > maxLongEdge ? maxLongEdge / sourceLongEdge : 1;
+        let targetWidth = Math.max(1, Math.round(sourceWidth * initialRatio));
+        let targetHeight = Math.max(1, Math.round(sourceHeight * initialRatio));
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          return { dataUrl, changed: false, estimatedBytes: estimateDataUrlBytes(dataUrl) };
+        }
+
+        const drawAndEncode = (width, height, quality) => {
+          canvas.width = width;
+          canvas.height = height;
+          ctx.clearRect(0, 0, width, height);
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(image, 0, 0, width, height);
+          return canvas.toDataURL("image/jpeg", quality);
+        };
+
+        let changed = initialRatio < 1 || !/^data:image\/jpe?g/i.test(dataUrl);
+        let quality = startQuality;
+        let optimizedDataUrl = drawAndEncode(targetWidth, targetHeight, quality);
+        let optimizedBytes = estimateDataUrlBytes(optimizedDataUrl);
+
+        for (let pass = 0; pass < resizePasses; pass += 1) {
+          while (optimizedBytes > maxBytes && quality > minQuality) {
+            quality = Math.max(minQuality, Number((quality - 0.05).toFixed(2)));
+            optimizedDataUrl = drawAndEncode(targetWidth, targetHeight, quality);
+            optimizedBytes = estimateDataUrlBytes(optimizedDataUrl);
+            changed = true;
+            if (quality === minQuality) break;
+          }
+          if (optimizedBytes <= maxBytes) break;
+          const nextWidth = Math.max(1, Math.round(targetWidth * 0.85));
+          const nextHeight = Math.max(1, Math.round(targetHeight * 0.85));
+          if (nextWidth === targetWidth && nextHeight === targetHeight) break;
+          targetWidth = nextWidth;
+          targetHeight = nextHeight;
+          quality = startQuality;
+          optimizedDataUrl = drawAndEncode(targetWidth, targetHeight, quality);
+          optimizedBytes = estimateDataUrlBytes(optimizedDataUrl);
+          changed = true;
+        }
+
+        const originalBytes = estimateDataUrlBytes(dataUrl);
+        const shouldKeepOriginal =
+          !changed &&
+          targetWidth === sourceWidth &&
+          targetHeight === sourceHeight &&
+          /^data:image\/jpe?g/i.test(dataUrl) &&
+          originalBytes <= maxBytes;
+        if (shouldKeepOriginal) {
+          return { dataUrl, changed: false, estimatedBytes: originalBytes };
+        }
+        return {
+          dataUrl: optimizedDataUrl,
+          changed: changed || optimizedBytes < originalBytes,
+          estimatedBytes: optimizedBytes,
+        };
+      };
+
+      const updateMultiModeUI = () => {
+        if (multiModeBtn) {
+          multiModeBtn.dataset.multiMode = isMultiMode ? "true" : "false";
+          multiModeBtn.setAttribute("aria-pressed", isMultiMode ? "true" : "false");
+          multiModeBtn.classList.toggle("is-active", isMultiMode);
+          multiModeBtn.textContent = isMultiMode ? "多張模式：開" : "多張模式：關";
+        }
+        if (uploadInput) {
+          uploadInput.multiple = isMultiMode;
+        }
+        if (uploadPhotoBtn) {
+          uploadPhotoBtn.textContent = isMultiMode ? "上傳多張照片" : "上傳照片";
+        }
+        if (exportAllBtn) {
+          exportAllBtn.hidden = !isMultiMode;
+          exportAllBtn.disabled = !isMultiMode || photoItems.length === 0;
+        }
+      };
+
+      const renderPhotoList = () => {
+        if (!photoListPanel || !photoList || !photoListCount) return;
+        const hasItems = photoItems.length > 0;
+        photoListPanel.hidden = !isMultiMode || !hasItems;
+        photoListCount.textContent = `${photoItems.length} 張照片`;
+        if (!hasItems) {
+          photoList.innerHTML = "";
+          prevPhotoBtn.disabled = true;
+          nextPhotoBtn.disabled = true;
+          clearPhotoListBtn.disabled = true;
+          if (exportAllBtn && isMultiMode) {
+            exportAllBtn.disabled = true;
+          }
           return;
         }
-        if (cameraStream) return;
-        cameraToolbar.hidden = false;
-        cameraStatus.textContent = "相機啟動中…";
-        stopCameraBtn.disabled = true;
-        takePhotoBtn.disabled = true;
-        takePhotoBtn.textContent = takePhotoDefaultText;
-        setCameraMode(true);
-        try {
-          cameraStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: { ideal: "environment" },
-              width: { ideal: 1920 },
-              height: { ideal: 1080 },
-            },
-            audio: false,
+        prevPhotoBtn.disabled = photoItems.length <= 1;
+        nextPhotoBtn.disabled = photoItems.length <= 1;
+        clearPhotoListBtn.disabled = false;
+        if (exportAllBtn && isMultiMode) {
+          exportAllBtn.disabled = false;
+        }
+        photoList.innerHTML = "";
+        photoItems.forEach((item, index) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "photo-item-btn";
+          if (index === activePhotoIndex) {
+            button.classList.add("is-active");
+          }
+          button.title = item.name || `photo_${index + 1}.jpg`;
+          button.setAttribute("aria-label", `第 ${index + 1} 張照片`);
+          button.addEventListener("click", () => {
+            setActivePhoto(index);
           });
-          cameraPreview.srcObject = cameraStream;
-          cameraPreview.hidden = false;
-          placeholder.style.display = "none";
-          whiteboardWrapper.dataset.userPositioned = "false";
-          requestAnimationFrame(positionBoardAtBottomLeft);
-          takePhotoBtn.disabled = false;
-          stopCameraBtn.disabled = false;
-          captureFrameBtn.hidden = false;
-          captureFrameBtn.disabled = false;
-          cameraFontScaleInput.value = fontScaleInput.value;
-          cameraFontScaleValue.textContent = `${fontScaleInput.value}%`;
-          cameraStatus.textContent = "請調整白板位置後按「擷取畫面」。";
-          updateStageAspect();
-        } catch (error) {
-          console.error("startCameraPreview error:", error);
-          cameraStatus.textContent = "無法啟動相機，請檢查權限設定。";
-          takePhotoBtn.disabled = false;
-          cameraToolbar.hidden = true;
-          setCameraMode(false);
-          captureFrameBtn.hidden = true;
-          captureFrameBtn.disabled = true;
-          showToast("啟動相機失敗，請檢查權限設定。");
-        }
+          const img = document.createElement("img");
+          img.className = "photo-item-thumb";
+          img.loading = "lazy";
+          img.decoding = "async";
+          img.src = item.dataUrl;
+          img.alt = `照片 ${index + 1}`;
+          const label = document.createElement("span");
+          label.className = "photo-item-index";
+          label.textContent = `${index + 1}. ${item.baseName}`;
+          button.appendChild(img);
+          button.appendChild(label);
+          photoList.appendChild(button);
+        });
       };
 
-      const captureCameraFrame = async () => {
-        if (!cameraStream || cameraPreview.hidden) {
-          await startCameraPreview();
-          return;
-        }
-        const width = cameraPreview.videoWidth || 1280;
-        const height = cameraPreview.videoHeight || 720;
-        if (!width || !height) {
-          showToast("相機尚未就緒，請稍後再試。");
-          return;
-        }
-        cameraCaptureCanvas.width = width;
-        cameraCaptureCanvas.height = height;
-        const ctx = cameraCaptureCanvas.getContext("2d");
-        ctx.drawImage(cameraPreview, 0, 0, width, height);
-        const dataUrl = cameraCaptureCanvas.toDataURL("image/jpeg", 0.92);
-        photoImage.src = dataUrl;
+      const setActivePhoto = (index, options = {}) => {
+        if (index < 0 || index >= photoItems.length) return;
+        const announce = options.announce !== false;
+        const keepPosition = options.keepPosition === true;
+        const item = photoItems[index];
+        activePhotoIndex = index;
+        photoImage.src = item.dataUrl;
         photoImage.hidden = false;
         placeholder.style.display = "none";
-        whiteboardWrapper.dataset.userPositioned = "false";
+        lastPhotoMetadata = clonePhotoMetadata(item.metadata);
+        lastPhotoExifBytes = item.exifBytes || null;
+        formInputs.testDate.value = item.dateValue || "";
+        syncField("testDate");
+        updateCoordinateOverlay();
+        applyDisplayMode();
+        if (!keepPosition) {
+          whiteboardWrapper.dataset.userPositioned = "false";
+          requestAnimationFrame(positionBoardAtBottomLeft);
+        }
         updateStageAspect();
-        requestAnimationFrame(positionBoardAtBottomLeft);
+        renderPhotoList();
+        if (announce) {
+          showToast(`已切換到第 ${index + 1} 張照片。`, "success");
+        }
+      };
+
+      const clearPhotoCollection = (toast = true) => {
+        photoItems = [];
+        activePhotoIndex = -1;
+        photoImage.removeAttribute("src");
+        photoImage.hidden = true;
+        placeholder.style.display = "flex";
         lastPhotoMetadata = null;
         lastPhotoExifBytes = null;
-        formInputs.testDate.value = formatDateInputValue(new Date());
-        syncField("testDate");
-        stopCameraPreview(false);
-        showToast("已擷取畫面，白板可繼續調整。", "success");
+        updateCoordinateOverlay();
+        applyDisplayMode();
+        updateStageAspect();
+        renderPhotoList();
+        if (exportAllBtn) {
+          exportAllBtn.disabled = true;
+        }
+        if (toast) {
+          showToast("照片清單已清空。", "success");
+        }
+      };
+
+      const setMultiMode = (enabled) => {
+        const next = Boolean(enabled);
+        if (next === isMultiMode) return;
+        if (!next && photoItems.length > 1) {
+          const keepItem = hasCurrentPhoto() ? photoItems[activePhotoIndex] : photoItems[photoItems.length - 1];
+          photoItems = keepItem ? [keepItem] : [];
+          activePhotoIndex = keepItem ? 0 : -1;
+          if (keepItem) {
+            setActivePhoto(0, { announce: false, keepPosition: true });
+          }
+        }
+        isMultiMode = next;
+        updateMultiModeUI();
+        renderPhotoList();
+        if (isMultiMode) {
+          showToast("已啟用多張模式，可一次匯入多張照片。", "success");
+        } else {
+          showToast("已切回單張模式。", "success");
+        }
+      };
+
+      const shiftActivePhoto = (step) => {
+        if (photoItems.length <= 1) return;
+        const total = photoItems.length;
+        const base = hasCurrentPhoto() ? activePhotoIndex : 0;
+        const nextIndex = (base + step + total) % total;
+        setActivePhoto(nextIndex);
+      };
+
+      const buildPhotoItemFromFile = async (file, captureCoordinates) => {
+        const rawDataUrl = await readFileAsDataURL(file);
+        let dataUrl = rawDataUrl;
+        let optimized = false;
+        try {
+          const normalized = await normalizeImageDataUrl(rawDataUrl, {
+            maxLongEdge: IMPORT_TARGET_LONG_EDGE,
+            maxBytes: IMPORT_TARGET_MAX_BYTES,
+            startQuality: IMPORT_JPEG_START_QUALITY,
+            minQuality: IMPORT_JPEG_MIN_QUALITY,
+            resizePasses: IMPORT_RESIZE_PASSES,
+          });
+          dataUrl = normalized?.dataUrl || rawDataUrl;
+          optimized = Boolean(normalized?.changed);
+        } catch (error) {
+          console.warn("圖片縮放失敗，改用原始圖片", error);
+          dataUrl = rawDataUrl;
+          optimized = false;
+        }
+        const metadataResult = await applyPhotoMetadata(file, dataUrl, captureCoordinates, {
+          syncDate: false,
+          showDateToast: false,
+          updateOverlay: false,
+        });
+        const resolvedDate =
+          metadataResult?.resolvedDate ||
+          (file.lastModified && Number.isFinite(file.lastModified)
+            ? formatDateInputValue(new Date(file.lastModified))
+            : formatDateInputValue(new Date()));
+        const id = ++photoSequence;
+        return {
+          id,
+          name: file.name || `photo_${id}.jpg`,
+          baseName: sanitizeFileBaseName(file.name, `photo_${id}`),
+          dataUrl,
+          metadata: clonePhotoMetadata(metadataResult?.metadata),
+          exifBytes: metadataResult?.exifBytes || null,
+          dateValue: resolvedDate,
+          usedExif: Boolean(metadataResult?.usedExif),
+          optimized,
+        };
       };
 
       const handlePhotoFiles = async (files) => {
-        const [file] = files || [];
-        if (!file) return;
-        let dataUrl = null;
-        try {
-          dataUrl = await readFileAsDataURL(file);
-          photoImage.src = dataUrl;
-          photoImage.hidden = false;
-          placeholder.style.display = "none";
-          updateStageAspect();
-          whiteboardWrapper.dataset.userPositioned = "false";
-          requestAnimationFrame(positionBoardAtBottomLeft);
-        } catch (error) {
-          showToast("照片載入失敗，請重新選擇。");
+        const fileArray = Array.from(files || []).filter(Boolean);
+        if (!fileArray.length) return;
+        const captureCoordinates = await consumePendingCaptureCoordinates();
+        const loadedItems = [];
+        let gpsCount = 0;
+        let optimizedCount = 0;
+        for (const file of fileArray) {
+          try {
+            const item = await buildPhotoItemFromFile(file, captureCoordinates);
+            loadedItems.push(item);
+            if (item.optimized) {
+              optimizedCount += 1;
+            }
+            const hasGps =
+              item.metadata &&
+              typeof item.metadata.gps?.latitude === "number" &&
+              typeof item.metadata.gps?.longitude === "number";
+            if (hasGps) {
+              gpsCount += 1;
+            }
+          } catch (error) {
+            console.warn("讀取照片失敗", error);
+          }
+        }
+        if (!loadedItems.length) {
+          showToast("無法讀取任何照片，請重新選擇。");
           return;
         }
-        await applyPhotoMetadata(file, dataUrl);
+        if (isMultiMode) {
+          const startIndex = photoItems.length;
+          photoItems = photoItems.concat(loadedItems);
+          updateMultiModeUI();
+          setActivePhoto(startIndex, { announce: false });
+          const message =
+            gpsCount > 0
+              ? `已加入 ${loadedItems.length} 張照片，取得 ${gpsCount} 筆座標。`
+              : `已加入 ${loadedItems.length} 張照片，但沒有可用座標。`;
+          const optimizedSuffix = optimizedCount > 0 ? ` 已自動優化 ${optimizedCount} 張尺寸。` : "";
+          showToast(`${message}${optimizedSuffix}`, gpsCount > 0 || optimizedCount > 0 ? "success" : undefined);
+          return;
+        }
+        if (loadedItems.length > 1) {
+          showToast("單張模式只保留最後一張，若要管理全部請先開啟多張模式。");
+        }
+        photoItems = [loadedItems[loadedItems.length - 1]];
+        updateMultiModeUI();
+        setActivePhoto(0, { announce: false });
+        const current = photoItems[0];
+        showToast(
+          current.usedExif
+            ? current.optimized
+              ? "已載入照片並自動優化尺寸，套用拍攝日期。"
+              : "已載入照片並套用拍攝日期。"
+            : current.optimized
+              ? "已載入照片並自動優化尺寸，可手動調整日期與白板。"
+              : "已載入照片，可手動調整日期與白板。",
+          "success"
+        );
       };
 
       const applyColorPreset = (button) => {
@@ -1684,6 +2802,8 @@
       const applyScale = () => {
         const combinedScale = baseBoardScale * fontScaleFactor;
         const baseOverlayScale = combinedScale * fontScaleFactor * 0.96;
+        // User feedback indicates the watermark is still too large.
+        // Applying a manual adjustment to reduce it by about half.
         let overlayScale = baseOverlayScale / 2;
         if (isMobileDevice) {
           overlayScale *= 2;
@@ -1702,6 +2822,7 @@
           requestAnimationFrame(positionBoardAtBottomLeft);
         }
       };
+
 
       const updateFontScale = (value) => {
         const percent = Math.max(50, Math.min(300, Number(value)));
@@ -1731,21 +2852,38 @@
       };
 
       function syncField(key) {
-        const value = formInputs[key].value.trim();
-        displayTargets[key].textContent = value || "—";
+        const input = formInputs[key];
+        if (!input) return;
+        const rawValue = input.value;
         if (key === "testDate") {
+          formData[key] = rawValue;
           updateWatermarkDate();
+        } else {
+          formData[key] = rawValue.trim();
         }
+        renderWhiteboardFields();
       }
 
       const syncAllFields = () => Object.keys(formInputs).forEach(syncField);
 
-      const clearBoard = () => {
+      const clearBoard = (options = {}) => {
+        const resetPhotoMetadata = options.resetPhotoMetadata === true;
         Object.values(formInputs).forEach((input) => (input.value = ""));
         formInputs.testDate.valueAsDate = new Date();
         syncAllFields();
-        lastPhotoMetadata = null;
-        lastPhotoExifBytes = null;
+        if (hasCurrentPhoto()) {
+          photoItems[activePhotoIndex].dateValue = formInputs.testDate.value;
+        }
+        if (resetPhotoMetadata) {
+          lastPhotoMetadata = null;
+          lastPhotoExifBytes = null;
+        } else if (hasCurrentPhoto()) {
+          const active = photoItems[activePhotoIndex];
+          lastPhotoMetadata = clonePhotoMetadata(active.metadata);
+          lastPhotoExifBytes = active.exifBytes || null;
+        }
+        updateCoordinateOverlay();
+        applyDisplayMode();
       };
 
       const updateBoardColor = (color) => {
@@ -1787,16 +2925,28 @@
 
       const buildShareText = () => {
         const sections = [
-          { label: "檢查位置", value: displayTargets.inspectionLocation.textContent },
-          { label: "檢查日期", value: displayTargets.testDate.textContent },
+          { key: "inspectionLocation", value: formData.inspectionLocation || "—" },
+          { key: "testDate", value: formatWatermarkDate(formData.testDate || "") || "—" },
         ];
-        return sections.map((item) => `${item.label}：${item.value || "—"}`).join("\n");
+        return sections
+          .map((item) => {
+            const label = fieldLabels[item.key] || DEFAULT_FIELD_LABELS[item.key] || "";
+            return `${label}：${item.value || "—"}`;
+          })
+          .join("\n");
       };
 
       const handleShareOrDownload = async (blob, filename) => {
         const file = new File([blob], filename, { type: "image/jpeg" });
         const shareText = buildShareText();
+        const isTopLevelWindow = window.top === window.self;
+        if (blob.size > SHARE_BYPASS_MAX_BYTES) {
+          downloadBlob(blob, filename);
+          showToast("圖片較大，已改為直接下載以避免分享失敗。", "success");
+          return;
+        }
         if (
+          isTopLevelWindow &&
           isMobileDevice &&
           navigator.canShare &&
           navigator.canShare({ files: [file] }) &&
@@ -1820,50 +2970,307 @@
         showToast("已下載圖片，可直接選擇儲存位置。", "success");
       };
 
-      const exportBoardImage = async () => {
-        exportBtn.disabled = true;
-        exportBtn.textContent = "匯出中…";
+      const waitForPhotoReady = async () => {
+        if (!photoImage.hidden && photoImage.complete && photoImage.naturalWidth) return;
+        await new Promise((resolve) => {
+          const handle = () => {
+            photoImage.removeEventListener("load", handle);
+            resolve();
+          };
+          photoImage.addEventListener("load", handle);
+          setTimeout(() => {
+            photoImage.removeEventListener("load", handle);
+            resolve();
+          }, 3000);
+        });
+      };
+
+      const withTimeout = (promise, timeoutMs, code = "TIMEOUT") =>
+        new Promise((resolve, reject) => {
+          const timer = setTimeout(() => {
+            const err = new Error(code);
+            err.code = code;
+            reject(err);
+          }, timeoutMs);
+          promise
+            .then((value) => {
+              clearTimeout(timer);
+              resolve(value);
+            })
+            .catch((error) => {
+              clearTimeout(timer);
+              reject(error);
+            });
+        });
+
+      const resolveSafeExportScale = (scale) => {
+        const stageWidth = captureArea?.clientWidth || captureArea?.offsetWidth || 0;
+        const stageHeight = captureArea?.clientHeight || captureArea?.offsetHeight || 0;
+        const baseScale = Number(scale) || 1;
+        if (!stageWidth || !stageHeight) {
+          return Math.max(EXPORT_MIN_SCALE, Math.min(baseScale, EXPORT_SCALE_MAX));
+        }
+        const currentPixels = stageWidth * stageHeight * baseScale * baseScale;
+        if (currentPixels <= EXPORT_MAX_TOTAL_PIXELS) {
+          return Math.max(EXPORT_MIN_SCALE, Math.min(baseScale, EXPORT_SCALE_MAX));
+        }
+        const ratio = Math.sqrt(EXPORT_MAX_TOTAL_PIXELS / currentPixels);
+        const adjusted = baseScale * ratio;
+        return Math.max(EXPORT_MIN_SCALE, Math.min(adjusted, EXPORT_SCALE_MAX));
+      };
+
+      const buildHtml2CanvasOptions = (scale) => {
+        const exportBg =
+          (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
+        const safeScale = resolveSafeExportScale(scale);
+        const rect = captureArea?.getBoundingClientRect?.();
+        const width = Math.max(
+          1,
+          Math.round(
+            captureArea?.clientWidth ||
+              captureArea?.offsetWidth ||
+              rect?.width ||
+              1
+          )
+        );
+        const height = Math.max(
+          1,
+          Math.round(
+            captureArea?.clientHeight ||
+              captureArea?.offsetHeight ||
+              rect?.height ||
+              1
+          )
+        );
+        return {
+          backgroundColor: exportBg,
+          scale: safeScale,
+          logging: false,
+          imageTimeout: 0,
+          removeContainer: true,
+          width,
+          height,
+          windowWidth: width,
+          windowHeight: height,
+          scrollX: 0,
+          scrollY: 0,
+        };
+      };
+
+      const captureCanvasWithScale = async (scale, timeoutMs = EXPORT_RENDER_TIMEOUT_MS) => {
+        return withTimeout(
+          html2canvas(captureArea, buildHtml2CanvasOptions(scale)),
+          timeoutMs,
+          "EXPORT_TIMEOUT"
+        );
+      };
+
+      const renderExportBlob = async (options = {}) => {
+        if (typeof html2canvas !== "function") {
+          const err = new Error("MISSING_HTML2CANVAS");
+          err.code = "MISSING_HTML2CANVAS";
+          throw err;
+        }
+        await waitForPhotoReady();
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
-          if (typeof html2canvas !== "function") {
-            showToast("匯出元件未載入，請重新整理頁面後再試。");
-            return;
+          const baseScale = window.devicePixelRatio || 1;
+          const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
+          const exportScale = Math.min(baseScale * sizeMultiplier, EXPORT_SCALE_MAX);
+          const safeInitialScale = resolveSafeExportScale(exportScale);
+          const candidateScales = [
+            safeInitialScale,
+            EXPORT_RETRY_SCALE,
+            EXPORT_FINAL_RETRY_SCALE,
+            EXPORT_ULTRA_RETRY_SCALE,
+          ].filter(
+            (scaleValue, index, list) =>
+              Number.isFinite(scaleValue) &&
+              scaleValue > 0 &&
+              list.findIndex((item) => item === scaleValue) === index
+          );
+          let canvas = null;
+          let blob = null;
+          let lastError = null;
+          for (let index = 0; index < candidateScales.length; index += 1) {
+            const scaleValue = candidateScales[index];
+            try {
+              const timeoutMs =
+                index === 0 ? EXPORT_RENDER_TIMEOUT_MS : EXPORT_RENDER_RETRY_TIMEOUT_MS;
+              const nextCanvas = await captureCanvasWithScale(scaleValue, timeoutMs);
+              const nextBlob = await encodeCanvasAsJpeg(nextCanvas, {
+                maxBytes: EXPORT_TARGET_MAX_BYTES,
+                startQuality: EXPORT_JPEG_START_QUALITY,
+                minQuality: EXPORT_JPEG_MIN_QUALITY,
+                qualityStep: EXPORT_JPEG_QUALITY_STEP,
+              });
+              canvas = nextCanvas;
+              blob = nextBlob;
+              if (
+                blob.size <= EXPORT_TARGET_MAX_BYTES ||
+                scaleValue === EXPORT_ULTRA_RETRY_SCALE
+              ) {
+                break;
+              }
+            } catch (error) {
+              lastError = error;
+              if (error?.code === "EXPORT_TIMEOUT") {
+                break;
+              }
+              const shouldRetry =
+                error?.code === "EXPORT_TIMEOUT" ||
+                error?.name === "AbortError" ||
+                error?.name === "SecurityError" ||
+                error?.code === "CANVAS_ENCODE_FAILED";
+              if (!shouldRetry) {
+                throw error;
+              }
+            }
           }
-          const exportBg =
-            (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
-          const canvas = await html2canvas(captureArea, {
-            backgroundColor: exportBg,
-            scale: window.devicePixelRatio || 2,
-          });
-          let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-          dataUrl = applyExifToDataUrl(dataUrl);
-          const blob = dataUrlToBlob(dataUrl);
+          if (!canvas || !blob) {
+            const shouldFallbackToManual =
+              !lastError ||
+              lastError?.code === "EXPORT_TIMEOUT" ||
+              lastError?.code === "CANVAS_ENCODE_FAILED" ||
+              lastError?.code === "EXPORT_RENDER_FAILED";
+            if (shouldFallbackToManual) {
+              return renderExportBlobManual(options);
+            }
+            if (lastError) {
+              throw lastError;
+            }
+            const err = new Error("EXPORT_RENDER_FAILED");
+            err.code = "EXPORT_RENDER_FAILED";
+            throw err;
+          }
+          blob = await attachExifToBlob(blob);
+          const isPortrait = canvas.height >= canvas.width;
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
-          await handleShareOrDownload(blob, `whiteboard_${timestamp}.jpg`);
-        } catch (error) {
-          console.error(error);
-          showToast("匯出失敗，請再試一次。");
+          const baseName = sanitizeFileBaseName(options.filenameBase || "whiteboard", "whiteboard");
+          const filename = `${baseName}_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
+          return { blob, filename };
         } finally {
           toggleExportAppearance(false);
           toggleWhiteboardSolid(false);
+        }
+      };
+
+      const exportBoardImage = async () => {
+        exportBtn.disabled = true;
+        exportBtn.textContent = "匯出中…";
+        if (exportAllBtn && isMultiMode) {
+          exportAllBtn.disabled = true;
+        }
+        try {
+          const baseName =
+            hasCurrentPhoto() && photoItems[activePhotoIndex]
+              ? `whiteboard_${photoItems[activePhotoIndex].baseName}`
+              : "whiteboard";
+          const { blob, filename } = await renderExportBlob({ filenameBase: baseName });
+          await handleShareOrDownload(blob, filename);
+        } catch (error) {
+          console.error(error);
+          if (error?.code === "MISSING_HTML2CANVAS") {
+            showToast("匯出元件未載入，請重新整理頁面後再試。");
+          } else if (error?.code === "EXPORT_TIMEOUT") {
+            showToast("匯出逾時，系統已自動降到最低倍率，請稍後再試。");
+          } else if (
+            error?.code === "CANVAS_ENCODE_FAILED" ||
+            error?.code === "EXPORT_RENDER_FAILED"
+          ) {
+            showToast("圖片轉檔失敗，系統已嘗試自動縮小，請再試一次。");
+          } else {
+            showToast("匯出失敗，請再試一次。");
+          }
+        } finally {
           exportBtn.disabled = false;
           exportBtn.textContent = "匯出整張圖片";
+          if (exportAllBtn && isMultiMode) {
+            exportAllBtn.disabled = !photoItems.length;
+          }
+        }
+      };
+
+      const exportAllBoardImages = async () => {
+        if (!isMultiMode) {
+          showToast("請先切換到多張模式。");
+          return;
+        }
+        if (!photoItems.length) {
+          showToast("目前沒有可批次匯出的照片。");
+          return;
+        }
+        exportBtn.disabled = true;
+        if (exportAllBtn) {
+          exportAllBtn.disabled = true;
+          exportAllBtn.textContent = "批次匯出中…";
+        }
+        const previousIndex = hasCurrentPhoto() ? activePhotoIndex : 0;
+        try {
+          for (let i = 0; i < photoItems.length; i += 1) {
+            const item = photoItems[i];
+            if (exportAllBtn) {
+              exportAllBtn.textContent = `批次匯出中… ${i + 1}/${photoItems.length}`;
+            }
+            setActivePhoto(i, { announce: false, keepPosition: true });
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            const { blob, filename } = await renderExportBlob({
+              filenameBase: `whiteboard_${String(i + 1).padStart(2, "0")}_${item.baseName}`,
+            });
+            downloadBlob(blob, filename);
+            await new Promise((resolve) => setTimeout(resolve, 120));
+          }
+          showToast(`已完成 ${photoItems.length} 張批次匯出。`, "success");
+        } catch (error) {
+          console.error(error);
+          if (error?.code === "MISSING_HTML2CANVAS") {
+            showToast("匯出元件未載入，請重新整理頁面後再試。");
+          } else if (error?.code === "EXPORT_TIMEOUT") {
+            showToast("批次匯出逾時，系統已自動降到最低倍率，請稍後再試。");
+          } else if (
+            error?.code === "CANVAS_ENCODE_FAILED" ||
+            error?.code === "EXPORT_RENDER_FAILED"
+          ) {
+            showToast("批次轉檔失敗，系統已嘗試自動縮小，請再試一次。");
+          } else {
+            showToast("批次匯出失敗，請再試一次。");
+          }
+        } finally {
+          const resumeIndex = Math.min(previousIndex, Math.max(0, photoItems.length - 1));
+          if (photoItems.length) {
+            setActivePhoto(resumeIndex, { announce: false, keepPosition: true });
+          }
+          exportBtn.disabled = false;
+          if (exportAllBtn) {
+            exportAllBtn.textContent = "批次匯出全部";
+            exportAllBtn.disabled = !photoItems.length;
+          }
         }
       };
 
       takePhotoBtn.addEventListener("click", () => {
-        if (!cameraStream) {
-          startCameraPreview();
-        }
+        requestCaptureCoordinates();
+        takePhotoInput.click();
       });
-      captureFrameBtn.addEventListener("click", () => captureCameraFrame());
-      stopCameraBtn.addEventListener("click", () => stopCameraPreview(true));
-      uploadPhotoBtn.addEventListener("click", () => {
-        stopCameraPreview(true);
-        uploadInput.click();
+      uploadPhotoBtn.addEventListener("click", () => uploadInput.click());
+      takePhotoInput.addEventListener("change", async (event) => {
+        await handlePhotoFiles(event.target.files);
+        event.target.value = "";
       });
-      uploadInput.addEventListener("change", (event) => handlePhotoFiles(event.target.files));
+      uploadInput.addEventListener("change", async (event) => {
+        await handlePhotoFiles(event.target.files);
+        event.target.value = "";
+      });
+      multiModeBtn?.addEventListener("click", () => setMultiMode(!isMultiMode));
+      displayModeBtn?.addEventListener("click", () => {
+        const currentIndex = DISPLAY_MODE_SEQUENCE.indexOf(displayMode);
+        const nextIndex = (currentIndex + 1) % DISPLAY_MODE_SEQUENCE.length;
+        setDisplayMode(DISPLAY_MODE_SEQUENCE[nextIndex]);
+      });
+      prevPhotoBtn?.addEventListener("click", () => shiftActivePhoto(-1));
+      nextPhotoBtn?.addEventListener("click", () => shiftActivePhoto(1));
+      clearPhotoListBtn?.addEventListener("click", () => clearPhotoCollection(true));
 
       whiteboardWrapper.addEventListener("pointerdown", startDrag);
       window.addEventListener("pointermove", dragMove, { passive: false });
@@ -1872,12 +3279,8 @@
 
       const historyFields = ["projectName", "inspectionLocation", "inspector", "testResult"];
       const historyTextFields = ["projectName", "inspectionLocation", "inspector"];
-
-      applyDataBtn.addEventListener("click", () => {
-        syncAllFields();
-        historyFields.forEach((field) => saveFieldHistory(field, formInputs[field].value));
-        showToast("白板內容已更新。", "success");
-      });
+      const autoSyncFields = Object.keys(formInputs);
+      const autoHistoryFields = ["projectName", "inspectionLocation", "inspector", "testResult"];
 
       clearBoardBtn.addEventListener("click", () => {
         clearBoard();
@@ -1893,18 +3296,9 @@
       boardRotationInput.addEventListener("input", (event) =>
         updateBoardRotation(event.target.value)
       );
-      fontScaleInput.addEventListener("input", (event) => {
-        updateFontScale(event.target.value);
-        cameraFontScaleInput.value = event.target.value;
-        cameraFontScaleValue.textContent = `${event.target.value}%`;
-      });
-      cameraFontScaleInput.addEventListener("input", (event) => {
-        const value = event.target.value;
-        fontScaleInput.value = value;
-        fontScaleValue.textContent = `${value}%`;
-        cameraFontScaleValue.textContent = `${value}%`;
-        updateFontScale(value);
-      });
+      fontScaleInput.addEventListener("input", (event) =>
+        updateFontScale(event.target.value)
+      );
       boardColorInput.addEventListener("input", (event) =>
         updateBoardColor(event.target.value)
       );
@@ -1917,9 +3311,30 @@
       lineColorInput.addEventListener("input", (event) =>
         updateLineColor(event.target.value)
       );
+      boardVisibilityButton.addEventListener("click", () => {
+        const nextState = boardVisibilityButton.dataset.boardVisible !== "true";
+        boardVisibilityPreference = nextState;
+        if (displayMode === DISPLAY_MODES.FULL) {
+          setWhiteboardVisibility(nextState);
+        } else {
+          updateBoardVisibilityButton(nextState);
+        }
+      });
       colorPresetButtons.forEach((button) =>
         button.addEventListener("click", () => applyColorPreset(button))
       );
+      exportSizeButtons.forEach((button) =>
+        button.addEventListener("click", () => setExportSize(button.dataset.exportSize))
+      );
+      clearCoordinateHistoryBtn?.addEventListener("click", clearCoordinateHistory);
+      downloadCoordinateHistoryKmlBtn?.addEventListener("click", downloadCoordinateHistoryKml);
+      downloadCoordinateHistoryBtn?.addEventListener("click", downloadCoordinateHistory);
+      coordinateFormatButton.addEventListener("click", () => {
+        const currentIndex = COORDINATE_FORMAT_SEQUENCE.indexOf(coordinateFormat);
+        const nextIndex = (currentIndex + 1) % COORDINATE_FORMAT_SEQUENCE.length;
+        const nextFormat = COORDINATE_FORMAT_SEQUENCE[nextIndex] || COORDINATE_FORMATS.TWD97;
+        setCoordinateFormat(nextFormat);
+      });
       refreshAllFieldHistoryUI();
 
       historyTextFields.forEach((field) => {
@@ -1937,11 +3352,29 @@
         scheduleHideFieldHistory("testResult")
       );
 
+      autoSyncFields.forEach((field) => {
+        const input = formInputs[field];
+        if (!input) return;
+        const eventName = input.type === "date" ? "change" : "input";
+        input.addEventListener(eventName, () => {
+          if (field === "testResult") {
+            autoResizeTextarea(formInputs.testResult);
+          }
+          syncField(field);
+          if (field === "testDate" && hasCurrentPhoto()) {
+            photoItems[activePhotoIndex].dateValue = formInputs.testDate.value;
+            applyDisplayMode();
+          }
+        });
+        if (autoHistoryFields.includes(field)) {
+          input.addEventListener("blur", () => saveFieldHistory(field, input.value));
+        }
+      });
+
       exportBtn.addEventListener("click", exportBoardImage);
+      exportAllBtn?.addEventListener("click", exportAllBoardImages);
       window.addEventListener("resize", updateStageAspect);
-      window.addEventListener("orientationchange", updateStageAspect);
       photoImage.addEventListener("load", updateStageAspect);
-      cameraPreview.addEventListener("loadedmetadata", updateStageAspect);
 
       if (isMobileDevice) {
         boardScaleInput.value = "35";
@@ -1954,6 +3387,51 @@
       if (!formInputs.testDate.value) {
         formInputs.testDate.valueAsDate = new Date();
       }
+      if (!isMobileDevice) {
+        fontScaleInput.value = "200";
+        fontScaleValue.textContent = "200%";
+      }
+      try {
+        const savedFormat = localStorage.getItem(COORDINATE_FORMAT_STORAGE_KEY);
+        if (Object.values(COORDINATE_FORMATS).includes(savedFormat)) {
+          coordinateFormat = savedFormat;
+        }
+      } catch (error) {
+        console.warn("讀取座標格式失敗", error);
+      }
+      updateCoordinateFormatButton();
+      coordinateHistory = loadCoordinateHistory();
+      try {
+        const storedExportSize = localStorage.getItem(EXPORT_SIZE_STORAGE_KEY);
+        if (storedExportSize && EXPORT_SIZE_SCALE[storedExportSize]) {
+          exportSize = storedExportSize;
+        }
+      } catch (error) {
+        console.warn("讀取輸出尺寸失敗", error);
+      }
+      updateExportSizeButtons();
+      let savedVisibility = true;
+      try {
+        const storedVisibility = localStorage.getItem(WHITEBOARD_VISIBILITY_STORAGE_KEY);
+        if (storedVisibility === "true" || storedVisibility === "false") {
+          savedVisibility = storedVisibility === "true";
+        }
+      } catch (error) {
+        console.warn("讀取白板可見狀態失敗", error);
+      }
+      boardVisibilityPreference = savedVisibility;
+      setWhiteboardVisibility(savedVisibility, { persist: false });
+      try {
+        const storedDisplayMode = localStorage.getItem(DISPLAY_MODE_STORAGE_KEY);
+        if (Object.values(DISPLAY_MODES).includes(storedDisplayMode)) {
+          displayMode = storedDisplayMode;
+        }
+      } catch (error) {
+        console.warn("讀取顯示模式失敗", error);
+      }
+      updateMultiModeUI();
+      updateDisplayModeButton();
+      renderPhotoList();
       syncAllFields();
       updateBoardScale(boardScaleInput.value);
       updateFontScale(fontScaleInput.value);
@@ -1964,6 +3442,14 @@
       updateTextColor(textColorInput.value);
       updateLineColor(lineColorInput.value);
       updateWatermarkDate();
+      updateCoordinateOverlay();
+      applyDisplayMode();
+      enableFieldDragReorder();
+      applyFieldLabels();
+      REORDERABLE_FIELD_KEYS.forEach(renderLabelHistorySelect);
+      applyFieldOrderToDOM();
+      applyFieldVisibility();
+      renderWhiteboardFields();
       requestAnimationFrame(positionBoardAtBottomLeft);
 
       toggleAdvanced.addEventListener("click", () => {
@@ -1984,8 +3470,10 @@
       formInputs.testDate.addEventListener("change", () =>
         syncField("testDate")
       );
+
     </script>
   </body>
 </html>
+
 
 
