@@ -607,10 +607,10 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const EXPORT_JPEG_START_QUALITY = 0.9;
       const EXPORT_JPEG_MIN_QUALITY = 0.62;
       const EXPORT_JPEG_QUALITY_STEP = 0.07;
-      const EXPORT_EXIF_MAX_BLOB_BYTES = 2_000_000;
+      const EXPORT_EXIF_MAX_BLOB_BYTES = 3_200_000;
       const EXPORT_FAST_MAX_SCALE_MOBILE = 1.15;
       const EXPORT_FAST_MAX_SCALE_DESKTOP = 1.5;
-      const EXPORT_KEEP_EXIF = false;
+      const EXPORT_KEEP_EXIF = true;
       const EXPORT_PREFER_MANUAL_PIPELINE = true;
       const EXPORT_WAIT_IMAGE_TIMEOUT_MS = 1200;
       const EXPORT_FALLBACK_BOARD_TIMEOUT_MS = 1800;
@@ -1758,10 +1758,7 @@ ${placemarks}
             : align === "center"
               ? mapped.x + mapped.width / 2
               : mapped.right;
-        let y = vertical === "top" ? mapped.y : mapped.bottom;
-        if (vertical !== "top") {
-          y -= lineHeight * Math.max(0, lines.length - 1);
-        }
+        let y = vertical === "top" ? mapped.y : mapped.bottom - lineHeight * lines.length;
         ctx.save();
         ctx.font = `${weight} ${fontSize}px ${family}`;
         ctx.fillStyle = style.color || "#fbbf24";
@@ -2969,6 +2966,36 @@ ${placemarks}
         showToast("已下載圖片，可選擇儲存位置。", "success");
       };
 
+      const handleBatchShareOrDownload = async (exports) => {
+        if (!Array.isArray(exports) || !exports.length) return;
+        const files = exports.map((item) => new File([item.blob], item.filename, { type: "image/jpeg" }));
+        const shareText = buildShareText();
+        const canShareBatch =
+          isMobileDevice &&
+          navigator.canShare &&
+          navigator.share &&
+          navigator.canShare({ files });
+        if (canShareBatch) {
+          try {
+            await navigator.share({
+              files,
+              title: "工程白板照片",
+              text: shareText,
+            });
+            showToast(`已開啟分享面板（共 ${files.length} 張）。`, "success");
+            return;
+          } catch (error) {
+            if (error?.name !== "AbortError") {
+              showToast("批次分享不可用，改為下載。");
+            } else {
+              return;
+            }
+          }
+        }
+        exports.forEach(({ blob, filename }) => downloadBlob(blob, filename));
+        showToast(`已下載 ${exports.length} 張圖片，可選擇儲存位置。`, "success");
+      };
+
       const waitForPhotoReady = async () => {
         if (!photoImage.hidden && photoImage.complete && photoImage.naturalWidth) return;
         await new Promise((resolve) => {
@@ -3195,6 +3222,7 @@ ${placemarks}
           exportAllBtn.textContent = "批次匯出中…";
         }
         const previousIndex = hasCurrentPhoto() ? activePhotoIndex : 0;
+        const exportedItems = [];
         try {
           for (let i = 0; i < photoItems.length; i += 1) {
             const item = photoItems[i];
@@ -3206,10 +3234,10 @@ ${placemarks}
             const { blob, filename } = await renderExportBlob({
               filenameBase: `whiteboard_${String(i + 1).padStart(2, "0")}_${item.baseName}`,
             });
-            downloadBlob(blob, filename);
-            await new Promise((resolve) => setTimeout(resolve, 120));
+            exportedItems.push({ blob, filename });
+            await new Promise((resolve) => setTimeout(resolve, 60));
           }
-          showToast(`已完成 ${photoItems.length} 張批次匯出。`, "success");
+          await handleBatchShareOrDownload(exportedItems);
         } catch (error) {
           console.error(error);
           if (error?.code === "MISSING_HTML2CANVAS") {
