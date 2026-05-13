@@ -595,9 +595,8 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         medium: 1,
         large: 1.5,
       };
-      const EXPORT_RENDER_TIMEOUT_MS = 60000;
-      const EXPORT_RENDER_RETRY_TIMEOUT_MS = 30000;
-      const EXPORT_FINAL_TIMEOUT_MS = 90000;
+      const EXPORT_RENDER_TIMEOUT_MS = 22000;
+      const EXPORT_RENDER_RETRY_TIMEOUT_MS = 12000;
       const EXPORT_SCALE_MAX = 1.8;
       const EXPORT_RETRY_SCALE = 1.0;
       const EXPORT_FINAL_RETRY_SCALE = 0.8;
@@ -610,6 +609,12 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const EXPORT_JPEG_QUALITY_STEP = 0.07;
       const EXPORT_EXIF_MAX_BLOB_BYTES = 2_000_000;
       const SHARE_BYPASS_MAX_BYTES = 2_600_000;
+      const EXPORT_FALLBACK_BOARD_TIMEOUT_MS = 12000;
+      const EXPORT_MANUAL_LONG_EDGE = {
+        small: 1280,
+        medium: 1600,
+        large: 1920,
+      };
       const IMPORT_TARGET_LONG_EDGE = 1920;
       const IMPORT_TARGET_MAX_BYTES = 1_200_000;
       const IMPORT_JPEG_START_QUALITY = 0.85;
@@ -1670,6 +1675,214 @@ ${placemarks}
           console.warn("EXIF blob 寫入失敗", error);
           return blob;
         }
+      };
+
+      const parsePercent = (value) => {
+        if (typeof value !== "string") return null;
+        const trimmed = value.trim();
+        if (!trimmed.endsWith("%")) return null;
+        const parsed = Number.parseFloat(trimmed.slice(0, -1));
+        return Number.isFinite(parsed) ? parsed / 100 : null;
+      };
+
+      const clampNumber = (value, min, max) => Math.min(max, Math.max(min, value));
+
+      const resolveManualOutputDimensions = () => {
+        const sourceWidth =
+          photoImage.naturalWidth || photoImage.width || captureArea.clientWidth || 1;
+        const sourceHeight =
+          photoImage.naturalHeight || photoImage.height || captureArea.clientHeight || 1;
+        const sourceLongEdge = Math.max(sourceWidth, sourceHeight);
+        const targetLongEdge =
+          EXPORT_MANUAL_LONG_EDGE[exportSize] || EXPORT_MANUAL_LONG_EDGE.medium;
+        const ratio =
+          sourceLongEdge > targetLongEdge ? targetLongEdge / sourceLongEdge : 1;
+        return {
+          width: Math.max(1, Math.round(sourceWidth * ratio)),
+          height: Math.max(1, Math.round(sourceHeight * ratio)),
+        };
+      };
+
+      const mapRectToOutput = (rect, stageRect, outputWidth, outputHeight) => {
+        const stageWidth = stageRect.width || 1;
+        const stageHeight = stageRect.height || 1;
+        const x = ((rect.left - stageRect.left) / stageWidth) * outputWidth;
+        const y = ((rect.top - stageRect.top) / stageHeight) * outputHeight;
+        const width = (rect.width / stageWidth) * outputWidth;
+        const height = (rect.height / stageHeight) * outputHeight;
+        return {
+          x,
+          y,
+          width,
+          height,
+          right: x + width,
+          bottom: y + height,
+        };
+      };
+
+      const drawTextOverlayFromElement = (
+        ctx,
+        element,
+        stageRect,
+        outputWidth,
+        outputHeight,
+        options = {}
+      ) => {
+        if (!element || element.hidden) return;
+        const text = (element.textContent || "").trim();
+        if (!text) return;
+        const rect = element.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const mapped = mapRectToOutput(rect, stageRect, outputWidth, outputHeight);
+        const style = window.getComputedStyle(element);
+        const domFontSize = Number.parseFloat(style.fontSize || "16");
+        const fontSize = Math.max(
+          12,
+          (Number.isFinite(domFontSize) ? domFontSize : 16) *
+            (outputHeight / Math.max(1, stageRect.height))
+        );
+        const weight = style.fontWeight || "700";
+        const family = style.fontFamily || "sans-serif";
+        const lineHeight = fontSize * 1.15;
+        const lines = text.split(/\n+/).filter(Boolean);
+        if (!lines.length) return;
+        const align = options.align || "right";
+        const vertical = options.vertical || "bottom";
+        const x =
+          align === "left"
+            ? mapped.x
+            : align === "center"
+              ? mapped.x + mapped.width / 2
+              : mapped.right;
+        let y = vertical === "top" ? mapped.y : mapped.bottom;
+        if (vertical !== "top") {
+          y -= lineHeight * Math.max(0, lines.length - 1);
+        }
+        ctx.save();
+        ctx.font = `${weight} ${fontSize}px ${family}`;
+        ctx.fillStyle = style.color || "#fbbf24";
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.9)";
+        ctx.lineWidth = Math.max(1, fontSize * 0.08);
+        ctx.textAlign = align;
+        ctx.textBaseline = "top";
+        lines.forEach((line, index) => {
+          const yy = y + index * lineHeight;
+          ctx.strokeText(line, x, yy);
+          ctx.fillText(line, x, yy);
+        });
+        ctx.restore();
+      };
+
+      const captureWhiteboardCanvas = async () => {
+        if (typeof html2canvas !== "function" || !whiteboard) return null;
+        return withTimeout(
+          html2canvas(whiteboard, {
+            backgroundColor: null,
+            scale: 1.5,
+            logging: false,
+            imageTimeout: 0,
+            removeContainer: true,
+          }),
+          EXPORT_FALLBACK_BOARD_TIMEOUT_MS,
+          "BOARD_CAPTURE_TIMEOUT"
+        );
+      };
+
+      const drawWhiteboardOverlay = async (ctx, stageRect, outputWidth, outputHeight) => {
+        if (!whiteboardWrapper || !whiteboard || whiteboardWrapper.hidden) return;
+        let boardCanvas = null;
+        try {
+          boardCanvas = await captureWhiteboardCanvas();
+        } catch (error) {
+          console.warn("白板疊圖渲染失敗，略過白板疊圖", error);
+          return;
+        }
+        if (!boardCanvas) return;
+        const style = window.getComputedStyle(whiteboardWrapper);
+        const centerXPercent = parsePercent(style.left);
+        const centerYPercent = parsePercent(style.top);
+        const wrapperRect = whiteboardWrapper.getBoundingClientRect();
+        const fallbackCenter = mapRectToOutput(
+          wrapperRect,
+          stageRect,
+          outputWidth,
+          outputHeight
+        );
+        const centerX =
+          centerXPercent !== null
+            ? clampNumber(centerXPercent, 0, 1) * outputWidth
+            : fallbackCenter.x + fallbackCenter.width / 2;
+        const centerY =
+          centerYPercent !== null
+            ? clampNumber(centerYPercent, 0, 1) * outputHeight
+            : fallbackCenter.y + fallbackCenter.height / 2;
+        const scale = Number.parseFloat(style.getPropertyValue("--board-scale")) || 1;
+        const rotationValue =
+          window.getComputedStyle(document.documentElement).getPropertyValue("--board-rotation") ||
+          "0deg";
+        const rotationDeg = Number.parseFloat(rotationValue) || 0;
+        const baseWidth = whiteboard.offsetWidth || boardCanvas.width || 1;
+        const baseHeight = whiteboard.offsetHeight || boardCanvas.height || 1;
+        const unitScaleX = outputWidth / Math.max(1, stageRect.width);
+        const unitScaleY = outputHeight / Math.max(1, stageRect.height);
+        const drawWidth = baseWidth * scale * unitScaleX;
+        const drawHeight = baseHeight * scale * unitScaleY;
+        const rotationRad = (rotationDeg * Math.PI) / 180;
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(rotationRad);
+        ctx.drawImage(boardCanvas, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+        ctx.restore();
+      };
+
+      const renderExportBlobManual = async (options = {}) => {
+        if (!photoImage || photoImage.hidden || !photoImage.naturalWidth) {
+          const err = new Error("NO_PHOTO_FOR_EXPORT");
+          err.code = "NO_PHOTO_FOR_EXPORT";
+          throw err;
+        }
+        const stageRect = captureArea.getBoundingClientRect();
+        if (!stageRect.width || !stageRect.height) {
+          const err = new Error("INVALID_STAGE_SIZE");
+          err.code = "INVALID_STAGE_SIZE";
+          throw err;
+        }
+        const output = resolveManualOutputDimensions();
+        const canvas = document.createElement("canvas");
+        canvas.width = output.width;
+        canvas.height = output.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          const err = new Error("CANVAS_CONTEXT_FAILED");
+          err.code = "CANVAS_CONTEXT_FAILED";
+          throw err;
+        }
+        const exportBg =
+          (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
+        ctx.fillStyle = exportBg;
+        ctx.fillRect(0, 0, output.width, output.height);
+        ctx.drawImage(photoImage, 0, 0, output.width, output.height);
+        await drawWhiteboardOverlay(ctx, stageRect, output.width, output.height);
+        drawTextOverlayFromElement(ctx, photoCoordinate, stageRect, output.width, output.height, {
+          align: "right",
+          vertical: "top",
+        });
+        drawTextOverlayFromElement(ctx, photoWatermark, stageRect, output.width, output.height, {
+          align: "right",
+          vertical: "bottom",
+        });
+        let blob = await encodeCanvasAsJpeg(canvas, {
+          maxBytes: EXPORT_TARGET_MAX_BYTES,
+          startQuality: EXPORT_JPEG_START_QUALITY,
+          minQuality: EXPORT_JPEG_MIN_QUALITY,
+          qualityStep: EXPORT_JPEG_QUALITY_STEP,
+        });
+        blob = await attachExifToBlob(blob);
+        const isPortrait = output.height >= output.width;
+        const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
+        const baseName = sanitizeFileBaseName(options.filenameBase || "whiteboard", "whiteboard");
+        const filename = `${baseName}_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
+        return { blob, filename };
       };
 
       const readFieldHistoryStore = () => {
@@ -2852,14 +3065,6 @@ ${placemarks}
         );
       };
 
-      const captureCanvasWithoutTimeout = (scale) => {
-        return withTimeout(
-          html2canvas(captureArea, buildHtml2CanvasOptions(scale)),
-          EXPORT_FINAL_TIMEOUT_MS,
-          "EXPORT_TIMEOUT_FINAL"
-        );
-      };
-
       const renderExportBlob = async (options = {}) => {
         if (typeof html2canvas !== "function") {
           const err = new Error("MISSING_HTML2CANVAS");
@@ -2910,6 +3115,9 @@ ${placemarks}
               }
             } catch (error) {
               lastError = error;
+              if (error?.code === "EXPORT_TIMEOUT") {
+                break;
+              }
               const shouldRetry =
                 error?.code === "EXPORT_TIMEOUT" ||
                 error?.name === "AbortError" ||
@@ -2921,25 +3129,14 @@ ${placemarks}
             }
           }
           if (!canvas || !blob) {
-            if (lastError?.code === "EXPORT_TIMEOUT") {
-              try {
-                const fallbackCanvas = await captureCanvasWithoutTimeout(
-                  EXPORT_ULTRA_RETRY_SCALE
-                );
-                const fallbackBlob = await encodeCanvasAsJpeg(fallbackCanvas, {
-                  maxBytes: EXPORT_TARGET_MAX_BYTES,
-                  startQuality: EXPORT_JPEG_START_QUALITY,
-                  minQuality: EXPORT_JPEG_MIN_QUALITY,
-                  qualityStep: EXPORT_JPEG_QUALITY_STEP,
-                });
-                canvas = fallbackCanvas;
-                blob = fallbackBlob;
-              } catch (fallbackError) {
-                lastError = fallbackError;
-              }
+            const shouldFallbackToManual =
+              !lastError ||
+              lastError?.code === "EXPORT_TIMEOUT" ||
+              lastError?.code === "CANVAS_ENCODE_FAILED" ||
+              lastError?.code === "EXPORT_RENDER_FAILED";
+            if (shouldFallbackToManual) {
+              return renderExportBlobManual(options);
             }
-          }
-          if (!canvas || !blob) {
             if (lastError) {
               throw lastError;
             }
@@ -2976,10 +3173,7 @@ ${placemarks}
           console.error(error);
           if (error?.code === "MISSING_HTML2CANVAS") {
             showToast("匯出元件未載入，請重新整理頁面後再試。");
-          } else if (
-            error?.code === "EXPORT_TIMEOUT" ||
-            error?.code === "EXPORT_TIMEOUT_FINAL"
-          ) {
+          } else if (error?.code === "EXPORT_TIMEOUT") {
             showToast("匯出逾時，系統已自動降到最低倍率，請稍後再試。");
           } else if (
             error?.code === "CANVAS_ENCODE_FAILED" ||
@@ -3032,10 +3226,7 @@ ${placemarks}
           console.error(error);
           if (error?.code === "MISSING_HTML2CANVAS") {
             showToast("匯出元件未載入，請重新整理頁面後再試。");
-          } else if (
-            error?.code === "EXPORT_TIMEOUT" ||
-            error?.code === "EXPORT_TIMEOUT_FINAL"
-          ) {
+          } else if (error?.code === "EXPORT_TIMEOUT") {
             showToast("批次匯出逾時，系統已自動降到最低倍率，請稍後再試。");
           } else if (
             error?.code === "CANVAS_ENCODE_FAILED" ||
