@@ -595,8 +595,9 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
         medium: 1,
         large: 1.5,
       };
-      const EXPORT_RENDER_TIMEOUT_MS = 25000;
-      const EXPORT_RENDER_RETRY_TIMEOUT_MS = 15000;
+      const EXPORT_RENDER_TIMEOUT_MS = 60000;
+      const EXPORT_RENDER_RETRY_TIMEOUT_MS = 30000;
+      const EXPORT_FINAL_TIMEOUT_MS = 90000;
       const EXPORT_SCALE_MAX = 1.8;
       const EXPORT_RETRY_SCALE = 1.0;
       const EXPORT_FINAL_RETRY_SCALE = 0.8;
@@ -2805,20 +2806,57 @@ ${placemarks}
         return Math.max(EXPORT_MIN_SCALE, Math.min(adjusted, EXPORT_SCALE_MAX));
       };
 
-      const captureCanvasWithScale = async (scale, timeoutMs = EXPORT_RENDER_TIMEOUT_MS) => {
+      const buildHtml2CanvasOptions = (scale) => {
         const exportBg =
           (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
         const safeScale = resolveSafeExportScale(scale);
+        const rect = captureArea?.getBoundingClientRect?.();
+        const width = Math.max(
+          1,
+          Math.round(
+            captureArea?.clientWidth ||
+              captureArea?.offsetWidth ||
+              rect?.width ||
+              1
+          )
+        );
+        const height = Math.max(
+          1,
+          Math.round(
+            captureArea?.clientHeight ||
+              captureArea?.offsetHeight ||
+              rect?.height ||
+              1
+          )
+        );
+        return {
+          backgroundColor: exportBg,
+          scale: safeScale,
+          logging: false,
+          imageTimeout: 0,
+          removeContainer: true,
+          width,
+          height,
+          windowWidth: width,
+          windowHeight: height,
+          scrollX: 0,
+          scrollY: 0,
+        };
+      };
+
+      const captureCanvasWithScale = async (scale, timeoutMs = EXPORT_RENDER_TIMEOUT_MS) => {
         return withTimeout(
-          html2canvas(captureArea, {
-            backgroundColor: exportBg,
-            scale: safeScale,
-            logging: false,
-            imageTimeout: 10000,
-            removeContainer: true,
-          }),
+          html2canvas(captureArea, buildHtml2CanvasOptions(scale)),
           timeoutMs,
           "EXPORT_TIMEOUT"
+        );
+      };
+
+      const captureCanvasWithoutTimeout = (scale) => {
+        return withTimeout(
+          html2canvas(captureArea, buildHtml2CanvasOptions(scale)),
+          EXPORT_FINAL_TIMEOUT_MS,
+          "EXPORT_TIMEOUT_FINAL"
         );
       };
 
@@ -2883,6 +2921,25 @@ ${placemarks}
             }
           }
           if (!canvas || !blob) {
+            if (lastError?.code === "EXPORT_TIMEOUT") {
+              try {
+                const fallbackCanvas = await captureCanvasWithoutTimeout(
+                  EXPORT_ULTRA_RETRY_SCALE
+                );
+                const fallbackBlob = await encodeCanvasAsJpeg(fallbackCanvas, {
+                  maxBytes: EXPORT_TARGET_MAX_BYTES,
+                  startQuality: EXPORT_JPEG_START_QUALITY,
+                  minQuality: EXPORT_JPEG_MIN_QUALITY,
+                  qualityStep: EXPORT_JPEG_QUALITY_STEP,
+                });
+                canvas = fallbackCanvas;
+                blob = fallbackBlob;
+              } catch (fallbackError) {
+                lastError = fallbackError;
+              }
+            }
+          }
+          if (!canvas || !blob) {
             if (lastError) {
               throw lastError;
             }
@@ -2919,7 +2976,10 @@ ${placemarks}
           console.error(error);
           if (error?.code === "MISSING_HTML2CANVAS") {
             showToast("匯出元件未載入，請重新整理頁面後再試。");
-          } else if (error?.code === "EXPORT_TIMEOUT") {
+          } else if (
+            error?.code === "EXPORT_TIMEOUT" ||
+            error?.code === "EXPORT_TIMEOUT_FINAL"
+          ) {
             showToast("匯出逾時，系統已自動降到最低倍率，請稍後再試。");
           } else if (
             error?.code === "CANVAS_ENCODE_FAILED" ||
@@ -2972,7 +3032,10 @@ ${placemarks}
           console.error(error);
           if (error?.code === "MISSING_HTML2CANVAS") {
             showToast("匯出元件未載入，請重新整理頁面後再試。");
-          } else if (error?.code === "EXPORT_TIMEOUT") {
+          } else if (
+            error?.code === "EXPORT_TIMEOUT" ||
+            error?.code === "EXPORT_TIMEOUT_FINAL"
+          ) {
             showToast("批次匯出逾時，系統已自動降到最低倍率，請稍後再試。");
           } else if (
             error?.code === "CANVAS_ENCODE_FAILED" ||
