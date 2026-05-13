@@ -608,7 +608,6 @@ const takePhotoBtn = document.getElementById("takePhotoBtn");
       const EXPORT_JPEG_MIN_QUALITY = 0.62;
       const EXPORT_JPEG_QUALITY_STEP = 0.07;
       const EXPORT_EXIF_MAX_BLOB_BYTES = 2_000_000;
-      const SHARE_BYPASS_MAX_BYTES = 2_600_000;
       const EXPORT_FALLBACK_BOARD_TIMEOUT_MS = 12000;
       const EXPORT_MANUAL_LONG_EDGE = {
         small: 1280,
@@ -2939,14 +2938,7 @@ ${placemarks}
       const handleShareOrDownload = async (blob, filename) => {
         const file = new File([blob], filename, { type: "image/jpeg" });
         const shareText = buildShareText();
-        const isTopLevelWindow = window.top === window.self;
-        if (blob.size > SHARE_BYPASS_MAX_BYTES) {
-          downloadBlob(blob, filename);
-          showToast("圖片較大，已改為直接下載以避免分享失敗。", "success");
-          return;
-        }
         if (
-          isTopLevelWindow &&
           isMobileDevice &&
           navigator.canShare &&
           navigator.canShare({ files: [file] }) &&
@@ -2958,16 +2950,16 @@ ${placemarks}
               title: "工程白板照片",
               text: shareText,
             });
-            showToast("已開啟分享面板，請選擇儲存影像。", "success");
+            showToast("已開啟分享面板，請選擇儲存或傳送。", "success");
             return;
           } catch (error) {
             if (error.name !== "AbortError") {
-              showToast("分享面板不可用，將自動下載影像。");
+              showToast("分享不可用，將改為下載。");
             }
           }
         }
         downloadBlob(blob, filename);
-        showToast("已下載圖片，可直接選擇儲存位置。", "success");
+        showToast("已下載圖片，可選擇儲存位置。", "success");
       };
 
       const waitForPhotoReady = async () => {
@@ -3072,80 +3064,27 @@ ${placemarks}
           throw err;
         }
         await waitForPhotoReady();
+        if (photoImage.hidden || !photoImage.naturalWidth) {
+          const err = new Error("NO_PHOTO_FOR_EXPORT");
+          err.code = "NO_PHOTO_FOR_EXPORT";
+          throw err;
+        }
         toggleExportAppearance(true);
         toggleWhiteboardSolid(true);
         try {
           const baseScale = window.devicePixelRatio || 1;
           const sizeMultiplier = EXPORT_SIZE_SCALE[exportSize] || 1;
-          const exportScale = Math.min(baseScale * sizeMultiplier, EXPORT_SCALE_MAX);
-          const safeInitialScale = resolveSafeExportScale(exportScale);
-          const candidateScales = [
-            safeInitialScale,
-            EXPORT_RETRY_SCALE,
-            EXPORT_FINAL_RETRY_SCALE,
-            EXPORT_ULTRA_RETRY_SCALE,
-          ].filter(
-            (scaleValue, index, list) =>
-              Number.isFinite(scaleValue) &&
-              scaleValue > 0 &&
-              list.findIndex((item) => item === scaleValue) === index
-          );
-          let canvas = null;
-          let blob = null;
-          let lastError = null;
-          for (let index = 0; index < candidateScales.length; index += 1) {
-            const scaleValue = candidateScales[index];
-            try {
-              const timeoutMs =
-                index === 0 ? EXPORT_RENDER_TIMEOUT_MS : EXPORT_RENDER_RETRY_TIMEOUT_MS;
-              const nextCanvas = await captureCanvasWithScale(scaleValue, timeoutMs);
-              const nextBlob = await encodeCanvasAsJpeg(nextCanvas, {
-                maxBytes: EXPORT_TARGET_MAX_BYTES,
-                startQuality: EXPORT_JPEG_START_QUALITY,
-                minQuality: EXPORT_JPEG_MIN_QUALITY,
-                qualityStep: EXPORT_JPEG_QUALITY_STEP,
-              });
-              canvas = nextCanvas;
-              blob = nextBlob;
-              if (
-                blob.size <= EXPORT_TARGET_MAX_BYTES ||
-                scaleValue === EXPORT_ULTRA_RETRY_SCALE
-              ) {
-                break;
-              }
-            } catch (error) {
-              lastError = error;
-              if (error?.code === "EXPORT_TIMEOUT") {
-                break;
-              }
-              const shouldRetry =
-                error?.code === "EXPORT_TIMEOUT" ||
-                error?.name === "AbortError" ||
-                error?.name === "SecurityError" ||
-                error?.code === "CANVAS_ENCODE_FAILED";
-              if (!shouldRetry) {
-                throw error;
-              }
-            }
-          }
-          if (!canvas || !blob) {
-            const shouldFallbackToManual =
-              !lastError ||
-              lastError?.code === "EXPORT_TIMEOUT" ||
-              lastError?.code === "CANVAS_ENCODE_FAILED" ||
-              lastError?.code === "EXPORT_RENDER_FAILED";
-            if (shouldFallbackToManual) {
-              return renderExportBlobManual(options);
-            }
-            if (lastError) {
-              throw lastError;
-            }
-            const err = new Error("EXPORT_RENDER_FAILED");
-            err.code = "EXPORT_RENDER_FAILED";
-            throw err;
-          }
-          blob = await attachExifToBlob(blob);
+          const exportScale = baseScale * sizeMultiplier;
+          const exportBg =
+            (captureArea && window.getComputedStyle(captureArea).backgroundColor) || "#0f172a";
+          const canvas = await html2canvas(captureArea, {
+            backgroundColor: exportBg,
+            scale: exportScale,
+          });
           const isPortrait = canvas.height >= canvas.width;
+          let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+          dataUrl = applyExifToDataUrl(dataUrl);
+          const blob = dataUrlToBlob(dataUrl);
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
           const baseName = sanitizeFileBaseName(options.filenameBase || "whiteboard", "whiteboard");
           const filename = `${baseName}_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
@@ -3173,13 +3112,8 @@ ${placemarks}
           console.error(error);
           if (error?.code === "MISSING_HTML2CANVAS") {
             showToast("匯出元件未載入，請重新整理頁面後再試。");
-          } else if (error?.code === "EXPORT_TIMEOUT") {
-            showToast("匯出逾時，系統已自動降到最低倍率，請稍後再試。");
-          } else if (
-            error?.code === "CANVAS_ENCODE_FAILED" ||
-            error?.code === "EXPORT_RENDER_FAILED"
-          ) {
-            showToast("圖片轉檔失敗，系統已嘗試自動縮小，請再試一次。");
+          } else if (error?.code === "NO_PHOTO_FOR_EXPORT") {
+            showToast("請先拍照或上傳照片再匯出。");
           } else {
             showToast("匯出失敗，請再試一次。");
           }
@@ -3226,13 +3160,8 @@ ${placemarks}
           console.error(error);
           if (error?.code === "MISSING_HTML2CANVAS") {
             showToast("匯出元件未載入，請重新整理頁面後再試。");
-          } else if (error?.code === "EXPORT_TIMEOUT") {
-            showToast("批次匯出逾時，系統已自動降到最低倍率，請稍後再試。");
-          } else if (
-            error?.code === "CANVAS_ENCODE_FAILED" ||
-            error?.code === "EXPORT_RENDER_FAILED"
-          ) {
-            showToast("批次轉檔失敗，系統已嘗試自動縮小，請再試一次。");
+          } else if (error?.code === "NO_PHOTO_FOR_EXPORT") {
+            showToast("批次匯出時找不到照片內容，請重新選擇後再試。");
           } else {
             showToast("批次匯出失敗，請再試一次。");
           }
