@@ -1559,47 +1559,68 @@ ${placemarks}
       const toExifDateTime = (dateStr) =>
         `${dateStr.replace(/-/g, ":")} 00:00:00`;
 
+      const isFiniteCoordinate = (value) =>
+        typeof value === "number" && Number.isFinite(value);
+
+      const applyMetadataToExifObject = (exifObj = {}) => {
+        exifObj["0th"] = exifObj["0th"] || {};
+        exifObj.Exif = exifObj.Exif || {};
+        exifObj.GPS = exifObj.GPS || {};
+        if (exifObj["0th"]?.[piexif.ImageIFD.Orientation] !== undefined) {
+          delete exifObj["0th"][piexif.ImageIFD.Orientation];
+        }
+        let hasMetadata = false;
+        const dateValue = lastPhotoMetadata?.date;
+        if (dateValue) {
+          const dateTime = toExifDateTime(dateValue);
+          exifObj["0th"][piexif.ImageIFD.DateTime] = dateTime;
+          exifObj.Exif[piexif.ExifIFD.DateTimeOriginal] = dateTime;
+          exifObj.Exif[piexif.ExifIFD.CreateDate] = dateTime;
+          hasMetadata = true;
+        }
+        const latitude = lastPhotoMetadata?.gps?.latitude;
+        const longitude = lastPhotoMetadata?.gps?.longitude;
+        if (isFiniteCoordinate(latitude) && isFiniteCoordinate(longitude)) {
+          exifObj.GPS[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
+          exifObj.GPS[piexif.GPSIFD.GPSLatitude] = decimalToDmsRational(latitude);
+          exifObj.GPS[piexif.GPSIFD.GPSLongitudeRef] = longitude >= 0 ? "E" : "W";
+          exifObj.GPS[piexif.GPSIFD.GPSLongitude] = decimalToDmsRational(longitude);
+          hasMetadata = true;
+        }
+        return hasMetadata;
+      };
+
       const applyExifToDataUrl = (dataUrl) => {
         if (!window.piexif) return dataUrl;
         if (typeof dataUrl === "string" && dataUrl.length > EXIF_INSERT_MAX_DATAURL_LENGTH) {
           return dataUrl;
         }
         try {
+          let workingDataUrl = dataUrl;
           if (lastPhotoExifBytes) {
-            return piexif.insert(lastPhotoExifBytes, dataUrl);
-          }
-          if (!lastPhotoMetadata) return dataUrl;
-          const zeroth = {};
-          const exif = {};
-          const gps = {};
-          if (lastPhotoMetadata.date) {
-            const dateTime = toExifDateTime(lastPhotoMetadata.date);
-            zeroth[piexif.ImageIFD.DateTime] = dateTime;
-            exif[piexif.ExifIFD.DateTimeOriginal] = dateTime;
-            exif[piexif.ExifIFD.CreateDate] = dateTime;
-          }
-          if (lastPhotoMetadata.gps) {
-            const { latitude, longitude } = lastPhotoMetadata.gps;
-            if (
-              typeof latitude === "number" &&
-              !Number.isNaN(latitude) &&
-              typeof longitude === "number" &&
-              !Number.isNaN(longitude)
-            ) {
-              gps[piexif.GPSIFD.GPSLatitudeRef] = latitude >= 0 ? "N" : "S";
-              gps[piexif.GPSIFD.GPSLatitude] = decimalToDmsRational(latitude);
-              gps[piexif.GPSIFD.GPSLongitudeRef] = longitude >= 0 ? "E" : "W";
-              gps[piexif.GPSIFD.GPSLongitude] = decimalToDmsRational(longitude);
+            try {
+              workingDataUrl = piexif.insert(lastPhotoExifBytes, dataUrl);
+            } catch (error) {
+              console.warn("套用原始 EXIF 失敗，改用重建 EXIF。", error);
             }
           }
-          if (!Object.keys(zeroth).length && !Object.keys(exif).length && !Object.keys(gps).length) {
+          let exifObj = null;
+          try {
+            exifObj = piexif.load(workingDataUrl);
+          } catch (error) {
+            exifObj = { "0th": {}, Exif: {}, GPS: {} };
+          }
+          const hasExistingExif = Boolean(
+            exifObj &&
+              (Object.keys(exifObj["0th"] || {}).length ||
+                Object.keys(exifObj.Exif || {}).length ||
+                Object.keys(exifObj.GPS || {}).length)
+          );
+          const hasPatchedMetadata = applyMetadataToExifObject(exifObj);
+          if (!hasExistingExif && !hasPatchedMetadata) {
             return dataUrl;
           }
-          const exifBytes = piexif.dump({
-            "0th": zeroth,
-            Exif: exif,
-            GPS: gps,
-          });
+          const exifBytes = piexif.dump(exifObj);
           return piexif.insert(exifBytes, dataUrl);
         } catch (error) {
           console.warn("EXIF 寫入失敗", error);
@@ -2966,34 +2987,225 @@ ${placemarks}
         showToast("已下載圖片，可選擇儲存位置。", "success");
       };
 
-      const handleBatchShareOrDownload = async (exports) => {
+      const ZIP_HEADER_LOCAL_FILE = 0x04034b50;
+      const ZIP_HEADER_CENTRAL_FILE = 0x02014b50;
+      const ZIP_HEADER_EOCD = 0x06054b50;
+      const ZIP_VERSION_NEEDED = 20;
+      const ZIP_UTF8_FLAG = 0x0800;
+      const ZIP_METHOD_STORE = 0;
+      const ZIP_MAX_ENTRIES = 0xffff;
+      const ZIP_MAX_SIZE_32BIT = 0xffffffff;
+      const crc32Table = (() => {
+        const table = new Uint32Array(256);
+        for (let i = 0; i < 256; i += 1) {
+          let value = i;
+          for (let bit = 0; bit < 8; bit += 1) {
+            value = value & 1 ? 0xedb88320 ^ (value >>> 1) : value >>> 1;
+          }
+          table[i] = value >>> 0;
+        }
+        return table;
+      })();
+
+      const crc32 = (bytes) => {
+        let value = 0xffffffff;
+        for (let i = 0; i < bytes.length; i += 1) {
+          value = crc32Table[(value ^ bytes[i]) & 0xff] ^ (value >>> 8);
+        }
+        return (value ^ 0xffffffff) >>> 0;
+      };
+
+      const toZipDosDateTime = (date = new Date()) => {
+        const year = Math.min(2107, Math.max(1980, date.getFullYear()));
+        const month = Math.min(12, Math.max(1, date.getMonth() + 1));
+        const day = Math.min(31, Math.max(1, date.getDate()));
+        const hour = Math.min(23, Math.max(0, date.getHours()));
+        const minute = Math.min(59, Math.max(0, date.getMinutes()));
+        const second = Math.min(59, Math.max(0, date.getSeconds()));
+        const dosDate = ((year - 1980) << 9) | (month << 5) | day;
+        const dosTime = (hour << 11) | (minute << 5) | Math.floor(second / 2);
+        return { dosDate, dosTime };
+      };
+
+      const normalizeZipEntryName = (filename, fallback) => {
+        const base = String(filename || fallback || "photo.jpg")
+          .replace(/\\/g, "/")
+          .split("/")
+          .pop();
+        const sanitized = base.replace(/[<>:"|?*\u0000-\u001f]/g, "_").trim();
+        return sanitized || fallback || "photo.jpg";
+      };
+
+      const ensureUniqueZipEntryName = (name, usedNames) => {
+        if (!usedNames.has(name)) {
+          usedNames.add(name);
+          return name;
+        }
+        const dotIndex = name.lastIndexOf(".");
+        const base = dotIndex > 0 ? name.slice(0, dotIndex) : name;
+        const ext = dotIndex > 0 ? name.slice(dotIndex) : "";
+        let counter = 2;
+        let candidate = `${base}_${counter}${ext}`;
+        while (usedNames.has(candidate)) {
+          counter += 1;
+          candidate = `${base}_${counter}${ext}`;
+        }
+        usedNames.add(candidate);
+        return candidate;
+      };
+
+      const concatUint8Arrays = (chunks, totalLength) => {
+        const output = new Uint8Array(totalLength);
+        let offset = 0;
+        chunks.forEach((chunk) => {
+          output.set(chunk, offset);
+          offset += chunk.byteLength;
+        });
+        return output;
+      };
+
+      const buildZipBlobFromExports = async (exports) => {
+        if (!Array.isArray(exports) || !exports.length) {
+          const err = new Error("EMPTY_BATCH_EXPORT");
+          err.code = "EMPTY_BATCH_EXPORT";
+          throw err;
+        }
+        if (exports.length > ZIP_MAX_ENTRIES) {
+          const err = new Error("ZIP_ENTRY_LIMIT_EXCEEDED");
+          err.code = "ZIP_ENTRY_LIMIT_EXCEEDED";
+          throw err;
+        }
+        const usedNames = new Set();
+        const utf8Encoder = new TextEncoder();
+        const localChunks = [];
+        const centralChunks = [];
+        let localOffset = 0;
+        let centralSize = 0;
+        const now = new Date();
+        const { dosDate, dosTime } = toZipDosDateTime(now);
+
+        for (let i = 0; i < exports.length; i += 1) {
+          const item = exports[i];
+          if (!item?.blob) continue;
+          const resolvedName = ensureUniqueZipEntryName(
+            normalizeZipEntryName(item.filename, `whiteboard_${String(i + 1).padStart(2, "0")}.jpg`),
+            usedNames
+          );
+          const nameBytes = utf8Encoder.encode(resolvedName);
+          const fileBytes = new Uint8Array(await item.blob.arrayBuffer());
+          const fileSize = fileBytes.byteLength;
+          if (fileSize > ZIP_MAX_SIZE_32BIT || localOffset > ZIP_MAX_SIZE_32BIT) {
+            const err = new Error("ZIP_SIZE_LIMIT_EXCEEDED");
+            err.code = "ZIP_SIZE_LIMIT_EXCEEDED";
+            throw err;
+          }
+          const checksum = crc32(fileBytes);
+
+          const localHeader = new Uint8Array(30 + nameBytes.length);
+          const localView = new DataView(localHeader.buffer);
+          localView.setUint32(0, ZIP_HEADER_LOCAL_FILE, true);
+          localView.setUint16(4, ZIP_VERSION_NEEDED, true);
+          localView.setUint16(6, ZIP_UTF8_FLAG, true);
+          localView.setUint16(8, ZIP_METHOD_STORE, true);
+          localView.setUint16(10, dosTime, true);
+          localView.setUint16(12, dosDate, true);
+          localView.setUint32(14, checksum, true);
+          localView.setUint32(18, fileSize, true);
+          localView.setUint32(22, fileSize, true);
+          localView.setUint16(26, nameBytes.length, true);
+          localView.setUint16(28, 0, true);
+          localHeader.set(nameBytes, 30);
+
+          localChunks.push(localHeader, fileBytes);
+
+          const centralHeader = new Uint8Array(46 + nameBytes.length);
+          const centralView = new DataView(centralHeader.buffer);
+          centralView.setUint32(0, ZIP_HEADER_CENTRAL_FILE, true);
+          centralView.setUint16(4, ZIP_VERSION_NEEDED, true);
+          centralView.setUint16(6, ZIP_VERSION_NEEDED, true);
+          centralView.setUint16(8, ZIP_UTF8_FLAG, true);
+          centralView.setUint16(10, ZIP_METHOD_STORE, true);
+          centralView.setUint16(12, dosTime, true);
+          centralView.setUint16(14, dosDate, true);
+          centralView.setUint32(16, checksum, true);
+          centralView.setUint32(20, fileSize, true);
+          centralView.setUint32(24, fileSize, true);
+          centralView.setUint16(28, nameBytes.length, true);
+          centralView.setUint16(30, 0, true);
+          centralView.setUint16(32, 0, true);
+          centralView.setUint16(34, 0, true);
+          centralView.setUint16(36, 0, true);
+          centralView.setUint32(38, 0, true);
+          centralView.setUint32(42, localOffset, true);
+          centralHeader.set(nameBytes, 46);
+          centralChunks.push(centralHeader);
+          centralSize += centralHeader.byteLength;
+          localOffset += localHeader.byteLength + fileBytes.byteLength;
+        }
+
+        const entryCount = centralChunks.length;
+        if (!entryCount) {
+          const err = new Error("EMPTY_BATCH_EXPORT");
+          err.code = "EMPTY_BATCH_EXPORT";
+          throw err;
+        }
+        if (
+          entryCount > ZIP_MAX_ENTRIES ||
+          centralSize > ZIP_MAX_SIZE_32BIT ||
+          localOffset > ZIP_MAX_SIZE_32BIT
+        ) {
+          const err = new Error("ZIP_SIZE_LIMIT_EXCEEDED");
+          err.code = "ZIP_SIZE_LIMIT_EXCEEDED";
+          throw err;
+        }
+
+        const eocd = new Uint8Array(22);
+        const eocdView = new DataView(eocd.buffer);
+        eocdView.setUint32(0, ZIP_HEADER_EOCD, true);
+        eocdView.setUint16(4, 0, true);
+        eocdView.setUint16(6, 0, true);
+        eocdView.setUint16(8, entryCount, true);
+        eocdView.setUint16(10, entryCount, true);
+        eocdView.setUint32(12, centralSize, true);
+        eocdView.setUint32(16, localOffset, true);
+        eocdView.setUint16(20, 0, true);
+
+        const allChunks = localChunks.concat(centralChunks, [eocd]);
+        const totalLength = allChunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+        const zipBytes = concatUint8Arrays(allChunks, totalLength);
+        return new Blob([zipBytes], { type: "application/zip" });
+      };
+
+      const handleBatchZipShareOrDownload = async (exports) => {
         if (!Array.isArray(exports) || !exports.length) return;
-        const files = exports.map((item) => new File([item.blob], item.filename, { type: "image/jpeg" }));
+        const zipBlob = await buildZipBlobFromExports(exports);
+        const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
+        const zipFilename = `whiteboard_batch_${timestamp}.zip`;
+        const zipFile = new File([zipBlob], zipFilename, { type: "application/zip" });
         const shareText = buildShareText();
-        const canShareBatch =
+        const canShareZip =
           isMobileDevice &&
           navigator.canShare &&
           navigator.share &&
-          navigator.canShare({ files });
-        if (canShareBatch) {
+          navigator.canShare({ files: [zipFile] });
+        if (canShareZip) {
           try {
             await navigator.share({
-              files,
-              title: "工程白板照片",
+              files: [zipFile],
+              title: "工程白板照片批次壓縮檔",
               text: shareText,
             });
-            showToast(`已開啟分享面板（共 ${files.length} 張）。`, "success");
+            showToast(`已開啟分享面板（ZIP，共 ${exports.length} 張）。`, "success");
             return;
           } catch (error) {
-            if (error?.name !== "AbortError") {
-              showToast("批次分享不可用，改為下載。");
-            } else {
+            if (error?.name === "AbortError") {
               return;
             }
+            showToast("ZIP 分享不可用，改為下載。");
           }
         }
-        exports.forEach(({ blob, filename }) => downloadBlob(blob, filename));
-        showToast(`已下載 ${exports.length} 張圖片，可選擇儲存位置。`, "success");
+        downloadBlob(zipBlob, zipFilename);
+        showToast(`已下載 ZIP（共 ${exports.length} 張）。`, "success");
       };
 
       const waitForPhotoReady = async () => {
@@ -3237,7 +3449,10 @@ ${placemarks}
             exportedItems.push({ blob, filename });
             await new Promise((resolve) => setTimeout(resolve, 60));
           }
-          await handleBatchShareOrDownload(exportedItems);
+          if (exportAllBtn) {
+            exportAllBtn.textContent = "壓縮打包中…";
+          }
+          await handleBatchZipShareOrDownload(exportedItems);
         } catch (error) {
           console.error(error);
           if (error?.code === "MISSING_HTML2CANVAS") {
