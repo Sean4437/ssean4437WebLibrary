@@ -46,6 +46,7 @@
       const GEOLOCATION_TIMEOUT_MS = 15000;
       let lastPhotoMetadata = null;
       let lastPhotoExifBytes = null;
+      let shouldPatchExifFromMetadata = false;
       let pendingCaptureCoordinatesPromise = null;
 
       const layoutIdentifier =
@@ -64,6 +65,8 @@
         TWD97: "97",
       };
       const COORDINATE_HISTORY_LIMIT = 500;
+      const FORCE_DOWNLOAD_LAYOUTS_FOR_EXIF = new Set(["layout1"]);
+      const shouldForceDownloadForExif = FORCE_DOWNLOAD_LAYOUTS_FOR_EXIF.has(layoutIdentifier);
       let coordinateFormat = COORDINATE_FORMATS.TWD97;
       const EXPORT_SIZE_SCALE = {
         small: 0.8,
@@ -413,12 +416,18 @@
         if (!window.piexif) return dataUrl;
         try {
           let workingDataUrl = dataUrl;
-          if (lastPhotoExifBytes) {
+          const hasSourceExif = Boolean(lastPhotoExifBytes);
+          if (hasSourceExif) {
             try {
               workingDataUrl = piexif.insert(lastPhotoExifBytes, dataUrl);
             } catch (error) {
               console.warn("套用原始 EXIF 失敗，改用重建 EXIF。", error);
             }
+            if (!shouldPatchExifFromMetadata) {
+              return workingDataUrl;
+            }
+          } else if (!shouldPatchExifFromMetadata && !lastPhotoMetadata) {
+            return dataUrl;
           }
           let exifObj = null;
           try {
@@ -452,6 +461,31 @@
         } catch (error) {
           console.warn("EXIF 寫入失敗", error);
           return dataUrl;
+        }
+      };
+
+      const inspectExifInDataUrl = (dataUrl) => {
+        if (!window.piexif || !dataUrl) {
+          return { hasExif: false, hasGps: false, hasDate: false };
+        }
+        try {
+          const exifObj = piexif.load(dataUrl);
+          const gps = exifObj?.GPS || {};
+          const exif = exifObj?.Exif || {};
+          const zeroth = exifObj?.["0th"] || {};
+          const hasGps =
+            Boolean(gps[piexif.GPSIFD.GPSLatitude]) &&
+            Boolean(gps[piexif.GPSIFD.GPSLongitude]);
+          const hasDate =
+            Boolean(exif[piexif.ExifIFD.DateTimeOriginal]) ||
+            Boolean(zeroth[piexif.ImageIFD.DateTime]);
+          const hasExif =
+            Object.keys(gps).length > 0 ||
+            Object.keys(exif).length > 0 ||
+            Object.keys(zeroth).length > 0;
+          return { hasExif, hasGps, hasDate };
+        } catch (error) {
+          return { hasExif: false, hasGps: false, hasDate: false };
         }
       };
 
@@ -640,6 +674,17 @@
         return chars.trim();
       };
 
+      const bytesToBinaryString = (bytes) => {
+        if (!bytes || !bytes.length) return "";
+        let result = "";
+        const chunkSize = 0x8000;
+        for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+          const chunk = bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length));
+          result += String.fromCharCode(...chunk);
+        }
+        return result;
+      };
+
       const normalizeExifDate = (value) => {
         if (!value) return null;
         const match = value.match(/^(\d{4}):?(\d{2}):?(\d{2})/);
@@ -793,6 +838,8 @@
           const length = view.getUint16(offset + 2, false);
           if (marker === 0xe1) {
             const segmentStart = offset + 4;
+            const segmentLength = Math.max(0, length - 2);
+            const segmentEnd = Math.min(view.byteLength, segmentStart + segmentLength);
             const identifier = asciiFromView(view, segmentStart, 4);
             if (identifier !== "Exif") {
               offset += 2 + length;
@@ -809,10 +856,15 @@
               little,
               {}
             );
+            const exifBytes =
+              segmentEnd > segmentStart
+                ? bytesToBinaryString(new Uint8Array(buffer.slice(segmentStart, segmentEnd)))
+                : null;
             return {
               date: metadata.primaryDate || metadata.fallbackDate || null,
               gps: metadata.gps || null,
               orientation: metadata.orientation || null,
+              exifBytes,
             };
           }
           offset += 2 + length;
@@ -843,14 +895,24 @@
           metadata && (metadata.date || metadata.gps || metadata.orientation)
             ? { ...metadata }
             : null;
-        if (extraGps && typeof extraGps.latitude === "number" && typeof extraGps.longitude === "number") {
+        const shouldUseCaptureGps =
+          extraGps &&
+          typeof extraGps.latitude === "number" &&
+          typeof extraGps.longitude === "number" &&
+          (!metadata?.gps ||
+            typeof metadata.gps.latitude !== "number" ||
+            typeof metadata.gps.longitude !== "number");
+        if (shouldUseCaptureGps) {
           lastPhotoMetadata = lastPhotoMetadata || {};
           lastPhotoMetadata.gps = {
             latitude: extraGps.latitude,
             longitude: extraGps.longitude,
           };
         }
-        if (window.piexif && dataUrl) {
+        shouldPatchExifFromMetadata = Boolean(shouldUseCaptureGps);
+        if (typeof metadata?.exifBytes === "string" && metadata.exifBytes.startsWith("Exif")) {
+          lastPhotoExifBytes = metadata.exifBytes;
+        } else if (window.piexif && dataUrl) {
           try {
             const exifObj = piexif.load(dataUrl);
           if (exifObj["0th"]) {
@@ -879,10 +941,20 @@
 
         formInputs.testDate.value = resolvedDate;
         syncField("testDate");
-        showToast(
-          usedExif ? "已套用照片 EXIF 日期/座標。" : "已套用檔案時間作為日期。",
-          "success"
-        );
+        const hasGpsFromExif =
+          typeof metadata?.gps?.latitude === "number" &&
+          typeof metadata?.gps?.longitude === "number";
+        const hasGpsFromCapture =
+          typeof extraGps?.latitude === "number" &&
+          typeof extraGps?.longitude === "number";
+        const toastText = hasGpsFromExif
+          ? "已套用照片 EXIF 日期與 GPS。"
+          : hasGpsFromCapture
+            ? "照片 EXIF 無 GPS，已改用即時定位寫入。"
+            : usedExif
+              ? "已套用照片 EXIF 日期（來源未提供 GPS）。"
+              : "已套用檔案時間作為日期。";
+        showToast(toastText, "success");
         updateCoordinateOverlay();
         recordCoordinateHistory();
       };
@@ -1097,6 +1169,7 @@
         syncAllFields();
         lastPhotoMetadata = null;
         lastPhotoExifBytes = null;
+        shouldPatchExifFromMetadata = false;
         updateCoordinateOverlay();
       };
 
@@ -1145,10 +1218,12 @@
         return sections.map((item) => `${item.label}：${item.value || "—"}`).join("\n");
       };
 
-      const handleShareOrDownload = async (blob, filename) => {
+      const handleShareOrDownload = async (blob, filename, options = {}) => {
+        const skipShare = options.skipShare === true;
         const file = new File([blob], filename, { type: "image/jpeg" });
         const shareText = buildShareText();
         if (
+          !skipShare &&
           isMobileDevice &&
           navigator.canShare &&
           navigator.canShare({ files: [file] }) &&
@@ -1194,10 +1269,16 @@
           const isPortrait = canvas.height >= canvas.width;
             let dataUrl = canvas.toDataURL("image/jpeg", 0.92);
             dataUrl = applyExifToDataUrl(dataUrl);
+          const exifStatus = inspectExifInDataUrl(dataUrl);
+          const expectedGps = isFiniteCoordinate(lastPhotoMetadata?.gps?.latitude) && isFiniteCoordinate(lastPhotoMetadata?.gps?.longitude);
+          if (expectedGps && !exifStatus.hasGps) {
+            console.warn("匯出檔未檢測到 GPS EXIF，可能被來源或瀏覽器流程移除。");
+            showToast("提醒：來源或瀏覽器可能移除 GPS EXIF。建議改用相機直接拍攝並允許定位。");
+          }
           const blob = dataUrlToBlob(dataUrl);
           const timestamp = new Date().toISOString().replace(/[T:]/g, "-").split(".")[0];
           const filename = `whiteboard_${timestamp}${isPortrait ? "_portrait" : "_landscape"}.jpg`;
-          await handleShareOrDownload(blob, filename);
+          await handleShareOrDownload(blob, filename, { skipShare: shouldForceDownloadForExif });
         } catch (error) {
           console.error(error);
           showToast("匯出失敗，請再試一次。");
